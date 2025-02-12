@@ -458,7 +458,15 @@ let
     mkdir -p /run/kexec
     chmod 0700 /run/kexec
     ${pkgs.busybox}/bin/zcat ${boot.initrd.image} > /run/kexec/initrd
+  ''
 
+  # FIXME(amjoseph): provide a more general "copy these files into the initrd
+  # when kexec()ing" instead of this gross hack
+  + ''
+    echo miniboot-cryptsetup-keyfile | ${pkgs.cpio}/bin/cpio --create --append -O /run/kexec/initrd -H newc -D /etc
+  ''
+
+  + ''
     ${pkgs.busybox}/bin/gzip /run/kexec/initrd
     ${pkgs.kexec-tools}/bin/kexec ${lib.escapeShellArgs ([
       "--load"
