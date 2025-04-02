@@ -137,11 +137,13 @@
         # lvm lvchange --addtag @boot vg/lv
         /sbin/lvm lvchange -a ay @boot
         mkdir -p /root
-        mount -o ro LABEL=boot /root || exit 1
       ''];
       "sbin/dmsetup"    = _: "${lib.getBin pkgs.pkgsStatic.lvm2}/bin/dmsetup.static";
       "sbin/lvm"        = _: "${lib.getBin pkgs.pkgsStatic.lvm2}/bin/lvm";
     };
+    boot.initrd.mount-root.__default = [''
+      mount -o ro LABEL=boot /root || exit 1
+    ''];
   })))
 
  # switch_root into the chosen profile
@@ -169,4 +171,9 @@
     ''];
   })))
 
+ (util.forall-hosts
+  (host-name: host-final: prev: infuse prev ({
+    boot.initrd.image.__input.contents."early/run".__append =
+      host-final.boot.initrd.mount-root;
+  })))
 ]

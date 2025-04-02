@@ -131,6 +131,8 @@ let
           # should be run after the kernel starts PID1.  It has no effect on the
           # pre-userspace kernel or the early-userspace initrd.
           ttys  = tty-dev-map;
+
+          mount-root = list string; # kludge
         };
 
         spec = option storepath;

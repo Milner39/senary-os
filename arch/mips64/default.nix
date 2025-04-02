@@ -337,7 +337,7 @@ in
   # the device exists... like one or two full seconds after the
   # kernel-to-userspace handoff.  So we have to wait for the root device to
   # appear.
-  boot.initrd.mount-root.__assign = [''
+  boot.initrd.mount-root.__append = [''
     while ! (busybox blkid | busybox grep -q 'LABEL="${root-device-label}"'); do
       echo waiting for a device with 'LABEL="${root-device-label}"' to appear
       sleep 1
