@@ -183,9 +183,11 @@ stdenv.mkDerivation {
   '' +
   # The first thing s6-linux-init does is to mount /run and recursively copy its
   # template into /run/s6-linux-init.  Unfortunately the "template" contains
-  # setgid directories and named pipes, which means it can't be kept in the nix
-  # store.  In order to put it there, we wrap it in a cpio archive;
-  # unfortunately this means that we must run our own /run-mounting and
+  # setgid directories and named pipes, which means it the template can't be put
+  # directly into the nix store.
+  #
+  # To work around this, we wrap the template in a cpio archive.
+  # Unfortunately this means that we must run our own /run-mounting and
   # cpio-unpacking script ahead of s6-linux-init's `init`.  The mount options
   # for /run are the same as those found in s6-linux-init.c.  Statically-linked
   # busybox is used to minimize the size of the closure.
