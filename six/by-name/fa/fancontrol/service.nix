@@ -16,10 +16,6 @@ modprobe w83795
 
 export PATH=$PATH:${with pkgs; lib.makeBinPath [ gnugrep gnused ]}
 
-BASE=/sys/devices/pci0000:00/0000:00:14.0/i2c*/*-002f
-
-echo 1 > ''${BASE}/pwm1_enable
-#test -e ''${BASE}/hwmon/hwmon6/pwm1_enable && echo 1 > ''${BASE}/hwmon/hwmon6/pwm1_enable
 while true; do
     echo
     temp_southbridge=$(${pkgs.lm_sensors}/bin/sensors w83795g-i2c-1-2f | grep temp1: | sed s_[^C]*\+__ | sed s_\\..*__) 
@@ -43,6 +39,8 @@ while true; do
     pwm=$(( ''${pwm} > ''${maxpwm} ? ''${maxpwm} : ''${pwm} ))
     pwm=$(( ''${pwm} < ''${minpwm} ? ''${minpwm} : ''${pwm} ))
     echo "pwm         = "''${pwm}
+    BASE=/sys/devices/pci0000:00/0000:00:14.0/i2c*/*-002f
+    echo 1 > ''${BASE}/pwm1_enable
     echo ''${pwm} > ''${BASE}/pwm1
     echo
     sleep 1
