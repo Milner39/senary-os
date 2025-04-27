@@ -19,11 +19,11 @@ let
   inherit (targets.hwclock-fake.passthru)
     hwclock-fake-file;
 
-  execline-update-hwclock-fake = ''
-    ${pkgs.execline}/bin/if
-      { ${pkgs.execline}/bin/redirfd -w 1 ${hwclock-fake-file}- ${pkgs.busybox}/bin/busybox date -u +%s }
-      ${pkgs.busybox}/bin/busybox mv ${hwclock-fake-file}- ${hwclock-fake-file}
-  '';
+  execline-update-hwclock-fake = [
+    "${pkgs.execline}/bin/if"
+    [ "${pkgs.execline}/bin/redirfd" "-w" "1" "${hwclock-fake-file}-" "${pkgs.busybox}/bin/busybox" "date" "-u" "+%s" ]
+    "${pkgs.busybox}/bin/busybox" "mv" "${hwclock-fake-file}-" "${hwclock-fake-file}"
+  ];
 
 in six.mkFunnel {
 
@@ -31,22 +31,21 @@ in six.mkFunnel {
   run =
     six.util.depot.writeExecline
       "service.hwclock-fake-updater.run"
-      { argMode = "none"; } [
-          "${pkgs.execline}/bin/loopwhilex"
-          "${pkgs.execline}/bin/if"
-          [ "${execline-update-hwclock-fake}" ]
-          "sleep" "${toString interval-seconds}"
-        ];
+      { argMode = "none"; }
+      (six.util.execline.loop
+        { inherit interval-seconds; }
+        execline-update-hwclock-fake);
 
   # at shutdown, update the hwclock-fake file one last time, but don't obstruct
   # the shutdown process if we're unable to update it.
-  finish = pkgs.writeScript "finish" ''
-    #!${pkgs.execline}/bin/execlineb -P
-    ${pkgs.execline}/bin/foreground
-      { ${execline-update-hwclock-fake} }
-      ${pkgs.execline}/bin/exit 0
-  '';
-
+  finish =
+    six.util.depot.writeExecline
+      "service.hwclock-fake-updater.finish"
+      { argMode = "none"; } [
+          "${pkgs.execline}/bin/foreground"
+          execline-update-hwclock-fake
+          "${pkgs.execline}/bin/exit" "0"
+        ];
 
   passthru.after = [
     # Don't start this until hwclock-fake has copied from the disk to the system
