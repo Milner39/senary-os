@@ -1,0 +1,5 @@
+The contents of this directory are a vendored copies of things from
+depot.tvl.fyi:nix.  Each commit which adds files below this directory includes,
+in its git comment, the depot commit hash from whence said things were vendored.
+
+See LICENSE for copyright and authorship.
