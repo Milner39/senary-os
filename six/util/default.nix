@@ -1,5 +1,6 @@
 { lib
-, pkgs
+, pkgs  ? throw "six.util was called without the `pkgs` argument"
+, ...
 }:
 
 let
