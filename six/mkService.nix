@@ -1,5 +1,6 @@
 { lib
 , pkgs
+, six
 
 , type          ? throw "missing type"
 #, description
@@ -17,8 +18,8 @@
 #, wants
 #, wantedBy?
 }:
-assert up!=null   -> lib.isPath up   || lib.isDerivation up   || lib.isList up;
-assert down!=null -> lib.isPath down || lib.isDerivation down || lib.isList down;
+assert up!=null   -> six.util.execline.assertIsExecline up;
+assert down!=null -> six.util.execline.assertIsExecline down;
 
 # TODO: prefix all runscripts with `s6-cd /run/booted-system/six/scandir/$1`?
 # That way relative path references to ./data will use a path which gets updated
