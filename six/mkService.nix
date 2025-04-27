@@ -5,9 +5,9 @@
 , type          ? throw "missing type"
 #, description
 #, documentation  # must be urls
-, up            ? null # must contain a single unix command line (no shebang) -- (TODO: switch to array-of-strings and execlineb)
+, up            ? null # must contain a single unix command line (no shebang)
 , timeout-up    ? null
-, down          ? null # must contain a single unix command line (no shebang) -- (TODO: switch to array-of-strings and execlineb)
+, down          ? null # must contain a single unix command line (no shebang)
 , timeout-down  ? null
 , passthru      ? {}
 , extraCommands ? ""
@@ -27,6 +27,16 @@ assert down!=null -> six.util.execline.assertIsExecline down;
 
 let
   afterDirName = if type == "bundle" then "contents.d" else "dependencies.d";
+
+  # applies escapeExecline if the argument is a list; this is simply to avoid
+  # "diff noise" in the existing westernsemico-internal test suite
+  maybeEscapeExecline =
+    argv:
+    assert six.util.execline.assertIsExecline argv;
+    if lib.isList argv
+    then six.util.depot.escapeExecline argv
+    else argv;
+
 in
 (pkgs.stdenvNoCC.mkDerivation {
   name = throw "this will be overridden";
@@ -49,9 +59,9 @@ in
     mkdir $out
     echo ${type} > $out/type
   '' + lib.optionalString (up != null) ''
-    echo '${up}' > $out/up
+    echo ${lib.escapeShellArg (maybeEscapeExecline up)} > $out/up
   '' + lib.optionalString (down != null) ''
-    echo '${down}' > $out/down
+    echo ${lib.escapeShellArg (maybeEscapeExecline down)} > $out/down
   '' + lib.optionalString (finalAttrs.passthru.essential or false) ''
     touch $out/flag-essential
   '' + lib.optionalString (timeout-up != null) ''

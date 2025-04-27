@@ -64,10 +64,7 @@ let
   run =
     if run'!=null
     then scriptify "run" run'
-    else pkgs.writeScript "run" ''
-      #!${pkgs.execline}/bin/execlineb
-      ${lib.concatStringsSep " " argv'}
-    '';
+    else six.util.depot.writeExecline "run" { argMode = "none"; } argv';
 
   scriptify = name: script:
     if lib.isList script
