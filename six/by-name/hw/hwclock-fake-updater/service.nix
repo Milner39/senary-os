@@ -28,13 +28,15 @@ let
 in six.mkFunnel {
 
   # continuously copy from the system clock to the hwclock-fake file
-  run = pkgs.writeScript "run" ''
-    #!${pkgs.execline}/bin/execlineb -P
-    ${pkgs.execline}/bin/loopwhilex
-      ${pkgs.execline}/bin/if
-        { ${execline-update-hwclock-fake} }
-        sleep ${toString interval-seconds}
-  '';
+  run =
+    six.util.depot.writeExecline
+      "service.hwclock-fake-updater.run"
+      { argMode = "none"; } [
+          "${pkgs.execline}/bin/loopwhilex"
+          "${pkgs.execline}/bin/if"
+          [ "${execline-update-hwclock-fake}" ]
+          "sleep" "${toString interval-seconds}"
+        ];
 
   # at shutdown, update the hwclock-fake file one last time, but don't obstruct
   # the shutdown process if we're unable to update it.
