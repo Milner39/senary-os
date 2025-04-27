@@ -6,6 +6,9 @@
 let
   chpst = pkgs.callPackage ./chpst {};
   depot = pkgs.callPackage ./depot { inherit lib; };
+  execline = pkgs.callPackage ./execline {
+    inherit lib toPrettyTry;
+  };
 
   # The following is copy-pasted from infuse.nix, which uses this routine but
   # does not expose it (since doing so would make it part of the infuse API).
@@ -28,6 +31,7 @@ in {
   inherit
     chpst
     depot
+    execline
     toPrettyTryWrapper
     toPrettyTry
   ;
