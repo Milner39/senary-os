@@ -11,6 +11,7 @@
 , passthru ? {}
 }:
 
+# FIXME: use six.util.execline.loop
 six.mkFunnel {
   chpst = {
     argv = [
