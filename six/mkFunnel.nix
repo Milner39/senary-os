@@ -4,12 +4,9 @@
 , timeout-up   ? null # milliseconds
 , timeout-down ? null # milliseconds
 
-# you must set exactly one of the following three (run, argv, chpst)
-, run   ? null # an executable (string or path)
-, argv  ? null # a list-of-(string|path) to be execve()'d
-, chpst ? null # an attrset to be passed to six.util.chpst
-
+, run    ? throw "you must set run"
 , finish ? null
+
 , notification-fd ? null
 , lock-fd ? null
 , timeout-kill ? null
@@ -30,62 +27,11 @@ assert up!=null   -> lib.isPath up || lib.isDerivation up;
 assert data!=null -> lib.isPath data || lib.isDerivation data;
 assert env!=null  -> lib.isPath env || lib.isDerivation env || lib.isAttrs env;
 
-assert argv==null && run==null && chpst==null -> throw "you must set one of: run, argv, chpst";
-assert argv!=null && run!=null -> throw "you cannot set both run and argv";
-assert argv!=null && chpst!=null -> throw "you cannot set both chpst and argv";
-assert run!=null && chpst!=null -> throw "you cannot set both chpst and run";
-
 assert flag-newpidns ->
        pkgs.stdenv.hostPlatform.isLinux &&
        lib.versionAtLeast pkgs.s6.version "2.13.1.0";
 
 let
-  run' = run;
-  argv' =
-    if argv!=null
-    then argv
-    else six.util.chpst ({
-      envdir = "./env";
-      redirect-stderr-to-stdout = true;
-
-      # TODO: consider these
-      #dir ? null,
-      #new-session ? false,
-      #new-process-group ? new-session,
-      #user ? null,
-      #group ? null,
-      #groups ? [],
-      #env-clear ? false,
-    } // chpst);
-in
-
-let
-
-  run =
-    if run'!=null
-    then scriptify "run" run'
-    else six.util.depot.writeExecline "run" { argMode = "none"; } argv';
-
-  scriptify = name: script:
-    if lib.isList script
-    then
-      # As a convenience, you can pass an argv (list of strings) and mkFunnel
-      # will call writeScript for you.  All elements of the list must be
-      # strings, paths, numbers, or derivations.  As a further convenience,
-      # `toString` will be applied to each element.
-      let argv = map (e:
-        if lib.isInt e || lib.isFloat e
-        then toString e
-        else assert !(lib.isString e || lib.isPath e || lib.isDerivation e)
-          -> throw "the list passed as the script argument to mkFunnel must contain only numbers, strings, paths, and derivations";
-          e) script;
-      in pkgs.writeScript name ''
-        #!${pkgs.runtimeShell}
-        exec ${lib.escapeShellArgs argv}
-      ''
-    else
-      assert (lib.isString script || lib.isDerivation script);
-      script;
 
   env' =
     if env==null || lib.isPath env || lib.isDerivation env
@@ -126,14 +72,14 @@ in
   '' + lib.optionalString (timeout-finish != null) ''
     echo ${timeout-finish} > $out/timeout-finish
   '' + ''
-    ln -s ${run} $out/run
+    ln -s ${six.util.scriptify { name = "run"; } run} $out/run
   '' + lib.optionalString (finish != null) ''
-    ln -s ${scriptify "finish" finish} $out/finish
+    ln -s ${six.util.scriptify { name = "finish"; } finish} $out/finish
   '' + lib.optionalString (data != null) ''
     ln -s ${data} $out/data
   '' + lib.optionalString (env' != null) ''
     ln -s ${env'} $out/env
-  '' + lib.optionalString (env' == null && chpst != null) ''
+  '' + lib.optionalString (env' == null && lib.isAttrs run && !(lib.isDerivation run)) ''
     mkdir $out/env
   '' + lib.optionalString flag-newpidns ''
     touch $out/flag-newpidns

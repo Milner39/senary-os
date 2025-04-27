@@ -6,6 +6,11 @@
 let
   chpst = pkgs.callPackage ./chpst {};
   depot = pkgs.callPackage ./depot { inherit lib; };
+  scriptify = pkgs.callPackage ./scriptify {
+    inherit lib;
+    inherit chpst;
+    inherit (depot) writeExecline;
+  };
   execline = pkgs.callPackage ./execline {
     inherit lib toPrettyTry;
   };
@@ -31,6 +36,7 @@ in {
   inherit
     chpst
     depot
+    scriptify
     execline
     toPrettyTryWrapper
     toPrettyTry

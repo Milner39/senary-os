@@ -13,7 +13,7 @@
 
 # FIXME: use six.util.execline.loop
 six.mkFunnel {
-  chpst = {
+  run = {
     argv = [
       "${pkgs.s6-portable-utils}/bin/s6-sleep" "5"
       "${pkgs.rsync}/bin/rsync"
