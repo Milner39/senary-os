@@ -2,7 +2,7 @@
 , pkgs
 , six
 , targets
-, listen-ip                ? 0    # means listen everywhere
+, listen-ip                ? "0"  # means listen everywhere
 , listen-port              ? 69
 , path-to-serve            ? throw "you must provide the path to serve"
 , allow-upload             ? false
