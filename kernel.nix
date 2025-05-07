@@ -18,9 +18,12 @@
 
 # TODO: set this to `false` on more platforms
 , enableCommonStructuredConfig ? with stdenv.hostPlatform; isx86_64 || isPower64
+, structuredExtraConfig ? {}
 
 , patches ? []
 }:
+
+let structuredExtraConfig' = structuredExtraConfig; in
 
 let
   commonargs = {
@@ -143,9 +146,6 @@ let
           NUMA_BALANCING_DEFAULT_ENABLED = yes;
 
         } // lib.optionalAttrs stdenv.hostPlatform.isPower64 {
-          CRYPTO_AES_GCM_P10 = lib.mkForce (option no);
-          CRYPTO_CHACHA20_P10 = lib.mkForce (option no);
-          CRYPTO_POLY1305_P10 = lib.mkForce (option no);
 
         } // lib.optionalAttrs stdenv.hostPlatform.isx86 {
           GART_IOMMU = yes;
@@ -313,7 +313,16 @@ let
           PPP_SYNC_TTY = lib.mkForce module;
           #HDLC_PPP = lib.mkForce module;
 
-        };
+        }
+        //
+        lib.flip lib.mapAttrs structuredExtraConfig'
+          (name: value:
+            lib.mkForce (option {
+              n = lib.kernel.no;
+              m = lib.kernel.module;
+              y = lib.kernel.yes;
+            }.${lib.toLower value}))
+      ;
 
     });
 in
