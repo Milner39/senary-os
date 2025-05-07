@@ -322,7 +322,10 @@ let
         if lib.isList boot.kernel.firmware
         then pkgs.buildEnv {
           name = "firmware";
-          paths = boot.kernel.firmware;
+          paths = lib.pipe boot.kernel.firmware [
+            #(lib.map toString)
+            #lib.naturalSort   # for normalization purposes
+          ];
         }
         else boot.kernel.firmware;
     in
