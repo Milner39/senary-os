@@ -65,16 +65,19 @@ in
   };
   type = "longrun";
   extraCommands = "";
-}).overrideAttrs(finalAttrs: previousAttrs: {
+}).overrideAttrs(finalAttrs: previousAttrs:
+  let
+    final-sname = lib.concatStringsSep "." finalAttrs.passthru.spath;
+  in {
   buildCommand = (previousAttrs.buildCommand or "") + ''
   '' + lib.optionalString (timeout-kill != null) ''
     echo ${timeout-kill} > $out/timeout-kill
   '' + lib.optionalString (timeout-finish != null) ''
     echo ${timeout-finish} > $out/timeout-finish
   '' + ''
-    ln -s ${six.util.scriptify { name = "run"; } run} $out/run
+    ln -s ${six.util.scriptify { name = "target.${final-sname}.run"; } run} $out/run
   '' + lib.optionalString (finish != null) ''
-    ln -s ${six.util.scriptify { name = "finish"; } finish} $out/finish
+    ln -s ${six.util.scriptify { name = "target.${final-sname}.finish"; } finish} $out/finish
   '' + lib.optionalString (data != null) ''
     ln -s ${data} $out/data
   '' + lib.optionalString (env' != null) ''
