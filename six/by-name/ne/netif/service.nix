@@ -13,8 +13,7 @@
 , mac ? null       # a hardware MAC address to use
 , attempts ? 3     # number of DHCP requests to send before giving up
 
-# FIXME instead of each of these being a string, they should be a list of
-# exec()-able paths
+# FIXME instead of each of these being a string, they should be execlines
 
 , type ? null      # if non-null, `ip link add` will be called
 , pre-add ? null   # executed at the very start of the `up` script
