@@ -117,29 +117,49 @@ let
           # `canonical` and `name` fields of `final.hosts.${name}` do not depend
           # on the fixpoint.
           hosts =
-            lib.mapAttrs
-              (name: host-func:
-                let
-                  nofixpoint-host' = host-func {
-                    inherit name;
-                    inherit (nofixpoint-host) canonical tags;
-                    host = site-final.hosts.${name};
-                    host-prev = {};
-                    #site = throw "immutable fields of host must not depend on the site argument";
-                    site = site-final;
-                    pkgs = throw "immutable fields of host must not depend on the pkgs argument";
-                  };
-                  q = nofixpoint-host' // {
-                    inherit name;
-                    tags = types.set-tag-values (nofixpoint-host'.tags or {});
-                  };
-                  nofixpoint-host = q // {
-                    inherit (q) name canonical pkgs tags;
-                    service-overlays = q.service-overlays or [];
-                  };
-                in nofixpoint-host
-              )
-              site.hosts;
+            lib.flip lib.mapAttrs site.hosts
+              (name: host-func: let
+
+                # an attrset where the forbidden (see below) attributes are
+                # replaced with maximally-helpful error messages
+                diagnostic-attributes = dependee: {
+                  host-prev = {};
+                  host =
+                    lib.flip lib.mapAttrs site-final.hosts.${name}
+                      (key: _: throw "${dependee} may not recursively depend on host.\${name}.${key}")
+                    // restricted-recursive-host-fields;
+                  pkgs = throw "${dependee} may not recursively depend on the pkgs attribute";
+
+                  # TODO: this can be loosened up a bit, for access to site.globals, etc
+                  site = throw "${dependee} may not recursively depend on the site attribute";
+                };
+
+                # these fields of the `host` fixpoint must not depend on any
+                # part of the final result
+                nonrecursive-host-fields = {
+                  inherit name;
+                  inherit (host-func (nonrecursive-host-fields // diagnostic-attributes "host.\${name}.canonical")) canonical;
+                };
+
+                # `tags` is allowed to be recursive only in itself (not in other attributes)
+                restricted-recursive-host-fields = {
+                  inherit (nonrecursive-host-fields) name canonical;
+                  # may depend recursively only on the nonrecursive fields and itself
+                  tags = lib.pipe restricted-recursive-host-fields [
+                    (x: x // diagnostic-attributes "host.\${name}.tags")
+                    host-func
+                    (x: types.set-tag-values (x.tags or {}))
+                  ];
+                };
+
+              in host-func {
+                inherit (restricted-recursive-host-fields) name canonical tags;
+                host = site-final.hosts.${name};
+                host-prev = {};
+                site = site-final;
+              } // {
+                inherit (restricted-recursive-host-fields) name canonical tags;
+              });
         }))
 
     # build the ifconns and interfaces attributes
