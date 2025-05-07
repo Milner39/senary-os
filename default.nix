@@ -272,7 +272,7 @@ let
               inherit (prev) tags;   # FIXME: use final.tags
             };
           mips-unknown-linux-gnu = {};
-          armv7-unknown-linux-gnueabi = {};
+          armv7l-unknown-linux-gnueabi = {};
           "" = {};
         }.${prev.canonical or ""})  # FIXME: use final.canonical
       ))
