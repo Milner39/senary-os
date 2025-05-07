@@ -148,7 +148,26 @@ let
                   tags = lib.pipe restricted-recursive-host-fields [
                     (x: x // diagnostic-attributes "host.\${name}.tags")
                     host-func
-                    (x: types.set-tag-values (x.tags or {}))
+                    (x: types.set-tag-values (
+                      (x.tags or {}) //
+
+                      # This turns each of nixpkgs.lib's predicates "p" into an
+                      # attribute "system-${p}" whose value is a boolean
+                      # indicating whether or not the predicate matched this
+                      # host's `hostPlatform`.  These attribute names will be
+                      # intersected with those of site.tags, so if the site
+                      # doesn't declare a "system-${p}" tag that's okay.
+                      lib.flip lib.mapAttrs' lib.systems.inspect.predicates
+                        (predicate-name: predicate-function:
+                          let
+                            inherit (nonrecursive-host-fields) canonical;
+                            system = lib.systems.parse.mkSystemFromString canonical;
+                            name = "system-${predicate-name}";
+                            value = predicate-function system;
+                          in {
+                            inherit name value;
+                          })
+                    ))
                   ];
                 };
 
