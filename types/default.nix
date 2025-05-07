@@ -82,6 +82,26 @@ let
     # Using `list tty-dev` would allow duplicates and be ordering-sensitive.
     tty-dev-map = attrs (option yants.int);
 
+    # basically one line of /etc/passwd (with shadow passwords)
+    user = struct "user" {
+      name = string;
+
+      # if missing, password logins are disabled
+      # FIXME: get `busybox mkpasswd --algorithm=yescrypt` working
+      hashedPassword = option string;
+
+      uid = int;
+
+      gid = int;
+
+      # this is usually the user's full name ("Mr. First Last")
+      comment = option string;
+
+      home-directory = string;
+
+      shell = option string;   # for root user, use `/run/current-system/boot/ash`
+    };
+
     host = struct "host" {
       name = string;
       canonical = string;      # gnu-config triple
