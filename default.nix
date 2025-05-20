@@ -245,7 +245,7 @@ let
             (mkKernelConsoleBootArg final.boot.kernel.console)
           ];
           boot.kernel.modules  = _: "${final.boot.kernel.package}";
-          boot.kernel.payload    = _: "${final.boot.kernel.package}/bzImage";
+          boot.kernel.payload  = _: "${final.boot.kernel.package}/bzImage";
           boot.kernel.package  = _: final.pkgs.callPackage ./kernel.nix { };
         }
       ))
