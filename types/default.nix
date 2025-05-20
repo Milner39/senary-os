@@ -29,7 +29,7 @@ let
     set-tag-values =
       new-tag-values:
       default-tag-values //
-      lib.intersectAttrs default-tag-values new-tag-values;
+      builtins.intersectAttrs default-tag-values new-tag-values;
 
     # here's the problem
     # - some hosts are on a subnet, but i haven't declared the name of the interface for that subnet yet
