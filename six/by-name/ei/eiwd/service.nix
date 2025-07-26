@@ -25,7 +25,7 @@ in
   passthru.after = [ targets.global.coldplug ];
   run = pkgs.writeScript "run"
 ''
-#!${pkgs.runtimeShell} -x
+#!${pkgs.runtimeShell}
 exec 2>&1
 
 ${pkgs.kmod}/bin/modprobe ath9k_htc || exec sleep 5
