@@ -17,6 +17,7 @@ ${pkgs.findutils}/bin/find $SYSFS_BASE/net/ \
      -maxdepth 1 \
      -type d \
      -execdir basename {} \; \
+  2>/dev/null \
 | ${pkgs.findutils}/bin/xargs -I{} iw dev {} del \
 2>/dev/null
 '';
