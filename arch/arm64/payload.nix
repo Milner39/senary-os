@@ -19,20 +19,12 @@
 , loadaddr-hex    ?  "6000000"  # where the kernel is located when we jump to it
 , initrd-addr-hex ?  "2080000"  # where the initrd is located
 , fdtaddr-hex     ?  "1f00000"  # where the devicetree is located when we jump to the kernl
-, uboot-commands ?
-null/*
- [
-setenv loadaddr 9800800
-setenv tftp_server_ip '192.168.22.6'
-setenv hostname 'rockabye'
-dhcp $(loadaddr) $(tftp_server_ip):/nix/var/nix/profiles/by-hostname/$(hostname)/tftpboot
-fdt addr $(loadaddr)
-
-dhcp 9800800 192.168.22.6:/nix/var/nix/profiles/by-hostname/rockabye/tftpboot; fdt addr 9800800; bootm
-
-
-bootm
-*/
+, uboot-commands  ? [
+  "fatload mmc 0 ${loadaddr-hex} normal.uImage"
+  "fdt addr ${loadaddr-hex}"
+  "fdt get value bootscript /images/script data"
+  "run bootscript"
+]
 , arch ? "arm64"
 , append-dtb-to-kernel ? false
 }:
@@ -40,26 +32,7 @@ bootm
 assert append-dtb-to-kernel -> dtb!=null;
 assert linux-command-line != null -> dtb != null;
 
-let
-
-/*
-env default -a
-setenv tftp_server_ip 192.168.22.6
-setenv hostname rockabye
-setenv loadaddr 9800800
-setenv netbootcmd 'dhcp; tftp $(loadaddr) $(tftp_server_ip):/nix/var/nix/profiles/by-hostname/$(hostname)/uImage; fdt addr $(loadaddr); bootm $(loadaddr)'
-setenv bootcmd 'run netbootcmd'
-
-#setenv bootcmd 'fatload mmc 0 $(loadaddr) normal.uImage; fdt addr $(loadaddr); fdt get value bootscript /images/script data; run bootscript'
-  #   saveenv
-  #   reset
-
-*/
-/*
-uboot-script
-    echo ${lib.escapeShellArg (lib.concatStringsSep ";" uboot-commands)} > script
-*/
-payload = stdenv.mkDerivation {
+stdenv.mkDerivation {
   pname = "kernel${lib.optionalString (initrd!=null) "+initrd"}${lib.optionalString (dtb!=null) "+dtb"}";
   inherit version;
   dontUnpack = true;
@@ -146,6 +119,13 @@ payload = stdenv.mkDerivation {
         };
     };
     EOF
+  ''
+  #
+  # boot script
+  #
+  + lib.optionalString (uboot-commands != null) ''
+    echo ${lib.escapeShellArg
+      (lib.concatStringsSep ";" uboot-commands)} > script
   '';
 
   installPhase = ''
@@ -158,7 +138,6 @@ payload = stdenv.mkDerivation {
     mv uImage $out
     runHook postInstall
   '';
-};
-in payload
+}
 
 

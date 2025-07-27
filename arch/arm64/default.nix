@@ -9,11 +9,15 @@
 
 {
   boot.kernel.payload = prev:
-    if !final.tags.is-nfsroot then prev else
-      pkgs.callPackage ./payload.nix {
-        kernel = "${final.boot.kernel.package}/Image";
-        initrd = final.boot.initrd.image;
-        params = final.boot.kernel.params;
-        dtb    = final.boot.kernel.dtb;
-      };
+    if !final.tags.is-bootloader-uboot
+    then prev
+    else pkgs.callPackage ./payload.nix ({
+      kernel = "${final.boot.kernel.package}/Image";
+      initrd = final.boot.initrd.image;
+      params = final.boot.kernel.params;
+    } // lib.optionalAttrs (final?boot.kernel.dtb) {
+      dtb    = final.boot.kernel.dtb;
+    } // lib.optionalAttrs (final?boot.loader.uboot-commands) {
+      inherit (final.boot.loader) uboot-commands;
+    });
 }
