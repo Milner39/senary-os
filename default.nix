@@ -267,7 +267,6 @@ let
           aarch64-unknown-linux-gnu =
             import ./arch/arm64 {
               inherit lib final infuse name;
-              inherit (prev) tags;   # FIXME: use final.tags
             };
           mips-unknown-linux-gnu = {};
           armv7l-unknown-linux-gnueabi = {};
