@@ -109,6 +109,9 @@ let
 
       tags = attrs2yants "tags" args.tags;
 
+      # in the `final` parameter, site.host.${name}.site == site
+      site = option any;
+
       interfaces = attrs interface;
       ifconns = attrs ifconn; # attrname is the subnet name; assumes (sensibly) maximum one interface per subnet
       pkgs = any;             # attrsof<pkg>; set to `any` to keep eval times reasonable

@@ -329,6 +329,16 @@ let
             })
       ))
 
+  ] ++ [
+
+    # Add `site.host.${name}.site==site` (only in the `final` parameter, so this
+    # overlay must go last).
+    (site-final: site-prev: site-prev // {
+      hosts = lib.mapAttrs (name: host-prev:
+        host-prev // {
+          site = site-final;
+        }) site-prev.hosts;
+    })
   ];
 
 in {
