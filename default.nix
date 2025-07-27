@@ -123,7 +123,6 @@ let
                 # an attrset where the forbidden (see below) attributes are
                 # replaced with maximally-helpful error messages
                 diagnostic-attributes = dependee: {
-                  host-prev = {};
                   host =
                     lib.flip lib.mapAttrs site-final.hosts.${name}
                       (key: _: throw "${dependee} may not recursively depend on host.\${name}.${key}")
@@ -174,7 +173,6 @@ let
               in host-func {
                 inherit (restricted-recursive-host-fields) name canonical tags;
                 host = site-final.hosts.${name};
-                host-prev = {};
                 site = site-final;
               } // {
                 inherit (restricted-recursive-host-fields) name canonical tags;
