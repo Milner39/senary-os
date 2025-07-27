@@ -72,6 +72,22 @@ set-up-mtd = ''
 ```
 
 
+Misc Notes:
+
+- If using `bootoctlinux` (which we currently are not using), you must remove
+  the factory-shipped `vmlinux.64.md5` from `/dev/mmcblk0p1` -- this is the only
+  way to disable md5 checking.
+
+Network boot stuff:
+
+```
+setenv tftp_server_ip <REPLACE_ME>
+setenv hostname <REPLACE_ME>
+setenv netbootcmd 'dhcp; tftp $(loadaddr) $(tftp_server_ip):$(hostname)/uImage; fdt addr $(loadaddr); fdt get value bootscript /images/script data; run bootscript'
+```
+
+
+
 Copypasta to create a USB boot image:
 
 ```
@@ -357,19 +373,3 @@ in
 
 }
 
-/*
-
-Misc Notes:
-
-- If using `bootoctlinux` (which we currently are not using), you must remove
-  the factory-shipped `vmlinux.64.md5` from `/dev/mmcblk0p1` -- this is the only
-  way to disable md5 checking.
-
-Network boot stuff:
-
-```
-setenv tftp_server_ip <REPLACE_ME>
-setenv hostname <REPLACE_ME>
-setenv netbootcmd 'dhcp; tftp $(loadaddr) $(tftp_server_ip):$(hostname)/uImage; fdt addr $(loadaddr); fdt get value bootscript /images/script data; run bootscript'
-```
-*/
