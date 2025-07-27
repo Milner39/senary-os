@@ -248,8 +248,8 @@ let
         }
       ))
 
-    # arch stage
-    (root.util.forall-hosts
+    # arch stage is allowed to alter the tags
+    (root.util.forall-hosts'
       (name: final: prev: infuse prev
         ({
           x86_64-unknown-linux-gnu =
