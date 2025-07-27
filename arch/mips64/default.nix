@@ -159,11 +159,24 @@ eject ${DEV}
 #
 , append-dtb-to-kernel ? false
 
+, uboot-commands ? [
+  "fdt move $(fileaddr) 0x${preloadaddr-hex}"
+  "fdt addr 0x${preloadaddr-hex}"
+  "usb start"
+  "fdt header"
+  "fdt get addr kernel_addr /images/kernel data"
+  "fdt get value rd_start /images/ramdisk load"
+  "imxtract 0x${preloadaddr-hex} ramdisk $(rd_start)"
+  "fdt get size rd_size /images/ramdisk data"
+  "bootm start 0x${preloadaddr-hex}"
+  "bootm loados"
+  "bootm fdt"
+  "bootoctlinux $(kernel_addr) numcores=$(numcores) endbootargs rd_start=$(rd_start) rd_size=$(rd_size) ${lib.concatStringsSep " " final.boot.kernel.params} $(bootargs)"
+]
+
 }:
 
 let
-
-  params = final.boot.kernel.params;
 
   payload = pkgs.stdenv.mkDerivation {
     pname = "kernel+initrd+dtb";
@@ -273,16 +286,17 @@ let
                       algo = "sha1";
                   };
               };
+    '' + lib.optionalString (uboot-commands != null) ''
+    ${""}        script {
+                description = "script";
+                data = /incbin/("script");
+                type = "script";
+                compression = "none";
+                hash {
+                    algo = "sha1";
+                };
+            };
     '' + ''
-              script {
-                  description = "script";
-                  data = /incbin/("script");
-                  type = "script";
-                  compression = "none";
-                  hash {
-                      algo = "sha1";
-                  };
-              };
           };
           configurations {
               default = "conf";
@@ -298,22 +312,9 @@ let
     #
     # boot script
     #
-    + ''
+    + lib.optionalString (uboot-commands != null) ''
       echo ${lib.escapeShellArg
-(lib.concatStringsSep ";" ([
-    "fdt move $(fileaddr) 0x${preloadaddr-hex}"
-    "fdt addr 0x${preloadaddr-hex}"
-    "usb start"
-    "fdt header"
-    "fdt get addr kernel_addr /images/kernel data"
-    "fdt get value rd_start /images/ramdisk load"
-    "imxtract 0x${preloadaddr-hex} ramdisk $(rd_start)"
-    "fdt get size rd_size /images/ramdisk data"
-    "bootm start 0x${preloadaddr-hex}"
-    "bootm loados"
-    "bootm fdt"
-    "bootoctlinux $(kernel_addr) numcores=$(numcores) endbootargs rd_start=$(rd_start) rd_size=$(rd_size) ${lib.concatStringsSep " " params} $(bootargs)"
-  ]))} > script
+        (lib.concatStringsSep ";" uboot-commands)} > script
     '';
 
     installPhase = ''
