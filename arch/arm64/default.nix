@@ -12,7 +12,7 @@
     if !final.tags.is-bootloader-uboot
     then prev
     else pkgs.callPackage ./payload.nix ({
-      kernel = "${final.boot.kernel.package}/Image";
+      kernel = final.boot.kernel.package;
       initrd = final.boot.initrd.image;
       params = final.boot.kernel.params;
     } // lib.optionalAttrs (final?boot.kernel.dtb) {

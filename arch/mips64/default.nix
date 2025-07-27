@@ -148,6 +148,7 @@ eject ${DEV}
 , initrd-alignment-hex ?      "10000"  # initrd address will be aligned to multiples of this
 , initrd-addr-hex      ?   "20C90000"  # where the initrd is located
 , initrd-ceiling-hex   ?   "21000000"  # build will fail if top of initrd is above this address
+, initrd-compression   ? "gzip"
 
 #
 # Although the factory bootloader (u-boot) can be instructed to pass a DTB to
@@ -178,165 +179,22 @@ eject ${DEV}
 
 let
 
-  payload = pkgs.stdenv.mkDerivation {
-    pname = "kernel+initrd+dtb";
-    inherit (final.boot.kernel.package) version;
-    dontUnpack = true;
-    nativeBuildInputs = with pkgs.buildPackages; [
-      dtc bc
-    ];
-
-    # Old buildPhase commands that are no longer needed (but might be useful
-    # someday):
-    #
-    # fdtput    -p -v dtb -t x /chosen linux,initrd-start 0x${initrd-addr-hex}
-    # fdtput    -p -v dtb -t x /chosen linux,initrd-end   0x$((echo 10k; wc -c < ${initrd}; echo 16o 16i; echo ${initrd-addr-hex}; echo '+f') | dc)
-    # fdtput    -p -v dtb -t s /chosen bootargs           "rd_start=0x${initrd-addr-hex} rd_size=$(wc -c < ${final.boot.initrd.image}) mem=0"
-    # fdtput    -p -v dtb -t s /chosen bootargs           ${lib.escapeShellArg (lib.concatStringsSep " " params)}
-    #
-    buildPhase = lib.optionalString (final.boot.kernel.dtb != null) ''
-      cp ${final.boot.kernel.dtb} dtb
-      chmod u+w dtb
-      dtc -I dtb -O dts dtb -o before.dts
-
-      # not sure this matters
-      fdtput    -p -v dtb -t s /chosen stdout-path   "soc/serial@1180000000800"
-
-      dtc -I dtb -O dts dtb -o after.dts
-      echo
-      diff -u before.dts after.dts || true
-      echo
-
-    ''
-    #
-    # kernel
-    #
-    + ''
-      cp ${final.boot.kernel.package}/vmlinux-* vmlinux
-      chmod u+w vmlinux
-    '' + lib.optionalString append-dtb-to-kernel ''
-      $OBJCOPY --update-section \
-        .appended_dtb=dtb \
-        vmlinux
-    ''
-    #
-    # initrd
-    #
-    + ''
-      cp ${final.boot.initrd.image} initrd
-      chmod u+w initrd
-      KERNEL_ADDR=$((0x${loadaddr-hex}))
-      KERNEL_TOP=$(( 0x${loadaddr-hex} + $(cat vmlinux | wc -c) ))
-      echo KERNEL_TOP is $(echo "10k16o $KERNEL_TOP f" | dc)
-      KERNEL_TOP_PADDING=$(( ( 0x${initrd-alignment-hex} - ( $KERNEL_TOP % 0x${initrd-alignment-hex} ) ) 0x${initrd-alignment-hex}  ))
-      echo KERNEL_TOP_PADDING is $(echo "10k16o $KERNEL_TOP_PADDING f" | dc)
-      INITRD_ADDR=$(( $KERNEL_TOP + $KERNEL_TOP_PADDING ))
-      echo INITRD_ADDR is $(echo "10k16o $INITRD_ADDR f" | dc)
-      INITRD_TOP=$(( $INITRD_ADDR + $(cat initrd | wc -c) ))
-      echo INITRD_TOP is $(echo "10k16o $INITRD_TOP f" | dc)
-      if (( $INITRD_TOP > 0x${initrd-ceiling-hex} )); then
-        echo kernel and initrd together do not fit beneath 0x${initrd-ceiling-hex}
-        exit -1
-      fi
-    ''
-    #
-    # devicetree
-    #
-    + ''
-      cat > octeon-dts <<EOF
-      /dts-v1/;
-      / {
-          description = "kernel image with one or more FDT blobs";
-          images {
-              kernel {
-                  description = "kernel";
-                  data = /incbin/("vmlinux");
-                  type = "kernel_noload";
-                  arch = "mips";
-                  os = "linux";
-                  compression = "none";
-                  load = <0x${loadaddr-hex}>;
-                  entry = <0>;
-                  hash {
-                      algo = "sha1";
-                  };
-              };
-              ramdisk {
-                  description = "initramfs";
-                  data = /incbin/("initrd");
-                  type = "ramdisk";
-                  arch = "mips";
-                  os = "linux";
-                  compression = "none";
-                  load = <0x${initrd-addr-hex}>;
-                  entry = <0>;
-                  hash {
-                      algo = "sha1";
-                  };
-              };
-    '' + lib.optionalString (final.boot.kernel.dtb != null) ''
-              fdt {
-                  description = "fdt";
-                  data = /incbin/("dtb");
-                  type = "flat_dt";
-                  arch = "mips";
-                  compression = "none";
-                  load = <0x${fdtaddr-hex}>;
-                  hash {
-                      algo = "sha1";
-                  };
-              };
-    '' + lib.optionalString (uboot-commands != null) ''
-    ${""}        script {
-                description = "script";
-                data = /incbin/("script");
-                type = "script";
-                compression = "none";
-                hash {
-                    algo = "sha1";
-                };
-            };
-    '' + ''
-          };
-          configurations {
-              default = "conf";
-              conf {
-                  kernel = "kernel";
-                  fdt = "fdt";
-                  ramdisk = "ramdisk";
-              };
-          };
-      };
-      EOF
-    ''
-    #
-    # boot script
-    #
-    + lib.optionalString (uboot-commands != null) ''
-      echo ${lib.escapeShellArg
-        (lib.concatStringsSep ";" uboot-commands)} > script
-    '';
-
-    installPhase = ''
-      runHook preInstall
-      mkdir -p $out
-      ln -s ${final.boot.kernel.package}/{dtbs,lib,config-*,System.map-*} $out/
-
-      ${pkgs.buildPackages.ubootTools}/bin/mkimage \
-        -D "-I dts -O dtb -p 4096" \
-        -B 1000 \
-        -f octeon-dts \
-        uImage
-      mv uImage $out/uImage
-
-      cp ${final.boot.kernel.package}/vmlinux-* $out/vmlinux
-      chmod u+w $out/vmlinux
-      cp ${final.boot.initrd.image} $out/initrd
-
-      runHook postInstall
-    '';
-  };
-
+  payload = pkgs.callPackage ./payload.nix ({
+    kernel = final.boot.kernel.package;
+    initrd = final.boot.initrd.image;
+    params = final.boot.kernel.params;
+    preload-hex = preloadaddr-hex;
+    inherit fdtaddr-hex;
+    inherit loadaddr-hex;
+    inherit initrd-alignment-hex;
+    inherit initrd-addr-hex;
+    inherit initrd-ceiling-hex;
+    inherit uboot-commands;
+  } // lib.optionalAttrs (final?boot.kernel.dtb) {
+    dtb    = final.boot.kernel.dtb;
+  } // lib.optionalAttrs (final?boot.loader.uboot-commands) {
+    inherit (final.boot.loader) uboot-commands;
+  });
 in
 {
   boot.kernel.payload  = _: "${payload}/uImage";

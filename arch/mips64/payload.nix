@@ -15,11 +15,14 @@
 , dtb ? null
 , params ? []
 , linux-command-line ? null
-, preload-hex     ?  "9800800"  # this is where the tftp image is copied to
-, loadaddr-hex    ?  "6000000"  # where the kernel is located when we jump to it
-, initrd-addr-hex ?  "2080000"  # where the initrd is located
-, fdtaddr-hex     ?  "1f00000"  # where the devicetree is located when we jump to the kernl
-, initrd-compression ? "gzip"
+, preload-hex          ?   "22000000"  # where the uImage is placed when first loaded from network or disk
+, loadaddr-hex         ?   "20000000"  # where the kernel is located when we jump to it
+, initrd-addr-hex      ?   "20C90000"  # where the initrd is located
+, fdtaddr-hex          ?      "80000"  # where the devicetree is located when we jump to the kernel
+, initrd-alignment-hex ?      "10000"  # initrd address will be aligned to multiples of this
+, initrd-ceiling-hex   ?   "21000000"  # build will fail if top of initrd is above this address
+, initrd-compression ? "none"
+
 , uboot-commands  ? [
   "fatload mmc 0 ${loadaddr-hex} normal.uImage"
   "fdt addr ${loadaddr-hex}"
@@ -30,24 +33,37 @@
 , append-dtb-to-kernel ? false
 }:
 
-let kernel' = kernel; in
-let kernel = "${kernel'}/Image"; in
-
 assert append-dtb-to-kernel -> dtb!=null;
 assert linux-command-line != null -> dtb != null;
 
+let
+  arch = "mips";
+in
+
 stdenv.mkDerivation {
   pname = "kernel${lib.optionalString (initrd!=null) "+initrd"}${lib.optionalString (dtb!=null) "+dtb"}";
-  inherit (kernel') version;
+  inherit (kernel) version;
   dontUnpack = true;
   nativeBuildInputs = [
     dtc bc
   ];
 
+  # Old buildPhase commands that are no longer needed (but might be useful
+  # someday):
+  #
+  # fdtput    -p -v dtb -t x /chosen linux,initrd-start 0x${initrd-addr-hex}
+  # fdtput    -p -v dtb -t x /chosen linux,initrd-end   0x$((echo 10k; wc -c < ${initrd}; echo 16o 16i; echo ${initrd-addr-hex}; echo '+f') | dc)
+  # fdtput    -p -v dtb -t s /chosen bootargs           "rd_start=0x${initrd-addr-hex} rd_size=$(wc -c < ${initrd}) mem=0"
+  # fdtput    -p -v dtb -t s /chosen bootargs           ${lib.escapeShellArg (lib.concatStringsSep " " params)}
+  #
   buildPhase = (lib.optionalString (dtb != null) ''
     cp ${dtb} dtb
     chmod u+w dtb
     dtc -I dtb -O dts dtb -o before.dts
+
+    # not sure this matters
+    fdtput    -p -v dtb -t s /chosen stdout-path   "soc/serial@1180000000800"
+
   '' + lib.optionalString (linux-command-line != null) ''
     fdtput -t s -v -p dtb /chosen bootargs ${lib.escapeShellArg linux-command-line}
   '' + ''
@@ -57,7 +73,7 @@ stdenv.mkDerivation {
   # kernel
   #
   + ''
-    cp ${kernel} vmlinux
+    cp ${kernel}/vmlinux-* vmlinux
     chmod u+w vmlinux
   '' + lib.optionalString append-dtb-to-kernel ''
     $OBJCOPY --update-section \
@@ -69,6 +85,20 @@ stdenv.mkDerivation {
   #
   + ''
     cp ${initrd} initrd
+    chmod u+w initrd
+    KERNEL_ADDR=$((0x${loadaddr-hex}))
+    KERNEL_TOP=$(( 0x${loadaddr-hex} + $(cat vmlinux | wc -c) ))
+    echo KERNEL_TOP is $(echo "10k16o $KERNEL_TOP f" | dc)
+    KERNEL_TOP_PADDING=$(( ( 0x${initrd-alignment-hex} - ( $KERNEL_TOP % 0x${initrd-alignment-hex} ) ) 0x${initrd-alignment-hex}  ))
+    echo KERNEL_TOP_PADDING is $(echo "10k16o $KERNEL_TOP_PADDING f" | dc)
+    INITRD_ADDR=$(( $KERNEL_TOP + $KERNEL_TOP_PADDING ))
+    echo INITRD_ADDR is $(echo "10k16o $INITRD_ADDR f" | dc)
+    INITRD_TOP=$(( $INITRD_ADDR + $(cat initrd | wc -c) ))
+    echo INITRD_TOP is $(echo "10k16o $INITRD_TOP f" | dc)
+    if (( $INITRD_TOP > 0x${initrd-ceiling-hex} )); then
+      echo kernel and initrd together do not fit beneath 0x${initrd-ceiling-hex}
+      exit -1
+    fi
   ''
   #
   # devicetree
@@ -151,12 +181,20 @@ stdenv.mkDerivation {
 
   installPhase = ''
     runHook preInstall
+    mkdir -p $out
+    ln -s ${kernel}/{dtbs,lib,config-*,System.map-*} $out/
+
     ${buildPackages.ubootTools}/bin/mkimage \
       -D "-I dts -O dtb -p 4096" \
       -B 1000 \
       -f dts \
       uImage
-    mv uImage $out
+    mv uImage $out/uImage
+
+    cp ${kernel}/vmlinux-* $out/vmlinux
+    chmod u+w $out/vmlinux
+    cp ${initrd} $out/initrd
+
     runHook postInstall
   '';
 }
