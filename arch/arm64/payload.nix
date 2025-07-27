@@ -44,7 +44,7 @@ stdenv.mkDerivation {
     dtc bc
   ];
 
-  buildPhase = (lib.optionalString (dtb != null) ''
+  buildPhase = (lib.optionalString (dtb != null) (''
     cp ${dtb} dtb
     chmod u+w dtb
     dtc -I dtb -O dts dtb -o before.dts
@@ -52,7 +52,7 @@ stdenv.mkDerivation {
     fdtput -t s -v -p dtb /chosen bootargs ${lib.escapeShellArg linux-command-line}
   '' + ''
     dtc -I dtb -O dts dtb -o after.dts
-  '')
+  ''))
   #
   # kernel
   #

@@ -56,7 +56,7 @@ stdenv.mkDerivation {
   # fdtput    -p -v dtb -t s /chosen bootargs           "rd_start=0x${initrd-addr-hex} rd_size=$(wc -c < ${initrd}) mem=0"
   # fdtput    -p -v dtb -t s /chosen bootargs           ${lib.escapeShellArg (lib.concatStringsSep " " params)}
   #
-  buildPhase = (lib.optionalString (dtb != null) ''
+  buildPhase = (lib.optionalString (dtb != null) (''
     cp ${dtb} dtb
     chmod u+w dtb
     dtc -I dtb -O dts dtb -o before.dts
@@ -68,7 +68,7 @@ stdenv.mkDerivation {
     fdtput -t s -v -p dtb /chosen bootargs ${lib.escapeShellArg linux-command-line}
   '' + ''
     dtc -I dtb -O dts dtb -o after.dts
-  '')
+  ''))
   #
   # kernel
   #
