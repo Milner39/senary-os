@@ -135,9 +135,11 @@ let
 
                 # these fields of the `host` fixpoint must not depend on any
                 # part of the final result
-                nonrecursive-host-fields = {
+                nonrecursive-host-fields = let
+                  prev = (nonrecursive-host-fields // diagnostic-attributes "host.\${name}.canonical");
+                in {
                   inherit name;
-                  inherit (host-func (nonrecursive-host-fields // diagnostic-attributes "host.\${name}.canonical")) canonical;
+                  inherit (host-func prev prev) canonical;
                 };
 
                 # `tags` is allowed to be recursive only in itself (not in other attributes)
@@ -146,7 +148,7 @@ let
                   # may depend recursively only on the nonrecursive fields and itself
                   tags = lib.pipe restricted-recursive-host-fields [
                     (x: x // diagnostic-attributes "host.\${name}.tags")
-                    host-func
+                    (prev: host-func prev prev)
                     (x: types.set-tag-values (
                       (x.tags or {}) //
 
@@ -170,13 +172,13 @@ let
                   ];
                 };
 
-              in host-func {
-                inherit (restricted-recursive-host-fields) name canonical tags;
-                host = site-final.hosts.${name};
-                site = site-final;
-              } // {
-                inherit (restricted-recursive-host-fields) name canonical tags;
-              });
+                host-func-arg = {
+                  inherit (restricted-recursive-host-fields) name canonical tags;
+                };
+              in
+                host-func site-final.hosts.${name} host-func-arg // {
+                  inherit (restricted-recursive-host-fields) name canonical tags;
+                });
         }))
 
     # build the ifconns and interfaces attributes
