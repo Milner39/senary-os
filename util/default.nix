@@ -101,7 +101,22 @@ let
             (make-host-attrnames-deterministic
               (host-prev
                // (host-overlay name hosts-final.${name} host-prev))
-              // { inherit (host-prev) tags; }))
+            // { inherit (host-prev) tags; }))
+          hosts-prev
+      );
+
+  #
+  # Like forall-hosts, but allows modification of the tags
+  #
+  forall-hosts' = host-overlay:
+    apply-to-hosts
+      (hosts-final: hosts-prev:
+        lib.mapAttrs
+          (name: host-prev:
+            (make-host-attrnames-deterministic
+              (host-prev
+               // (host-overlay name hosts-final.${name} host-prev))
+            ))
           hosts-prev
       );
 
@@ -110,6 +125,7 @@ in {
     canonicalize
     maybe-invoke-readTree
     forall-hosts
+    forall-hosts'
     apply-to-hosts
     make-host-attrnames-deterministic
     ;
