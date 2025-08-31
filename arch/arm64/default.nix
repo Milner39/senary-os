@@ -24,7 +24,7 @@
         "run bootscript"
       ];
     in
-      pkgs.callPackage ./payload.nix ({
+      pkgs.callPackage ../uboot ({
         inherit (final.boot) kernel;
         inherit preload-hex    ;
         inherit loadaddr-hex   ;

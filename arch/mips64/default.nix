@@ -179,7 +179,7 @@ eject ${DEV}
 
 let
 
-  payload = pkgs.callPackage ./payload.nix ({
+  payload = pkgs.callPackage ../uboot ({
     inherit (final.boot) kernel;
     initrd = final.boot.initrd.image;
     params = final.boot.kernel.params;
