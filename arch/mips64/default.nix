@@ -180,7 +180,7 @@ eject ${DEV}
 let
 
   payload = pkgs.callPackage ./payload.nix ({
-    kernel = final.boot.kernel.package;
+    inherit (final.boot) kernel;
     initrd = final.boot.initrd.image;
     params = final.boot.kernel.params;
     preload-hex = preloadaddr-hex;

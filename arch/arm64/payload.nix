@@ -13,32 +13,24 @@
 , kernel ? throw "you must provide a kernel"
 , initrd ? null
 , dtb ? null
+, arch
 , params ? []
 , linux-command-line ? null
-, preload-hex     ?  "9800800"  # this is where the tftp image is copied to
-, loadaddr-hex    ?  "6000000"  # where the kernel is located when we jump to it
-, initrd-addr-hex ?  "2080000"  # where the initrd is located
-, fdtaddr-hex     ?  "1f00000"  # where the devicetree is located when we jump to the kernl
-, initrd-compression ? "gzip"
-, uboot-commands  ? [
-  "fatload mmc 0 ${loadaddr-hex} normal.uImage"
-  "fdt addr ${loadaddr-hex}"
-  "fdt get value bootscript /images/script data"
-  "run bootscript"
-]
-, arch ? "arm64"
+, preload-hex     # this is where the tftp image is copied to
+, loadaddr-hex    # where the kernel is located when we jump to it
+, initrd-addr-hex # where the initrd is located
+, fdtaddr-hex     # where the devicetree is located when we jump to the kernl
+, initrd-compression ? "none"
+, uboot-commands  ? null
 , append-dtb-to-kernel ? false
 }:
-
-let kernel' = kernel; in
-let kernel = "${kernel'}/Image"; in
 
 assert append-dtb-to-kernel -> dtb!=null;
 assert linux-command-line != null -> dtb != null;
 
 stdenv.mkDerivation {
   pname = "kernel${lib.optionalString (initrd!=null) "+initrd"}${lib.optionalString (dtb!=null) "+dtb"}";
-  inherit (kernel') version;
+  inherit (kernel.package) version;
   dontUnpack = true;
   nativeBuildInputs = [
     dtc bc
@@ -57,7 +49,7 @@ stdenv.mkDerivation {
   # kernel
   #
   + ''
-    cp ${kernel} vmlinux
+    cp ${kernel.image} vmlinux
     chmod u+w vmlinux
   '' + lib.optionalString append-dtb-to-kernel ''
     $OBJCOPY --update-section \

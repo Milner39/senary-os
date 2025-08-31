@@ -36,7 +36,7 @@ assert (initrd-ceiling-hex!=null) == (initrd-alignment-hex!=null);
 
 stdenv.mkDerivation {
   pname = "kernel${lib.optionalString (initrd!=null) "+initrd"}${lib.optionalString (dtb!=null) "+dtb"}";
-  inherit (kernel) version;
+  inherit (kernel.package) version;
   dontUnpack = true;
   nativeBuildInputs = [
     dtc bc
@@ -67,7 +67,7 @@ stdenv.mkDerivation {
   # kernel
   #
   + ''
-    cp ${kernel}/vmlinux-* vmlinux
+    cp ${kernel.image} vmlinux
     chmod u+w vmlinux
   '' + lib.optionalString append-dtb-to-kernel ''
     $OBJCOPY --update-section \
@@ -177,7 +177,7 @@ stdenv.mkDerivation {
   installPhase = ''
     runHook preInstall
     mkdir -p $out
-    ln -s ${kernel}/{dtbs,lib,config-*,System.map-*} $out/
+    ln -s ${kernel.package}/{dtbs,lib,config-*,System.map-*} $out/
 
     ${buildPackages.ubootTools}/bin/mkimage \
       -D "-I dts -O dtb -p 4096" \
@@ -186,7 +186,7 @@ stdenv.mkDerivation {
       uImage
     mv uImage $out/uImage
 
-    cp ${kernel}/vmlinux-* $out/vmlinux
+    cp ${kernel.image} $out/vmlinux
     chmod u+w $out/vmlinux
     cp ${initrd} $out/initrd
 
