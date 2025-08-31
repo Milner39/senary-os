@@ -184,6 +184,7 @@ let
     initrd = final.boot.initrd.image;
     params = final.boot.kernel.params;
     preload-hex = preloadaddr-hex;
+    arch = "mips";
     inherit fdtaddr-hex;
     inherit loadaddr-hex;
     inherit initrd-alignment-hex;

@@ -13,32 +13,26 @@
 , kernel ? throw "you must provide a kernel"
 , initrd ? null
 , dtb ? null
+, arch
 , params ? []
 , linux-command-line ? null
-, preload-hex          ?   "22000000"  # where the uImage is placed when first loaded from network or disk
-, loadaddr-hex         ?   "20000000"  # where the kernel is located when we jump to it
-, initrd-addr-hex      ?   "20C90000"  # where the initrd is located
-, fdtaddr-hex          ?      "80000"  # where the devicetree is located when we jump to the kernel
-, initrd-alignment-hex ?      "10000"  # initrd address will be aligned to multiples of this
-, initrd-ceiling-hex   ?   "21000000"  # build will fail if top of initrd is above this address
-, initrd-compression ? "none"
+, preload-hex                          # where the uImage is placed when first loaded from network or disk
+, loadaddr-hex                         # where the kernel is located when we jump to it
+, initrd-addr-hex                      # where the initrd is located
+, fdtaddr-hex                          # where the devicetree is located when we jump to the kernel
+, initrd-alignment-hex  ? null         # initrd address will be aligned to multiples of this
+, initrd-ceiling-hex    ? null         # build will fail if top of initrd is above this address
+, initrd-compression    ? "none"
 
-, uboot-commands  ? [
-  "fatload mmc 0 ${loadaddr-hex} normal.uImage"
-  "fdt addr ${loadaddr-hex}"
-  "fdt get value bootscript /images/script data"
-  "run bootscript"
-]
-, arch ? "arm64"
+# These are the commands that uboot will execute after reading the payload from
+# internal storage into RAM.  These commands are embedded into the payload.
+, uboot-commands  ? null
 , append-dtb-to-kernel ? false
 }:
 
 assert append-dtb-to-kernel -> dtb!=null;
 assert linux-command-line != null -> dtb != null;
-
-let
-  arch = "mips";
-in
+assert (initrd-ceiling-hex!=null) == (initrd-alignment-hex!=null);
 
 stdenv.mkDerivation {
   pname = "kernel${lib.optionalString (initrd!=null) "+initrd"}${lib.optionalString (dtb!=null) "+dtb"}";
@@ -85,6 +79,7 @@ stdenv.mkDerivation {
   #
   + ''
     cp ${initrd} initrd
+  '' + lib.optionalString (initrd-alignment-hex != null) ''
     chmod u+w initrd
     KERNEL_ADDR=$((0x${loadaddr-hex}))
     KERNEL_TOP=$(( 0x${loadaddr-hex} + $(cat vmlinux | wc -c) ))

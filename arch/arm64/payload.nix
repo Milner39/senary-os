@@ -156,7 +156,7 @@ stdenv.mkDerivation {
       -B 1000 \
       -f dts \
       uImage
-    mv uImage $out
+    mv uImage $out/uImage
     runHook postInstall
   '';
 }
