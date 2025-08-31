@@ -246,6 +246,7 @@ let
           ];
           boot.kernel.modules  = _: "${final.boot.kernel.package}";
           boot.kernel.payload  = _: "${final.boot.kernel.package}/bzImage";
+          boot.kernel.image    = _: "${final.boot.kernel.package}/vmlinux";
           boot.kernel.package  = _: final.pkgs.callPackage ./kernel.nix { };
         }
       ))

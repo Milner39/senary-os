@@ -8,6 +8,7 @@
 }:
 
 {
+  boot.kernel.image.__assign = "${final.boot.kernel.package}/Image";
   boot.kernel.payload = prev:
     if !final.tags.is-bootloader-uboot
     then prev

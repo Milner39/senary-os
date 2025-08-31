@@ -132,7 +132,8 @@ let
         });
 
         kernel = struct "kernel" {
-          payload = storepath;
+          image = storepath;    # the bare kernel (`vmlinux`)
+          payload = storepath;  # the thing that the bootloader wants (i.e. `uImage` for uboot)
           params = list string;
           modules = storepath;  # store path containing the built kernel modules
           firmware = either storepath (list storepath);

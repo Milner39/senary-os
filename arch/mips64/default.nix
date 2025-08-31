@@ -199,6 +199,7 @@ let
 in
 {
   boot.kernel.payload  = _: "${payload}/uImage";
+  boot.kernel.image.__assign = "${final.boot.kernel.package}/vmlinux-${final.boot.kernel.package.version}";
 
   boot.kernel.dtb = _:
     if final.tags.is-er6
