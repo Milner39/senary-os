@@ -23,6 +23,7 @@
 , initrd-alignment-hex  ? null         # initrd address will be aligned to multiples of this
 , initrd-ceiling-hex    ? null         # build will fail if top of initrd is above this address
 , initrd-compression    ? "none"
+, stdout-path           ? null
 
 # These are the commands that uboot will execute after reading the payload from
 # internal storage into RAM.  These commands are embedded into the payload.
@@ -55,8 +56,9 @@ stdenv.mkDerivation {
     chmod u+w dtb
     dtc -I dtb -O dts dtb -o before.dts
 
+  '' + lib.optionalString (stdout-path != null) ''
     # not sure this matters
-    fdtput    -p -v dtb -t s /chosen stdout-path   "soc/serial@1180000000800"
+    fdtput    -p -v dtb -t s /chosen stdout-path   "${stdout-path}"
 
   '' + lib.optionalString (linux-command-line != null) ''
     fdtput -t s -v -p dtb /chosen bootargs ${lib.escapeShellArg linux-command-line}

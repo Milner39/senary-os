@@ -185,6 +185,7 @@ let
     params = final.boot.kernel.params;
     preload-hex = preloadaddr-hex;
     arch = "mips";
+    stdout-path = "soc/serial@1180000000800";
     inherit fdtaddr-hex;
     inherit loadaddr-hex;
     inherit initrd-alignment-hex;
