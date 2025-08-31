@@ -15,7 +15,7 @@
 
 # FIXME instead of each of these being a string, they should be execlines
 
-, type ? null      # if non-null, `ip link add` will be called
+, type ? if vlan!=null then "vlan" else null      # if non-null, `ip link add` will be called
 , pre-add ? null   # executed at the very start of the `up` script
 , pre-up ? null    # executed immediately before `ip link set ${ifname} up`
 , post-up ? null   # executed at the very end of the `up` script, or after *each* dhcp lease issuance/renewal
@@ -25,7 +25,10 @@
 , dhcp ? false     # FIXME: need to deal with DNS/resolvconf
 
 , metric ? null    # if non-null, this metric will be used for any routes added by this service.nix
-, table ? null     # if non-null, any routes added will be added to this table
+, table ? null     # if non-null, any routes added will be added to this table rather than the default table
+
+, vlan ? null      # when non-null, this is an integer vlan id for this interface within the parent interface
+, parent ? null    # if non-null, specifies the parent interface for a vlan interface
 
 , passthru ? {}
 }:
@@ -34,6 +37,9 @@
 
 # FIXME: change addresses gracefully, without bringing the interface up/down
 # FIXME: use `-e` in scripts?
+
+assert (vlan == null) -> (parent == null);
+assert (parent == null) -> (vlan == null);
 
 assert dhcp -> (gw==null || gw==true);
 
@@ -44,6 +50,9 @@ let
     after = (passthru'.after or []) ++ (with targets.global; [
       coldplug      # note: udhcpc expects /dev/random
       set-hostname
+    ] ++ lib.optionals (parent != null) [
+      # `link add` fails silently if the parent interface does not yet exist
+      parent
     ]);
   };
 
@@ -51,7 +60,9 @@ let
     ${pre-add}
   '' + lib.optionalString (type != null) ''
     ${pkgs.iproute2}/bin/ip link del ${ifname} &>/dev/null || true
-    ${pkgs.iproute2}/bin/ip link add ${ifname} type ${type}
+    ${pkgs.iproute2}/bin/ip link add ${
+      lib.optionalString (parent!=null) "link ${parent.ifname} "
+    }${ifname} type ${type}${lib.optionalString (vlan!=null) " id ${toString vlan}"}
   '' + lib.optionalString (mac != null) ''
     ${pkgs.busybox}/bin/busybox ip link set dev eth0 address ${mac}
   '' + lib.optionalString (mtu != null) ''
