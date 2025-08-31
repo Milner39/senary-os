@@ -103,7 +103,9 @@ let
       #types.site
         site-unchecked;
 
-  types = root.types { inherit (site) tags; };
+  tags-unprocessed = lib.attrsets.unionOfDisjoint root.tags site.tags;
+
+  types = root.types { tags = tags-unprocessed; };
 
   overlays = [
 
@@ -111,7 +113,8 @@ let
     (site-final: site-prev:
       #types.site
         ({
-          inherit (site) subnets overlay tags globals;
+          inherit (site) subnets overlay globals;
+          tags = tags-unprocessed;
           # This is a copy of site.hosts built by passing in an attrset full of
           # `throw` values as the fixpoint argument.  This ensures that the
           # `canonical` and `name` fields of `final.hosts.${name}` do not depend
@@ -282,7 +285,7 @@ let
   ] ++ (map root.util.apply-to-hosts site.overlay) ++ [
 
     # apply tags
-  ] ++ (lib.pipe site.tags [
+  ] ++ (lib.pipe tags-unprocessed [
 
     (lib.mapAttrs (tag: overlay:
       root.util.forall-hosts
