@@ -40,6 +40,7 @@ assert dhcp -> (gw==null || gw==true);
 let passthru' = passthru; in
 let
   passthru = passthru' // {
+    inherit ifname;
     after = (passthru'.after or []) ++ (with targets.global; [
       coldplug      # note: udhcpc expects /dev/random
       set-hostname
