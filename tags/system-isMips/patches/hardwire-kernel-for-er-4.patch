@@ -1,0 +1,23 @@
+commit e5e99723301d24a70dd67ce7775ede45b659f432
+Author: Your Name <you@example.com>
+Date:   Wed Jun 23 21:44:25 2021 -0700
+
+    e300: hardwire e300 to ER-4
+
+diff --git a/arch/mips/cavium-octeon/setup.c b/arch/mips/cavium-octeon/setup.c
+index cd6e4219eda0..fe6ea41e4e5f 100644
+--- a/arch/mips/cavium-octeon/setup.c
++++ b/arch/mips/cavium-octeon/setup.c
+@@ -1163,6 +1163,12 @@ void __init device_tree_init(void)
+ 	bool fill_mac;
+ 
+         if (0) {
++        } else if (octeon_bootinfo->board_type == CVMX_BOARD_TYPE_UBNT_E300) {
++		fdt = &__dtb_cn7130_ubnt_edgerouter4_begin;
++		//fdt = &__dtb_cn7130_ubnt_edgerouter_6_begin;
++		//fdt = &__dtb_cn7130_ubnt_edgerouter_12_begin;
++		do_prune = false;
++		fill_mac = true;
+         } else if (octeon_bootinfo->board_type == CVMX_BOARD_TYPE_UBNT_E200) {
+ 		fdt = &__dtb_ubnt_e200_begin;
+ 		do_prune = false;

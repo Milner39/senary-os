@@ -3,8 +3,6 @@
 , infuse
 , pkgs ? final.pkgs
 , lib /*? pkgs.lib*/          # no default in order to prevent infinite recursion
-, boot-device-label ? "boot"  # filesystem from which uboot will read the kernel and initrd
-, root-device-label ? "root"  # root filesystem device (post-boot)
 }:
 
 {

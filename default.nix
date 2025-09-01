@@ -251,6 +251,8 @@ let
           boot.kernel.payload  = _: "${final.boot.kernel.package}/bzImage";
           boot.kernel.image    = _: "${final.boot.kernel.package}/vmlinux";
           boot.kernel.package  = _: final.pkgs.callPackage ./kernel.nix { };
+          boot.rootfs.label.__assign = "root";
+          boot.loader.filesystem.label.__assign = "boot";
         }
       ))
 

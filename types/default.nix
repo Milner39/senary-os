@@ -123,8 +123,11 @@ let
 
       boot = struct "boot" {
         loader = option (struct "loader" {
-          update = either drv string; # command which is run with one or two arguments
+          update = either drv string;        # command which is run with one or two arguments
+          filesystem.label = option string;  # LABEL= value used to locate the filesystem holding the bootloader (if one exists)
         });
+
+        rootfs = option string; # LABEL= value used to locate the root filesystem
 
         nfsroot = option (struct "boot.tnfsroot" {
           # subnet name from which to boot; there must be an interface assigned to this subnet.

@@ -1,0 +1,267 @@
+commit 74d7d5e28bd6753bc2ba022ccde1d2dd26a93bc8
+Author: Your Name <you@example.com>
+Date:   Sun Mar 14 23:53:49 2021 -0700
+
+    e100/e120 support from https://gist.github.com/MartB/99e30df35cb41af7f8f9130cb41c6ddd
+
+diff --git a/arch/mips/boot/dts/cavium-octeon/Makefile b/arch/mips/boot/dts/cavium-octeon/Makefile
+index 17aef35f311b..d9b558bc0c0e 100644
+--- a/arch/mips/boot/dts/cavium-octeon/Makefile
++++ b/arch/mips/boot/dts/cavium-octeon/Makefile
+@@ -1,4 +1,6 @@
+ # SPDX-License-Identifier: GPL-2.0
+ dtb-$(CONFIG_CAVIUM_OCTEON_SOC)	+= octeon_3xxx.dtb octeon_68xx.dtb
++dtb-$(CONFIG_CAVIUM_OCTEON_SOC)	+= ubnt_e100.dtb
++dtb-$(CONFIG_CAVIUM_OCTEON_SOC)	+= ubnt_e120.dtb
+ 
+ obj-$(CONFIG_BUILTIN_DTB)	+= $(addsuffix .o, $(dtb-y))
+diff --git a/arch/mips/boot/dts/cavium-octeon/ubnt_e100-e120.dtsi b/arch/mips/boot/dts/cavium-octeon/ubnt_e100-e120.dtsi
+new file mode 100644
+index 000000000000..6daf2015b60e
+--- /dev/null
++++ b/arch/mips/boot/dts/cavium-octeon/ubnt_e100-e120.dtsi
+@@ -0,0 +1,60 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Device tree source for EdgeRouter Lite + UniFi Security Gateway (common parts).
++ *
++ * Written by: Aaro Koskinen <aaro.koskinen@iki.fi>
++ */
++
++/include/ "octeon_3xxx.dtsi"
++
++/ {
++	soc@0 {
++		smi0: mdio@1180000001800 {
++			phy5: ethernet-phy@5 {
++				reg = <5>;
++				compatible = "ethernet-phy-ieee802.3-c22";
++			};
++			phy6: ethernet-phy@6 {
++				reg = <6>;
++				compatible = "ethernet-phy-ieee802.3-c22";
++			};
++			phy7: ethernet-phy@7 {
++				reg = <7>;
++				compatible = "ethernet-phy-ieee802.3-c22";
++			};
++		};
++
++		pip: pip@11800a0000000 {
++			interface@0 {
++				ethernet@0 {
++					phy-handle = <&phy7>;
++					rx-delay = <0>;
++					tx-delay = <0x10>;
++				};
++				ethernet@1 {
++					phy-handle = <&phy6>;
++					rx-delay = <0>;
++					tx-delay = <0x10>;
++				};
++				ethernet@2 {
++					phy-handle = <&phy5>;
++					rx-delay = <0>;
++					tx-delay = <0x10>;
++				};
++			};
++		};
++
++		uart0: serial@1180000000800 {
++			clock-frequency = <500000000>;
++		};
++
++		usbn: usbn@1180068000000 {
++			refclk-frequency = <12000000>;
++			refclk-type = "crystal";
++		};
++	};
++
++	aliases {
++		pip = &pip;
++	};
++};
+diff --git a/arch/mips/boot/dts/cavium-octeon/ubnt_e100.dts b/arch/mips/boot/dts/cavium-octeon/ubnt_e100.dts
+index cb219b730c57..330763a68ecd 100644
+--- a/arch/mips/boot/dts/cavium-octeon/ubnt_e100.dts
++++ b/arch/mips/boot/dts/cavium-octeon/ubnt_e100.dts
+@@ -1,62 +1,15 @@
+-// SPDX-License-Identifier: GPL-2.0-only
+ /*
+  * Device tree source for EdgeRouter Lite.
+  *
+  * Written by: Aaro Koskinen <aaro.koskinen@iki.fi>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
+  */
+ 
+-/include/ "octeon_3xxx.dtsi"
++/include/ "ubnt_e100-e120.dtsi"
+ 
+ / {
+ 	model = "ubnt,e100";
+-
+-	soc@0 {
+-		smi0: mdio@1180000001800 {
+-			phy5: ethernet-phy@5 {
+-				reg = <5>;
+-				compatible = "ethernet-phy-ieee802.3-c22";
+-			};
+-			phy6: ethernet-phy@6 {
+-				reg = <6>;
+-				compatible = "ethernet-phy-ieee802.3-c22";
+-			};
+-			phy7: ethernet-phy@7 {
+-				reg = <7>;
+-				compatible = "ethernet-phy-ieee802.3-c22";
+-			};
+-		};
+-
+-		pip: pip@11800a0000000 {
+-			interface@0 {
+-				ethernet@0 {
+-					phy-handle = <&phy7>;
+-					rx-delay = <0>;
+-					tx-delay = <0x10>;
+-				};
+-				ethernet@1 {
+-					phy-handle = <&phy6>;
+-					rx-delay = <0>;
+-					tx-delay = <0x10>;
+-				};
+-				ethernet@2 {
+-					phy-handle = <&phy5>;
+-					rx-delay = <0>;
+-					tx-delay = <0x10>;
+-				};
+-			};
+-		};
+-
+-		uart0: serial@1180000000800 {
+-			clock-frequency = <500000000>;
+-		};
+-
+-		usbn: usbn@1180068000000 {
+-			refclk-frequency = <12000000>;
+-			refclk-type = "crystal";
+-		};
+-	};
+-
+-	aliases {
+-		pip = &pip;
+-	};
+ };
+diff --git a/arch/mips/boot/dts/cavium-octeon/ubnt_e120.dts b/arch/mips/boot/dts/cavium-octeon/ubnt_e120.dts
+new file mode 100644
+index 000000000000..8c7b560d41d7
+--- /dev/null
++++ b/arch/mips/boot/dts/cavium-octeon/ubnt_e120.dts
+@@ -0,0 +1,30 @@
++/*
++ * Device tree source for UniFi Security Gateway 3P
++ *
++ * Written by: Martin Böh <mart.b@outlook.de>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ */
++
++/include/ "ubnt_e100-e120.dtsi"
++#include <dt-bindings/gpio/gpio.h>
++
++/ {
++	model = "ubnt,e120";
++
++	leds {
++		compatible = "gpio-leds";
++
++		white {
++			label = "ubnt:white:dome";
++			gpios = <&gpio 0 GPIO_ACTIVE_HIGH>;
++		};
++
++		blue {
++			label = "ubnt:blue:dome";
++			gpios = <&gpio 1 GPIO_ACTIVE_HIGH>;
++		};
++	};
++};
+diff --git a/arch/mips/cavium-octeon/executive/cvmx-helper-board.c b/arch/mips/cavium-octeon/executive/cvmx-helper-board.c
+index 2e2d45bc850d..ef5fc0aadfb2 100644
+--- a/arch/mips/cavium-octeon/executive/cvmx-helper-board.c
++++ b/arch/mips/cavium-octeon/executive/cvmx-helper-board.c
+@@ -170,6 +170,7 @@ int cvmx_helper_board_get_mii_address(int ipd_port)
+ 		else
+ 			return -1;
+ 	case CVMX_BOARD_TYPE_UBNT_E100:
++	case CVMX_BOARD_TYPE_UBNT_E120:
+ 		if (ipd_port >= 0 && ipd_port <= 2)
+ 			return 7 - ipd_port;
+ 		else
+@@ -335,6 +336,7 @@ enum cvmx_helper_board_usb_clock_types __cvmx_helper_board_usb_get_clock_type(vo
+ 	case CVMX_BOARD_TYPE_LANAI2_G:
+ 	case CVMX_BOARD_TYPE_NIC10E_66:
+ 	case CVMX_BOARD_TYPE_UBNT_E100:
++	case CVMX_BOARD_TYPE_UBNT_E120:
+ 		return USB_CLOCK_TYPE_CRYSTAL_12;
+ 	case CVMX_BOARD_TYPE_NIC10E:
+ 		return USB_CLOCK_TYPE_REF_12;
+diff --git a/arch/mips/cavium-octeon/setup.c b/arch/mips/cavium-octeon/setup.c
+index 95034bf5ca83..1e48c9dd7ac1 100644
+--- a/arch/mips/cavium-octeon/setup.c
++++ b/arch/mips/cavium-octeon/setup.c
+@@ -1178,6 +1178,14 @@ void __init device_tree_init(void)
+ 		fdt = &__dtb_octeon_68xx_begin;
+ 		do_prune = true;
+ 		fill_mac = true;
++	} else if (octeon_bootinfo->board_type == CVMX_BOARD_TYPE_UBNT_E100) {
++		fdt = &__dtb_ubnt_e100_begin;
++		do_prune = false;
++		fill_mac = true;
++	} else if (octeon_bootinfo->board_type == CVMX_BOARD_TYPE_UBNT_E120) {
++		fdt = &__dtb_ubnt_e120_begin;
++		do_prune = false;
++		fill_mac = true;
+ 	} else {
+ 		fdt = &__dtb_octeon_3xxx_begin;
+ 		do_prune = true;
+diff --git a/arch/mips/include/asm/octeon/cvmx-bootinfo.h b/arch/mips/include/asm/octeon/cvmx-bootinfo.h
+index 62787765575e..2febec66a01e 100644
+--- a/arch/mips/include/asm/octeon/cvmx-bootinfo.h
++++ b/arch/mips/include/asm/octeon/cvmx-bootinfo.h
+@@ -295,6 +295,9 @@ enum cvmx_board_types_enum {
+ 	 */
+ 	CVMX_BOARD_TYPE_CUST_PRIVATE_MIN = 20001,
+ 	CVMX_BOARD_TYPE_UBNT_E100 = 20002,
++	CVMX_BOARD_TYPE_UBNT_E120 = 20004,
++	CVMX_BOARD_TYPE_UBNT_E200 = 20003,
++	CVMX_BOARD_TYPE_UBNT_E220 = 20005,
+ 	CVMX_BOARD_TYPE_CUST_DSR1000N = 20006,
+ 	CVMX_BOARD_TYPE_KONTRON_S1901 = 21901,
+ 	CVMX_BOARD_TYPE_CUST_PRIVATE_MAX = 30000,
+@@ -396,6 +399,9 @@ static inline const char *cvmx_board_type_to_string(enum
+ 		    /* Customer private range */
+ 		ENUM_BRD_TYPE_CASE(CVMX_BOARD_TYPE_CUST_PRIVATE_MIN)
+ 		ENUM_BRD_TYPE_CASE(CVMX_BOARD_TYPE_UBNT_E100)
++		ENUM_BRD_TYPE_CASE(CVMX_BOARD_TYPE_UBNT_E120)
++		ENUM_BRD_TYPE_CASE(CVMX_BOARD_TYPE_UBNT_E200)
++		ENUM_BRD_TYPE_CASE(CVMX_BOARD_TYPE_UBNT_E220)
+ 		ENUM_BRD_TYPE_CASE(CVMX_BOARD_TYPE_CUST_DSR1000N)
+ 		ENUM_BRD_TYPE_CASE(CVMX_BOARD_TYPE_KONTRON_S1901)
+ 		ENUM_BRD_TYPE_CASE(CVMX_BOARD_TYPE_CUST_PRIVATE_MAX)
+diff --git a/arch/mips/include/asm/octeon/octeon.h b/arch/mips/include/asm/octeon/octeon.h
+index a2e2876357ce..1138eb73524f 100644
+--- a/arch/mips/include/asm/octeon/octeon.h
++++ b/arch/mips/include/asm/octeon/octeon.h
+@@ -285,6 +285,8 @@ int octeon_prune_device_tree(void);
+ extern const char __appended_dtb;
+ extern const char __dtb_octeon_3xxx_begin;
+ extern const char __dtb_octeon_68xx_begin;
++extern const char __dtb_ubnt_e100_begin;
++extern const char __dtb_ubnt_e120_begin;
+ 
+ /**
+  * Write a 32bit value to the Octeon NPI register space

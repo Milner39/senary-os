@@ -134,9 +134,6 @@ eject ${DEV}
 , pkgs ? final.pkgs
 , lib ? pkgs.lib
 
-, boot-device-label ? "boot"  # filesystem from which uboot will read the kernel and initrd
-, root-device-label ? "root"  # root filesystem device (post-boot)
-
 #
 # For some utterly strange reason the kernel and initrd must both be
 # placed within the 16mbyte window between 0.5gb and 0.5gb+16mbyte.
@@ -216,11 +213,11 @@ in
   # kernel-to-userspace handoff.  So we have to wait for the root device to
   # appear.
   boot.initrd.mount-root.__append = [''
-    while ! (busybox blkid | busybox grep -q 'LABEL="${root-device-label}"'); do
-      echo waiting for a device with 'LABEL="${root-device-label}"' to appear
+    while ! (busybox blkid | busybox grep -q 'LABEL="${final.boot.rootfs.label}"'); do
+      echo waiting for a device with 'LABEL="${final.boot.rootfs.label}"' to appear
       sleep 1
     done
-    mount -o ro LABEL="${root-device-label}" /root || exit -1
+    mount -o ro LABEL="${final.boot.rootfs.label}" /root || exit -1
   ''];
 
   # mips devices have very small disks
