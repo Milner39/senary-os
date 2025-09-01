@@ -5,6 +5,12 @@
 , ifname ? throw "you must specify the interface name"
 , phyname ? throw "you must specify the phy name"
 
+, modules ? [ "pcie-rockchip-host" "mwifiex_pcie" ]
+#, modules ? [ "ath9k_htc" ]
+
+, sysfs-base-glob ? "/sys/bus/pci/drivers/mwifiex_pcie/????:??:??.?"
+#, sysfs-base-glob ? "/sys/bus/usb/drivers/ath9k_htc/*-*:*.*"
+
 # FIXME: make it clear that this directory contains secrets and must persist
 # across reboots
 , state_directory ? throw "missing state_directory"
@@ -25,20 +31,18 @@ in
 (six.mkFunnel {
   passthru.after = [ targets.global.coldplug ];
   run = pkgs.writeScript "run"
-''
+(''
 #!${pkgs.runtimeShell}
 exec 2>&1
 
-${pkgs.kmod}/bin/modprobe ath9k_htc || exec sleep 5
-
-if [ -e /sys/bus/usb/drivers/ath9k_htc/*-*:*.* ]; then
+${lib.concatStringsSep "\n" (lib.map (m: "${pkgs.kmod}/bin/modprobe ${m} || exec sleep 5") modules)}
+if [ -e ${sysfs-base-glob} ]; then
   true
 else
-  echo '/sys/bus/usb/drivers/ath9k_htc/*-*:*.*' does not exist yet, sleeping...
+  echo '${sysfs-base-glob}' does not exist yet, sleeping...
   exec sleep 5
 fi
-
-SYSFS_BASE=$(readlink -f /sys/bus/usb/drivers/ath9k_htc/*-*:*.*)
+SYSFS_BASE=$(readlink -f ${sysfs-base-glob})
 
 # find the phy, set its name
 ${pkgs.iw}/bin/iw phy $(cat $SYSFS_BASE/ieee80211/*/name) set name ${phyname} || exit -1
@@ -66,7 +70,7 @@ export IWD_WSC_DEBUG_KEYS=1
 # TODO: signal readiness?
 
 exec ${pkgs.eiwd}/libexec/iwd --interfaces ${ifname}
-'';
+'');
   finish = pkgs.writeScript "run" ''
     #!${pkgs.runtimeShell}
     ${delete-all-interfaces}
