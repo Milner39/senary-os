@@ -36,6 +36,7 @@ let
     # - the "lo" interface can't have a named subnet, since it doesn't connect to any other machine
     interface = struct "interface" {
       type = option string;
+      macaddr = option string;
       subnet = option string;
     };
     endpoint = struct "endpoint" {
