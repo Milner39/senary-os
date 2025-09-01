@@ -34,11 +34,26 @@ let
     # here's the problem
     # - some hosts are on a subnet, but i haven't declared the name of the interface for that subnet yet
     # - the "lo" interface can't have a named subnet, since it doesn't connect to any other machine
+    ifname = string;
     interface = struct "interface" {
       type = option string;
       macaddr = option string;
       subnet = option string;
     };
+    # a subnet plus an interface and (optionally) its ip/netmask/mtu/gw/etc on that subnet
+    ifconn = struct "ifconn" {
+      ifname = option ifname;
+      subnet = option string;
+      ip = option string;
+      netmask = option int;
+      mtu = option int;
+      gw = option string;
+      wg = option wg;
+      edenPort = option int;  # FIXME
+    };
+
+
+    # wireguard stuff
     endpoint = struct "endpoint" {
       ip = string;
       port = int;
@@ -54,17 +69,7 @@ let
       peers = option (attrs wgpeer);
       fwmark = option int;
     };
-    ifconn = struct "ifconn" {
-      ifname = option string;
-      subnet = option string;
-      ip = option string;
-      netmask = option int;
-      mtu = option int;
-      gw = option string;
-      wg = option wg;
-      edenPort = option int;  # FIXME
-    };
-    ifname = string;
+
 
     # a path in the store (i.e. outpath or a file within an outpath directory)
     storepath =

@@ -213,6 +213,8 @@ let
             (lib.filter (v: v!=null))
             lib.listToAttrs
           ];
+      in prev // {
+        inherit ifconns;
         interfaces =
           { lo.type = "loopback"; } //
           lib.pipe ifconns [
@@ -228,7 +230,7 @@ let
             (lib.filter (v: v!=null))
             lib.listToAttrs
           ];
-      in prev // { inherit ifconns interfaces; }
+      }
     ))
 
     # default kernel setup

@@ -8,42 +8,6 @@
 }:
 
 let
-  netifs = final: {
-    targets.net.iface = _: lib.pipe host.interfaces [
-      (lib.mapAttrsToList
-        (ifname: interface:
-          if interface.type or null == "loopback"
-          then lib.nameValuePair ifname (final.services.netif {
-            inherit ifname;
-            inherit (interface) type;
-            address = "127.0.0.1";
-            netmask = 8;
-          }) else if interface?subnet
-            then lib.nameValuePair ifname (
-              let ifconn = host.ifconns.${interface.subnet};
-              in if ifconn?wg
-                 then final.services.wireguard ((builtins.removeAttrs ifconn ["ip" "edenPort" "wg"]) // {
-                   inherit ifname;
-                   inherit (ifconn) mtu netmask;
-                   inherit (ifconn.wg) fwmark peers;
-                   private-key-filename = "/etc/wireguard/privatekey";
-                   address = host.ifconns.${interface.subnet}.ip;
-                   listen-port = 201;
-                 })
-                 else final.services.netif ((builtins.removeAttrs ifconn ["ip" "edenPort"]) // {
-                   inherit ifname;
-                 } // lib.optionalAttrs (host.ifconns.${interface.subnet}?ip) {
-                   address = host.ifconns.${interface.subnet}.ip;
-                 }))
-             else null
-        ))
-      (lib.filter (v: v!=null))
-      (map (lib.flip infuse ({
-        value.__output.passthru.before.__append = [ final.targets.default ];
-      })))
-      lib.listToAttrs
-    ];
-  };
 
   base = final: prev: infuse prev [
     ({
@@ -52,8 +16,41 @@ let
       targets.global.coldplug = _: final.six.mkBundle { };
       targets.global.set-hostname = _: final.six.mkBundle { };
       targets.global.hwclock = _: final.six.mkBundle { };
+      targets.net.iface = _: lib.pipe host.interfaces [
+        (lib.mapAttrsToList
+          (ifname: interface:
+            if interface.type or null == "loopback"
+            then lib.nameValuePair ifname (final.services.netif {
+              inherit ifname;
+              inherit (interface) type;
+              address = "127.0.0.1";
+              netmask = 8;
+            }) else if interface?subnet
+               then lib.nameValuePair ifname (
+                 let ifconn = host.ifconns.${interface.subnet};
+                 in if ifconn?wg
+                    then final.services.wireguard ((builtins.removeAttrs ifconn ["ip" "edenPort" "wg"]) // {
+                      inherit ifname;
+                      inherit (ifconn) mtu netmask;
+                      inherit (ifconn.wg) fwmark peers;
+                      private-key-filename = "/etc/wireguard/privatekey";
+                      address = host.ifconns.${interface.subnet}.ip;
+                      listen-port = 201;
+                    })
+                    else final.services.netif ((builtins.removeAttrs ifconn ["ip" "edenPort"]) // {
+                      inherit ifname;
+                    } // lib.optionalAttrs (host.ifconns.${interface.subnet}?ip) {
+                      address = host.ifconns.${interface.subnet}.ip;
+                    }))
+               else null
+          ))
+        (lib.filter (v: v!=null))
+        (map (lib.flip infuse ({
+          value.__output.passthru.before.__append = [ final.targets.default ];
+        })))
+        lib.listToAttrs
+      ];
     })
-    (netifs final)
     ({
       # TODO: use --onlyonce mounting option?
       targets.mounts = _: {
