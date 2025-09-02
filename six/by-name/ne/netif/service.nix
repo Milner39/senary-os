@@ -62,8 +62,6 @@ let
 
   up = lib.optionalString (pre-add != null) ''
     ${pre-add}
-  '' + lib.optionalString (type == "bridge") ''
-    /run/current-system/boot/modprobe-wrapped br_netfilter
   '' + lib.optionalString (type != null) ''
     ${pkgs.iproute2}/bin/ip link del ${ifname} &>/dev/null || true
     ${pkgs.iproute2}/bin/ip link add ${
