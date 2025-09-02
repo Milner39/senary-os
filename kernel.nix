@@ -298,6 +298,32 @@ let
           NF_NAT_H323 = lib.mkForce module;
           NF_CONNTRACK_BRIDGE = lib.mkForce module;
 
+          BRIDGE = lib.mkForce module;
+          BRIDGE_NETFILTER = lib.mkForce module;
+          BRIDGE_NF_EBTABLES = lib.mkForce yes;
+          BRIDGE_EBT_BROUTE = lib.mkForce yes;
+          BRIDGE_EBT_T_FILTER = lib.mkForce yes;
+          BRIDGE_EBT_T_NAT = lib.mkForce yes;
+          BRIDGE_EBT_802_3 = lib.mkForce yes;
+          BRIDGE_EBT_AMONG = lib.mkForce yes;
+          BRIDGE_EBT_ARP = lib.mkForce yes;
+          BRIDGE_EBT_IP = lib.mkForce yes;
+          BRIDGE_EBT_LIMIT = lib.mkForce yes;
+          BRIDGE_EBT_MARK = lib.mkForce yes;
+          BRIDGE_EBT_PKTTYPE = lib.mkForce yes;
+          BRIDGE_EBT_STP = lib.mkForce yes;
+          BRIDGE_EBT_VLAN = lib.mkForce yes;
+          BRIDGE_EBT_ARPREPLY = lib.mkForce yes;
+          BRIDGE_EBT_DNAT = lib.mkForce yes;
+          BRIDGE_EBT_MARK_T = lib.mkForce yes;
+          BRIDGE_EBT_REDIRECT = lib.mkForce yes;
+          BRIDGE_EBT_SNAT = lib.mkForce yes;
+          BRIDGE_EBT_LOG = lib.mkForce yes;
+          BRIDGE_IGMP_SNOOPING = lib.mkForce yes;
+          BRIDGE_EBT_NFLOG = lib.mkForce yes;
+          BRIDGE_VLAN_FILTERING = lib.mkForce yes;
+          BRIDGE_MRP = lib.mkForce yes;
+
           #      PHYLIB = module;
           #      NET_DSA_VITESSE_VSC73XX = module;
           #      VITESSE_PHY = yes;
