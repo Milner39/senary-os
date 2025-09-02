@@ -582,7 +582,9 @@ wmm_ac_vo_acm=0
 # (only supported with driver=nl80211)
 # This mode allows associated stations to use 4-address frames to allow layer 2
 # bridging to be used.
-#wds_sta=1
+'' + lib.optionalString (bridge != null) ''
+wds_sta=1
+'' + ''
 
 # If bridge parameter is set, the WDS STA interface will be added to the same
 # bridge by default. This can be overridden with the wds_bridge parameter to
