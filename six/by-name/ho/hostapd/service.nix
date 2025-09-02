@@ -3,7 +3,7 @@
 , pkgs
 , targets
 , yants
-, ifname
+, interface
 , ssid
 , bridge ? null   # bridge interface (i.e. net.iface.xxx) to bridge the wireless interface to
 , regulatory-domain-country-code ? "US"  # ISO/IEC 3166-1
@@ -22,8 +22,8 @@ let
   conf-file = pkgs.writeText "hostapd-conf"
     (import ./conf.nix {
       inherit lib;
-      inherit ifname;
-      inherit bridge;
+      ifname = interface.ifname;
+      bridge = bridge.ifname;
       inherit ssid;
       inherit regulatory-domain-country-code;
       inherit advertise-regulatory-domain-country-code;
@@ -36,11 +36,15 @@ let
     });
 in
 six.mkFunnel {
-  passthru.after = [ targets.global.coldplug ];
+  passthru.after = [
+    targets.global.coldplug
+    interface
+  ] ++ lib.optionals (bridge != null) [
+    bridge
+  ];
   run = pkgs.writeScript "run" ''
     #!${pkgs.runtimeShell}
     exec 2>&1
-    ${pkgs.kmod}/bin/modprobe ath9k_htc || exec sleep 5
     exec ${pkgs.hostapd}/bin/hostapd ${conf-file}
   '';
 }
