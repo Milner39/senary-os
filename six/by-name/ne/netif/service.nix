@@ -30,6 +30,8 @@
 , vlan ? null      # when non-null, this is an integer vlan id for this interface within the parent interface
 , parent ? null    # if non-null, specifies the parent interface for a vlan interface
 
+, master ? null    # if non-null, specifies the master interface of the bridge to which this interface belongs
+
 , passthru ? {}
 }:
 
@@ -53,11 +55,15 @@ let
     ] ++ lib.optionals (parent != null) [
       # `link add` fails silently if the parent interface does not yet exist
       parent
+    ] ++ lib.optionals (master != null) [
+      master
     ]);
   };
 
   up = lib.optionalString (pre-add != null) ''
     ${pre-add}
+  '' + lib.optionalString (type == "bridge") ''
+    /run/current-system/boot/modprobe-wrapped br_netfilter
   '' + lib.optionalString (type != null) ''
     ${pkgs.iproute2}/bin/ip link del ${ifname} &>/dev/null || true
     ${pkgs.iproute2}/bin/ip link add ${
@@ -67,6 +73,8 @@ let
     ${pkgs.busybox}/bin/busybox ip link set dev eth0 address ${mac}
   '' + lib.optionalString (mtu != null) ''
     ${pkgs.iproute2}/bin/ip link set ${ifname} mtu ${builtins.toString mtu}
+  '' + lib.optionalString (master != null) ''
+    ${pkgs.iproute2}/bin/ip link set ${ifname} master ${master.ifname}
   '' + lib.optionalString (pre-up != null) ''
     ${pre-up}
   '' + ''
