@@ -1,13 +1,14 @@
 { lib
 , infuse
 , six-initrd
-, util
+, root
+, ...
 }:
 
 [
 
  # basic minimal initrd
- (util.forall-hosts
+ (root.lib.forall-hosts
    (host-name: final: prev: infuse prev {
      boot.initrd.image.__assign =
        (six-initrd {
@@ -17,14 +18,14 @@
          .minimal;
   }))
 
- (util.forall-hosts
+ (root.lib.forall-hosts
    (host-name: final: prev: infuse prev {
      boot.initrd.image.__input.contents.__init =
        final.boot.initrd.contents;
    }))
 
  # abduco-enabled initrd
- (util.forall-hosts
+ (root.lib.forall-hosts
   (host-name: final: prev: infuse prev ({
     boot.initrd.contents =
       lib.mapAttrs
@@ -38,7 +39,7 @@
   })))
 
  # minimum necessary contents
- (util.forall-hosts
+ (root.lib.forall-hosts
   (host-name: final: prev: let
     inherit (final) pkgs;
   in infuse prev ({
@@ -79,7 +80,7 @@
     });
   })))
 
- (util.forall-hosts
+ (root.lib.forall-hosts
   (host-name: final: prev: let inherit (final) pkgs; in infuse prev ( {
     boot.initrd.image.__input.contents =
       lib.optionalAttrs final.tags.is-nfsroot {
@@ -96,7 +97,7 @@
   })))
 
  # cryptsetup-enabled initrd
- (util.forall-hosts
+ (root.lib.forall-hosts
   (host-name: final: prev: let inherit (final) pkgs; in infuse prev ({
     boot.initrd.image.__input.contents = lib.optionalAttrs (!final.tags.is-nfsroot) {
       "early/run".__append = [''
@@ -130,7 +131,7 @@
   })))
 
  # lvm-enabled initrd
- (util.forall-hosts
+ (root.lib.forall-hosts
   (host-name: final: prev: let inherit (final) pkgs; in infuse prev ( {
     boot.initrd.image.__input.contents = lib.optionalAttrs (!final.tags.is-nfsroot && !final.tags.dont-mount-root) {
       "early/run".__append = [''
@@ -147,7 +148,7 @@
   })))
 
  # switch_root into the chosen profile
- (util.forall-hosts
+ (root.lib.forall-hosts
   (host-name: final: prev: let
     inherit (final) pkgs;
   in infuse prev ({
@@ -171,7 +172,7 @@
     ''];
   })))
 
- (util.forall-hosts
+ (root.lib.forall-hosts
   (host-name: host-final: prev: infuse prev ({
     boot.initrd.image.__input.contents."early/run".__append =
       host-final.boot.initrd.mount-root;

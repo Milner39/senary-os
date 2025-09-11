@@ -70,7 +70,7 @@ let
   # `tryEval` around invocations of `lib.generators.toPretty`.
   yants = yants' {
     lib = infuse lib {
-      generators.toPretty = root.six.util.toPrettyTryWrapper;
+      generators.toPretty = root.lib.toPrettyTryWrapper;
     };
   };
 
@@ -78,11 +78,11 @@ let
   auto-args = {
     inherit lib yants infuse readTree;
     inherit types;
-    inherit (root) util;
     inherit root;
     inherit auto-args;
-    inherit site;
+    inherit site-dir;
     inherit nixpkgs;
+    inherit extra-by-name-dirs mapDerivations extractDerivations six-initrd;
   };
 
   # readTree invocation on the directory containing this file
@@ -92,9 +92,9 @@ let
   }));
 
   # readTree invocation on the `site` directory
-  site =
+  site-dir =
     let
-      site-unchecked = root.util.maybe-invoke-readTree auto-args' args.site;
+      site-unchecked = root.lib.maybe-invoke-readTree auto-args' args.site;
       auto-args' = auto-args // extra-auto-args // {
         site = site-unchecked;
         auto-args = auto-args';
@@ -103,258 +103,46 @@ let
       #types.site
         site-unchecked;
 
-  tags-unprocessed = lib.attrsets.unionOfDisjoint root.tags site.tags;
+  tags-unprocessed = lib.attrsets.unionOfDisjoint root.tags site-dir.tags;
 
   types = root.types { tags = tags-unprocessed; };
 
-  overlays = [
+  mapDerivations' =
+    path: f: val:
+    if path == [ "pkgs" ] then val else  # FIXME HACK
+    if path == [ "lib" ] then val else  # FIXME HACK
+    if lib.isDerivation val
+    then f path val
+    else if !(lib.isAttrs val)
+    then val
+    else lib.mapAttrs
+      (k: v: mapDerivations' (path ++ [k]) f v)
+      val;
 
-    # initial host set: populate attrnames from site.hosts
-    (site-final: site-prev:
-      #types.site
-        ({
-          inherit (site) subnets overlay globals;
-          tags = tags-unprocessed;
-          # This is a copy of site.hosts built by passing in an attrset full of
-          # `throw` values as the fixpoint argument.  This ensures that the
-          # `canonical` and `name` fields of `final.hosts.${name}` do not depend
-          # on the fixpoint.
-          hosts =
-            lib.flip lib.mapAttrs site.hosts
-              (name: host-func: let
+  mapDerivations = mapDerivations' [];
 
-                # an attrset where the forbidden (see below) attributes are
-                # replaced with maximally-helpful error messages
-                diagnostic-attributes = dependee: {
-                  host =
-                    lib.flip lib.mapAttrs site-final.hosts.${name}
-                      (key: _: throw "${dependee} may not recursively depend on host.\${name}.${key}")
-                    // restricted-recursive-host-fields;
-                  pkgs = throw "${dependee} may not recursively depend on the pkgs attribute";
+  # walks a tree of attrsets, extracting attrvalues which are derivations
+  extractDerivations = let
+    flatten' =
+      path: val:
+      if !(lib.isAttrs val) || lib.isDerivation val
+      then [(lib.nameValuePair (lib.concatStringsSep "." path) val)]
+      else lib.concatLists
+        (lib.mapAttrsToList
+          (k: v: flatten' (path ++ [k]) v)
+          val);
+    in
+      attrs:
+      lib.pipe attrs [
+        (lib.mapAttrsToList (k: v: flatten' [k] v))
+        lib.concatLists
+        lib.listToAttrs
+      ];
 
-                  # TODO: this can be loosened up a bit, for access to site.globals, etc
-                  site = throw "${dependee} may not recursively depend on the site attribute";
-                };
-
-                # these fields of the `host` fixpoint must not depend on any
-                # part of the final result
-                nonrecursive-host-fields = let
-                  prev = (nonrecursive-host-fields // diagnostic-attributes "host.\${name}.canonical");
-                in {
-                  inherit name;
-                  inherit (host-func prev prev) canonical;
-                };
-
-                # `tags` is allowed to be recursive only in itself (not in other attributes)
-                restricted-recursive-host-fields = {
-                  inherit (nonrecursive-host-fields) name canonical;
-                  # may depend recursively only on the nonrecursive fields and itself
-                  tags = lib.pipe restricted-recursive-host-fields [
-                    (x: x // diagnostic-attributes "host.\${name}.tags")
-                    (prev: host-func prev prev)
-                    (x: types.set-tag-values (
-                      (x.tags or {}) //
-
-                      # This turns each of nixpkgs.lib's predicates "p" into an
-                      # attribute "system-${p}" whose value is a boolean
-                      # indicating whether or not the predicate matched this
-                      # host's `hostPlatform`.  These attribute names will be
-                      # intersected with those of site.tags, so if the site
-                      # doesn't declare a "system-${p}" tag that's okay.
-                      lib.flip lib.mapAttrs' lib.systems.inspect.predicates
-                        (predicate-name: predicate-function:
-                          let
-                            inherit (nonrecursive-host-fields) canonical;
-                            system = lib.systems.parse.mkSystemFromString canonical;
-                            name = "system-${predicate-name}";
-                            value = predicate-function system;
-                          in {
-                            inherit name value;
-                          })
-                    ))
-                  ];
-                };
-
-                host-func-arg = {
-                  inherit (restricted-recursive-host-fields) name canonical tags;
-                };
-              in
-                host-func site-final.hosts.${name} host-func-arg // {
-                  inherit (restricted-recursive-host-fields) name canonical tags;
-                });
-        }))
-
-    # build the ifconns and interfaces attributes
-    (root.util.forall-hosts (host-name: final: prev:
-      let
-        ifconns =
-          # all the subnets to which it is directly attached.
-          lib.pipe site.subnets [
-            (
-              lib.mapAttrs (subnetName: subnet:
-                lib.pipe subnet [
-                  # drop the __netmask key, which is not a host
-                  (lib.filterAttrs (hostName: _:
-                    !(lib.strings.hasPrefix "__" hostName)
-                  ))
-
-                  # add ${host}.netmask
-                  (lib.mapAttrs
-                    (hostName: ifconn: {
-                      netmask = subnet.__netmask;
-                    } // ifconn))
-                ])
-            )
-            (lib.mapAttrsToList
-              (subnetName: subnet:
-                if subnet?${prev.name}
-                then lib.nameValuePair subnetName subnet.${prev.name}
-                else null))
-            (lib.filter (v: v!=null))
-            lib.listToAttrs
-          ];
-      in prev // {
-        inherit ifconns;
-        interfaces =
-          { lo.type = "loopback"; } //
-          lib.pipe ifconns [
-            (lib.mapAttrsToList
-              (subnetName: ifconn:
-                if ifconn?ifname
-                then lib.nameValuePair ifconn.ifname ({
-                  subnet = subnetName;
-                } // lib.optionalAttrs (site.subnets.${subnetName}?__type) {
-                  type = site.subnets.${subnetName}.__type;
-                })
-                else null))
-            (lib.filter (v: v!=null))
-            lib.listToAttrs
-          ];
-      }
-    ))
-
-    # default kernel setup
-    (root.util.forall-hosts
-      (host-name: final: prev:
-        let
-          mkKernelConsoleBootArg =
-            { device
-            , baud ? null }:
-            "console=${device}"
-            + lib.optionalString (baud!=null) ",${toString baud}";
-        in infuse prev {
-          boot.kernel.params   = _: [
-            "root=LABEL=boot"
-            "ro"
-          ] ++ lib.optionals (final.boot?kernel.console) [
-            (mkKernelConsoleBootArg final.boot.kernel.console)
-          ];
-          boot.kernel.modules  = _: "${final.boot.kernel.package}";
-          boot.kernel.payload  = _: "${final.boot.kernel.package}/bzImage";
-          boot.kernel.image    = _: "${final.boot.kernel.package}/vmlinux";
-          boot.kernel.package  = _: final.pkgs.callPackage ./kernel.nix { };
-          boot.rootfs.label.__assign = "root";
-          boot.loader.filesystem.label.__assign = "boot";
-        }
-      ))
-
-    # arch stage is allowed to alter the tags
-    (root.util.forall-hosts'
-      (name: final: prev: infuse prev
-        ({
-          x86_64-unknown-linux-gnu =
-            import ./arch/amd64 {
-              inherit final infuse name;
-            };
-          mips64el-unknown-linux-gnuabi64 =
-            import ./arch/mips64 {
-              inherit final infuse name;
-            };
-          powerpc64le-unknown-linux-gnu =
-            import ./arch/powerpc64 {
-              inherit final infuse name;
-            };
-          aarch64-unknown-linux-gnu =
-            import ./arch/arm64 {
-              inherit lib final infuse name;
-            };
-          mips-unknown-linux-gnu = {};
-          armv7l-unknown-linux-gnueabi = {};
-          "" = {};
-        }.${prev.canonical or ""})  # FIXME: use final.canonical
-      ))
-
-  ] ++ (import ./initrd.nix { inherit lib infuse six-initrd; inherit (root) util; }) ++ [
-
-  ] ++ (map root.util.apply-to-hosts site.overlay) ++ [
-
-    # apply tags
-  ] ++ (lib.pipe tags-unprocessed [
-
-    (lib.mapAttrs (tag: overlay:
-      root.util.forall-hosts
-        (name: host-final: host-prev:
-          host-prev //
-          (if host-final.tags.${tag}
-           then overlay host-final host-prev
-           else {}))))
-
-    lib.attrValues
-
-    # FIXME: make attrvalues of site.tags be a list-of-extensions, not a single
-    # extension -- that way concatenating the identity element has no
-    # performance penalty
-    #(lib.map (o: [o] ++ fixup))
-
-    lib.flatten
-
-  ]) ++ [
-
-    # set defaults
-    (root.util.forall-hosts
-      (host-name: final: prev:
-        infuse prev {
-          boot.initrd.ttys.__default = { tty0 = null; };
-          boot.initrd.contents.__default = { };
-          boot.kernel.firmware.__default = [];
-        }))
-
-    (root.util.apply-to-hosts
-      (hosts-final: hosts-prev:
-        lib.flip lib.mapAttrs hosts-prev
-          (name: prevHost:
-            let host-final = hosts-final.${name}; in
-            prevHost // {
-              configuration = import ./configuration.nix {
-                inherit yants lib infuse;
-                host = host-final;
-                overlays = host-final.service-overlays;
-                six = import ./six {
-                  inherit lib yants;
-                  inherit (host-final) pkgs;
-                  inherit extra-by-name-dirs;
-                };
-              };
-            })
-      ))
-
-  ] ++ [
-
-    # Add `site.host.${name}.site==site` (only in the `final` parameter, so this
-    # overlay must go last).
-    (site-final: site-prev: site-prev // {
-      hosts = lib.mapAttrs (name: host-prev:
-        host-prev // {
-          site = site-final;
-        }) site-prev.hosts;
-    })
-  ];
-
-in {
-
-  host =
-
-    lib.pipe overlays ([
+  site =
+    lib.pipe (root.mkSite {
+      inherit site-dir tags-unprocessed types;
+    }) ([
       # compose the extensions into a single (final: prev: ...)
       (lib.foldr lib.composeExtensions (_: _: {}))
 
@@ -364,9 +152,8 @@ in {
       # typecheck the result
     ] ++ lib.optionals check-types [
       types.site
-    ] ++ [
-
-      (x: x.hosts)
     ]);
 
+in {
+  host = site.hosts;
 }

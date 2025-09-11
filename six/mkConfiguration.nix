@@ -1,14 +1,12 @@
-# from six
 { lib
 , yants
-, pkgs
-, s6-linux-init
-, services
-, util
+, root
+, extractDerivations
+, ...
 }:
 
 # local args
-{ overlays
+{ pkgs
 , s6-fdholder-daemon-username ? null   # -h
 , verbosity                   ? null   # -v
 , default-runlevel            ? "default"
@@ -27,7 +25,6 @@
 # FIXME(amjoseph): should be using boot.initrd.ttys instead of boot.kernel.console here
 , early-getty ? "${pkgs.busybox}/bin/getty -nl ${pkgs.busybox}/bin/sh ${toString (boot.kernel.console.baud or 115200)} ${boot.kernel.console.device or "tty0"}"
 
-, hostname
 , nixpkgs-version ? "unknown-nixpkgs-version"
 , boot  ? {}
 , sw    ? null
@@ -35,222 +32,29 @@
 }:
 
 let
+  services = root.six.by-name;
+  util = root.six.util;
+  s6-linux-init   = pkgs.callPackage ./s6-linux-init.nix { };
+in
 
-  add-spath =
-    spath: v:
-    v.overrideAttrs (previousAttrs: {
-      passthru = previousAttrs.passthru // {
-        inherit spath;
-      }; });
 
-  mapDerivations' =
-    path: f: val:
-    if path == [ "pkgs" ] then val else  # FIXME HACK
-    if path == [ "lib" ] then val else  # FIXME HACK
-    if lib.isDerivation val
-    then f path val
-    else if !(lib.isAttrs val)
-    then val
-    else lib.mapAttrs
-      (k: v: mapDerivations' (path ++ [k]) f v)
-      val;
+host-final:
+host-prev:
 
-  mapDerivations = mapDerivations' [];
+let
 
-  flatten' =
-    path: val:
-    if path == [ "pkgs" ] then [] else  # FIXME HACK
-    if path == [ "lib" ] then [] else  # FIXME HACK
-    if path == [ "yants" ] then [] else  # FIXME HACK
-    if path == [ "services" ] then [] else  # FIXME HACK
-  if !(lib.isAttrs val) || lib.isDerivation val
-    then [(lib.nameValuePair (lib.concatStringsSep "." path) val)]
-    else lib.concatLists
-      (lib.mapAttrsToList
-        (k: v: flatten' (path ++ [k]) v)
-        val);
 
-  flatten = attrs:
-    lib.pipe attrs [
-      (lib.mapAttrsToList (k: v: flatten' [k] v))
-      lib.concatLists
-      lib.listToAttrs
-    ];
-
-  init = final: prev: {
-
-    inherit lib yants pkgs;
-
-    # consider automatically allowing arguments `before` and `after` which, if
-    # present, become `overrideAttrs` applied to `passthru`
-    callService = path: final.callPackage path;
-
-    six = {
-      mkService       = final.callPackage ./mkService.nix;
-      mkBundle        = final.callPackage ./mkBundle.nix;
-      mkOneshot       = final.callPackage ./mkOneshot.nix;
-      mkFunnel        = final.callPackage ./mkFunnel.nix;
-      mkLogger        = final.callPackage ./mkLogger.nix;
-      inherit util;
-    };
-
-    # A service is a Nix function which can be applied to various arguments,
-    # like a callPackage in nixpkgs.  Each `src/by-name/??/${name}/service.nix`
-    # defines one service.  See also `targets` below, which include service
-    # *derivations*.
-    services =
-      (lib.flip builtins.mapAttrs services
-        (name: service:
-          final.callService service))
-      // {
-
-        # A logger which simply uses `cat` to send its stdin to the supervisor's
-        # stdout, which is the same as the scanner's stdout.
-        #
-        # Unfortunately we need to create one of these (i.e. a separate s6-cat
-        # process, plus a s6-supervise process for it) due to s6 restrictions:
-        # every longrun either sends its stdout to some other longrun, or else
-        # sends it to the catch-all logger (i.e. the console) -- and you cannot
-        # change one type to the other without restarting the service.  In the
-        # case of mdevd this is catastrophic: restarting mdevd will freqently
-        # nuke the entire wayland/gui/x11 session.
-        uncaughtLogs =
-          spath: service:
-          final.six.mkLogger {
-            run = "${pkgs.s6-portable-utils}/bin/s6-cat";
-          };
-
-        defaultLogger = final.uncaughtLogs;
-      };
-
-    # A target is something that can be depended upon, started, or stopped.
-    # Targets include:
-    #
-    # - Bundles (possibly empty) of other targets.
-    # - Service derivations, which are specific instantiations of services.
-    #   Each service expression, applied to a complete set of arguments, yields
-    #   a service derivation.
-    #
-    # Each target has a `tname` which is the unique attrpath below `targets`
-    # through which it is reachable.  The `tname` is used to identify the target
-    # when issuing commands like `six start` and `six stop`.
-    #
-    targets = {
-    };
-  };
-
-  # After and before references must always be made via `final.${spath}`
-  # references to services which are part of the top-level service set.  Because
-  # there can be cyclic references (a.after = b, b.before = a) we can't test
-  # them for equality.  Therefore, we identify each service by its attrname in
-  # the top-level service set.  This is fundamentally what makes it possible for
-  # six to (unlike NixOS) have multiple copies of the ssh daemon running, and to
-  # reference that daemon without getting confused about which "sshd" the user
-  # means.
-  add-spaths =
-    final: prev: prev // {
-      targets = mapDerivations (path: v:
-        if !(lib.isDerivation v)
-        then v
-        else if v?overrideAttrs
-        then add-spath path v
-        else throw "derivation does not have an .override method: ${lib.concatStringsSep "." path}")
-        (prev.targets or {});
-    };
-
-  # This needs to be nearly-the-last overlay: any overlays after it must not add
-  # additional services to the top-level service set.  We deliberately use
-  # `final` instead of `prev` to cause an infinite recursion if any attrsets
-  # after this one add new services.
-  convert-before-to-after = final: prev:
-    let
-      flattened = lib.filter (x: x!=null) (builtins.attrValues (flatten prev.targets));
-      beforeFunc =
-        after-spath:
-        lib.pipe flattened [
-          (lib.filter
-            (target:
-              let target-before-spaths = map (x: x.passthru.spath) target.passthru.before;
-              in lib.elem after-spath target-before-spaths))
-          (map
-            (target: (lib.attrByPath target.passthru.spath (throw "missing") final.targets)))
-        ];
-    in prev // {
-      targets = lib.flip mapDerivations prev.targets
-        (_: target:
-          target.overrideAttrs
-            (previousAttrs: {
-              passthru = previousAttrs.passthru or {} // {
-                after = previousAttrs.passthru.after or [] ++
-                        beforeFunc target.passthru.spath;
-              };
-            })
-        );
-    };
-
-  add-loggers =
-    let make-logger-spath = path:
-          (lib.take ((lib.length path) - 1) path) ++ [ "${lib.last path}-log" ];
-    in final: prev: prev // {
-      targets =
-        lib.flip mapDerivations prev.targets
-          (path: v:
-            if false
-               || v.passthru.stype or null != "longrun"
-               || (v.passthru.logger or null) == false
-            then v
-            else let
-              logger-spath = make-logger-spath path;
-              logger-sname = lib.concatStringsSep "." logger-spath;
-              #logger-sname = "${lib.concatStringsSep "." path}-log";
-            in v.overrideAttrs (finalAttrs: previousAttrs: {
-                 buildCommand = (previousAttrs.buildCommand or "") + ''
-                   echo '${logger-sname}' > $out/producer-for
-                 '';
-                 passthru = (previousAttrs.passthru or {}) // {
-                   logger = lib.getAttrByPath path (throw "missing ${lib.concatStringsSep "." path}") final.targets.loggers;
-                 };
-               })
-          ) // {
-      loggers =
-        lib.flip mapDerivations prev.targets
-          (path: v:
-            if false
-               || v.passthru.stype or null != "longrun"
-               || (v.passthru.logger or null) == false
-            then null
-            else let
-              logger-spath = make-logger-spath path;
-              loggerfunc = if v.passthru.logger or null == null
-                           then prev.defaultLogger
-                           else v.passthru.logger;
-              logger = add-spath logger-spath (loggerfunc path v);
-            in logger
-          );
-          };
-    };
-
-  sorted-collected-targets = lib.pipe
-    # note: add-spaths must be the last extension before
-    # "convert-before-to-after", to be sure that it is able to "see" any
-    # additional services added by earlier overlays
-    (lib.composeManyExtensions ([
-      init
-    ] ++ overlays ++ [
-      add-spaths
-      add-loggers
-      convert-before-to-after
-    ]))
-    [
-      (lib.makeScope lib.callPackageWith (self: { })).overrideScope
-      flatten
-      (lib.filterAttrs (k: v: k!="spath" && v?passthru.spath))
-      (lib.mapAttrsToList (_: v: v))
-      (map (s: lib.nameValuePair (lib.concatStringsSep "." s.spath) s))
-      lib.listToAttrs
-      lib.attrValues
-      (lib.sort (a: b: (lib.concatStringsSep "." a.passthru.spath) < (lib.concatStringsSep "." b.passthru.spath)))
-    ];
+  # note: add-spaths must be the last extension before
+  # "convert-before-to-after", to be sure that it is able to "see" any
+  # additional services added by earlier overlays
+  sorted-collected-targets = lib.pipe host-final [
+    (host: (lib.mapAttrsToList (_: v: v) (extractDerivations host.targets)))
+    (lib.filter (v: v?passthru.spath))
+    (map (s: lib.nameValuePair (lib.concatStringsSep "." s.spath) s))
+    lib.listToAttrs
+    lib.attrValues
+    (lib.sort (a: b: (lib.concatStringsSep "." a.passthru.spath) < (lib.concatStringsSep "." b.passthru.spath)))
+  ];
 
   source = pkgs.runCommand "s6-rc-source" { preferLocalBuild = true; } (''
     mkdir -p $out
@@ -363,7 +167,7 @@ let
      ln -sT boot/firmware $out/firmware    # to match NixOS path burned-in to nixpkgs
    '';
 
-  configuration = (pkgs.runCommand "six-system-${hostname}-${nixpkgs-version}" { preferLocalBuild = true; } (''
+  configuration = (pkgs.runCommand "six-system-${host-final.name}-${nixpkgs-version}" { preferLocalBuild = true; } (''
     mkdir -p $out
     ${pkgs.gnu-config}/config.sub "${pkgs.hostPlatform.config}" > $out/system-canonical-gnu-triple
     mkdir -p $out/six/s6-rc
@@ -598,4 +402,6 @@ let
       };
     });
 in
-  configuration
+host-prev // {
+  inherit configuration;
+}

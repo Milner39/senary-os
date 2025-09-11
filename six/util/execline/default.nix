@@ -1,12 +1,13 @@
 { lib
 , execline
-, busybox
+, pkgs
 , toPrettyTry
 , ...
 }:
 
 
 let
+  inherit (pkgs) busybox;
 
   inherit (lib) all isList isInt isFloat isString isDerivation isPath;
 
