@@ -42,8 +42,8 @@ while true; do
     BASE=/sys/devices/pci0000:00/0000:00:14.0/i2c*/*-002f
 
     # chassis fans; we modulate these too because trunk has a busted fan connector
-    echo 1 > ''${BASE}/pwm0_enable
-    echo ''${pwm} > ''${BASE}/pwm0
+    echo 1 > ''${BASE}/pwm2_enable
+    echo ''${pwm} > ''${BASE}/pwm2
 
     # cpu fans
     echo 1 > ''${BASE}/pwm1_enable
