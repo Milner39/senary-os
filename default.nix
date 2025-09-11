@@ -324,7 +324,6 @@ let
         lib.flip lib.mapAttrs hosts-prev
           (name: prevHost:
             let host-final = hosts-final.${name}; in
-            #let host = prevHost; in
             prevHost // {
               configuration = import ./configuration.nix {
                 inherit yants lib infuse;
