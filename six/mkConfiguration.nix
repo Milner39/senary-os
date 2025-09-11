@@ -230,7 +230,7 @@ let
           };
     };
 
-  sorted-collected-services = lib.pipe
+  sorted-collected-targets = lib.pipe
     # note: add-spaths must be the last extension before
     # "convert-before-to-after", to be sure that it is able to "see" any
     # additional services added by earlier overlays
@@ -258,7 +258,7 @@ let
       mkdir -p                  $out/${lib.concatStringsSep "." target.passthru.spath}
       ln -s ${target.outPath}/* -t $out/${lib.concatStringsSep "." target.passthru.spath}/
       '')
-      sorted-collected-services}
+      sorted-collected-targets}
     ${lib.concatMapStrings (target:
       # s6-rc requires that consumers reference their producers and vice-versa;
       # when mapping services to derivations this would create cyclic
@@ -271,7 +271,7 @@ let
         echo ${lib.concatStringsSep "." target.passthru.spath} >> $out/$(cat ${target.outPath}/producer-for)/consumer-for
       fi
       '')
-      sorted-collected-services}
+      sorted-collected-targets}
   '');
 
   compiled = pkgs.runCommand "s6-rc-compiled" { preferLocalBuild = true; } (''
