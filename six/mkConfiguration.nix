@@ -175,7 +175,7 @@ let
           (map
             (target: (lib.attrByPath target.passthru.spath (throw "missing") final.targets)))
         ];
-    in {
+    in prev // {
       targets = lib.flip mapDerivations prev.targets
         (_: target:
           target.overrideAttrs
@@ -191,7 +191,7 @@ let
   add-loggers =
     let make-logger-spath = path:
           (lib.take ((lib.length path) - 1) path) ++ [ "${lib.last path}-log" ];
-    in final: prev: {
+    in final: prev: prev // {
       targets =
         lib.flip mapDerivations prev.targets
           (path: v:
