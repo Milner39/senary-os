@@ -24,7 +24,7 @@
 , passthru ? {}
 }@args:
 assert up!=null   -> lib.isPath up || lib.isDerivation up;
-assert data!=null -> lib.isPath data || lib.isDerivation data;
+assert data!=null -> lib.isPath data || lib.isDerivation data || lib.isAttrs data;
 assert env!=null  -> lib.isPath env || lib.isDerivation env || lib.isAttrs env;
 
 assert flag-newpidns ->
@@ -78,8 +78,21 @@ in
     ln -s ${six.util.scriptify { name = "target.${final-sname}.run"; } run} $out/run
   '' + lib.optionalString (finish != null) ''
     ln -s ${six.util.scriptify { name = "target.${final-sname}.finish"; } finish} $out/finish
-  '' + lib.optionalString (data != null) ''
+  '' + lib.optionalString (data != null && (!(lib.isAttrs data) || lib.isDerivation data)) ''
     ln -s ${data} $out/data
+  '' + lib.optionalString (data != null && lib.isAttrs data && !(lib.isDerivation data)) ''
+    mkdir $out/data
+    ${lib.pipe data [
+      (lib.mapAttrs (k: v: if lib.isInt v then toString v else v))
+      (lib.mapAttrsToList (k: v:
+        if lib.isString v
+        then "echo ${lib.escapeShellArg v} > $out/data/${lib.escapeShellArg k}"
+        else if (lib.isDerivation v || lib.isPath v)
+        then "ln -s ${v} $out/data/${lib.escapeShellArg k}"
+        else throw "when data is an attrset, attrvalues must be strings, ints, paths, or derivations; encountered ${lib.typeOf v} at ${k}"
+      ))
+      (lib.concatStringsSep "\n")
+    ]}
   '' + lib.optionalString (env' != null) ''
     ln -s ${env'} $out/env
   '' + lib.optionalString (env' == null && lib.isAttrs run && !(lib.isDerivation run)) ''
