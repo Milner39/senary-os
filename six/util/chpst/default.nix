@@ -10,6 +10,7 @@
 { lib
 , execline
 , s6
+, s6-portable-utils
 }:
 
 # arguments are listed here in the order in which they are applied/invoked
@@ -56,6 +57,9 @@
   argv ? throw "you must set argv to the command you want to execute",
 }:
 
+# s6-applyuidguid can't seem to set only one of these?
+assert (user != null) == (group != null);
+
 assert new-session -> new-process-group;
 
 assert chroot!=null && argv0!=null -> throw "once we enter the chroot we cannot access s6-exec";
@@ -81,15 +85,10 @@ assert envdir==null || envfile==null;
   "${s6}/bin/s6-envdir" envdir
 ] ++ lib.optionals (envfile != null) [
   "${execline}/bin/envfile" envfile
-] ++ lib.optionals (user != null) [
-  "${s6}/bin/s6-applyuidgid" "-u" user
-  "${s6}/bin/s6-envuidgid" "-u" user
-] ++ lib.optionals (group != null) [
-  "${s6}/bin/s6-applyuidgid" "-g" group
-  "${s6}/bin/s6-envuidgid" "-g" group
-] ++ lib.optionals (groups != []) [
-  "${s6}/bin/s6-applyuidgid" "-G" groups
-  "${s6}/bin/s6-envuidgid" "-G" groups
+] ++ lib.optionals (user != null || group != null) [
+  "${s6-portable-utils}/bin/s6-env" "GIDLIST="
+  "${s6}/bin/s6-envuidgid" "-B" "${user}:${group}"
+  "${s6}/bin/s6-applyuidgid" "-U" "-z"
 ] ++ lib.optionals (nice != null) [
   "${s6}/bin/s6-nice" "-n" (toString nice)
 ] ++ lib.optionals (umask!=null) [
