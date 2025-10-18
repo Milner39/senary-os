@@ -1,3 +1,7 @@
+#
+# This contains utilities which depend on a pkgs set (i.e. instantiated nixpkgs
+# beyond just nixpkgs/lib)
+#
 { lib,
   root,
   ...
