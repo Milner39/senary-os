@@ -71,6 +71,10 @@ assert envdir==null || envfile==null;
 # TODO: explain why the `-f`, `-g`, and `-d` flags for s6-setsid are not useful here
 
 [
+] ++ lib.optionals redirect-stderr-to-stdout [
+  # this goes first so that any error messages from the remaining operations end
+  # up in the service's logger rather than in uncaught-logs or on the console
+  "${execline}/bin/fdmove" "-c" "2" "1"
 ] ++ lib.optionals env-clear [
   "${execline}/bin/emptyenv"
 ] ++ lib.optionals (envdir != null) [
@@ -94,8 +98,6 @@ assert envdir==null || envfile==null;
   "${s6}/bin/s6-setsid" "-s"
 ] ++ lib.optionals (new-process-group && !new-session) [
   "${s6}/bin/s6-setsid" "-b"
-] ++ lib.optionals redirect-stderr-to-stdout [
-  "${execline}/bin/fdmove" "-c" "2" "1"
 ] ++ lib.optionals (chroot != null) [
   "${s6}/bin/s6-chroot" chroot
 ] ++ lib.optionals (dir != null) [
