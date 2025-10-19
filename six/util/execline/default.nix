@@ -35,6 +35,18 @@ let
     in assert !(isList arg) -> throw message;
       all assertIsExecline arg;
 
+  # Sequence a list of argvs, failing immediately if any of them fail.  This
+  # uses the somewhat-confusingly-named execline `if` operator, which is
+  # approximately equivalent to the bash `&&` operator.
+  seq = argvs:
+    assert (builtins.length argvs) > 0;
+    let
+      argvs' = lib.lists.take    ((builtins.length argvs)-1) argvs;
+      last   = lib.lists.last                                argvs;
+    in
+      lib.concatMap (argv: [ "${execline}/bin/if" argv ]) argvs' ++
+      last;
+
   # Takes an execline script (list-of-strings) and returns an execline scripts
   # which executes the argument every `interval-seconds` seconds.  Important
   # FIXME: make sure that sending SIGTERM to this PID will always cause the loop to exit.
@@ -53,6 +65,6 @@ let
     ];
 
 in {
-  inherit isExecline assertIsExecline loop;
+  inherit isExecline assertIsExecline loop seq;
 }
 
