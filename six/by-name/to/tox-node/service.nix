@@ -43,6 +43,9 @@ six.mkFunnel {
 ''
 #!${pkgs.runtimeShell}
 exec 2>&1
+if [[ ! -e ${secret-key-file} ]]; then
+  hexdump -n 32 -e '8 "%08x" 1 "\n"' /dev/random > ${secret-key-file}
+fi
 export TOX_SECRET_KEY=$(${pkgs.busybox}/bin/busybox cat ${secret-key-file})
 export RUST_LOG=tox=debug
 exec ${pkgs.runit}/bin/chpst ${lib.escapeShellArgs args}
