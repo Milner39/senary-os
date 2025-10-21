@@ -1,0 +1,42 @@
+{ lib
+, pkgs
+, six
+, targets
+, package ? pkgs.monero-cli
+, user ? "monerod"
+, group ? "monerod"
+, datadir ? throw "you must specify datadir"
+, extraArgs ? {}
+}:
+
+
+let
+
+  args = lib.mapAttrsToList
+    (k: v: if v==true then "--${k}" else "--${k}=${v}")
+    ({
+      data-dir = datadir;
+      non-interactive = true;
+    } // extraArgs);
+in
+
+six.mkFunnel {
+
+  run =
+    six.util.depot.writeExecline
+      "service.monerod.run"
+      { argMode = "none"; }
+      (six.util.execline.seq [
+        (six.util.chpst {
+          inherit user;
+          inherit group;
+          argv = [
+            "${package}/bin/monerod"
+          ] ++ args;
+        })
+      ]);
+
+  passthru.after = [ targets.global.coldplug ];
+
+}
+
