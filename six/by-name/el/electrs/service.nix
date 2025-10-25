@@ -39,16 +39,13 @@ six.mkFunnel {
     six.util.depot.writeExecline
       "service.electrs.run"
       { argMode = "none"; }
-      (six.util.execline.seq [
-        [ "${pkgs.busybox}/bin/chmod" "g+r" bitcoind.passthru.config.rpccookiefile ]
-        (six.util.chpst {
-          inherit user;
-          inherit group;
-          argv = [
-            "${package}/bin/electrs"
-          ] ++ args;
-        })
-      ]);
+      (six.util.chpst {
+        inherit user;
+        inherit group;
+        argv = [
+          "${package}/bin/electrs"
+        ] ++ args;
+      });
 
   passthru.after = [ bitcoind ];
 

@@ -23,6 +23,7 @@ let
     printtoconsole = true;
     disablewallet = true;
     nodebuglogfile =true;
+    rpccookieperms = "group";  # readable-by
   } // extraConfig;
 
 in
