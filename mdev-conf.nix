@@ -87,37 +87,37 @@ hwrandom    root:root 444
 grsec       root:root 660
 
 # Kernel-based Virtual Machine.
-kvm     root:kvm 660
+kvm     root:root 660
 
 # vhost-net, to be used with kvm.
-vhost-net   root:kvm 660
+vhost-net   root:root 660
 
 kmem        root:root 640
 mem         root:root 640
 port        root:root 640
 # console may already exist; therefore ownership has to be changed with command
-console     root:tty 600 @${busybox} chmod 600 $MDEV
-ptmx        root:tty 666
-pty.*       root:tty 660
+console     root:root 600 @${busybox} chmod 600 $MDEV
+ptmx        root:root 666
+pty.*       root:root 660
 
 # Typical devices
-tty         root:tty 666
-tty[0-9]*   root:tty 660
-vcsa*[0-9]* root:tty 660
-ttyS[0-9]*  root:uucp 660
+tty         root:root 666
+tty[0-9]*   root:root 660
+vcsa*[0-9]* root:root 660
+ttyS[0-9]*  root:root 660
 
 # block devices
-ram([0-9]*)        root:disk 660 >rd/%1
-loop([0-9]+)       root:disk 660 >loop/%1
-sr[0-9]*           root:cdrom 660 @${busybox} ln -sf $MDEV cdrom
-fd[0-9]*           root:floppy 660
-SUBSYSTEM=block;.* root:disk 660 *${helpers}/storage-device
+ram([0-9]*)        root:root 660 >rd/%1
+loop([0-9]+)       root:root 660 >loop/%1
+sr[0-9]*           root:root 660 @${busybox} ln -sf $MDEV cdrom
+fd[0-9]*           root:root 660
+SUBSYSTEM=block;.* root:root 660 *${helpers}/storage-device
 
 # Run settle-nics every time new NIC appear.
 # If you don't want to auto-populate /etc/mactab with NICs, run 'settle-nis' without '--write-mactab' param.
 #-SUBSYSTEM=net;DEVPATH=.*/net/.*;.*     root:root 600 @${helpers}/settle-nics --write-mactab
 
-net/tun[0-9]*   root:kvm 660
+net/tun[0-9]*   root:root 660
 net/tap[0-9]*   root:root 600
 
 '' + lib.optionalString alsaSupport ''
@@ -133,9 +133,9 @@ sequencer.* root:audio 660 >sound/
 
 
 # raid controllers
-cciss!(.*)  root:disk 660 =cciss/%1
-ida!(.*)    root:disk 660 =ida/%1
-rd!(.*)     root:disk 660 =rd/%1
+cciss!(.*)  root:root 660 =cciss/%1
+ida!(.*)    root:root 660 =ida/%1
+rd!(.*)     root:root 660 =rd/%1
 
 
 fuse        root:root 666
@@ -149,7 +149,7 @@ rtc         root:root 664 >misc/
 
 
 # input stuff
-SUBSYSTEM=input;.* root:input 660
+SUBSYSTEM=input;.* root:root 660
 
 
 # v4l stuff
