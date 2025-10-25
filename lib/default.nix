@@ -68,6 +68,8 @@ let
         delete-generations = null;
         service-overlays = [];
         boot = {};
+        users = {};
+        groups = {};
       };
     in
       builtins.intersectAttrs

@@ -1,0 +1,104 @@
+{ lib,
+  types,
+  ...
+}:
+
+let
+
+
+  mkUser = pkgs: groups: user:
+    let
+      inherit (user) name;
+      hashed-password = user.hashed-password or "!";
+      uid = toString (user.uid or (throw "impossible"));
+      gid = toString (user.gid or (if groups?name then groups.name else uid));
+      comment = user.comment or "";
+      home-directory = user.home-directory or "/var/empty";
+      shell = user.shell or "${pkgs.util-linux}/bin/nologin";
+    in
+      "${name}:${hashed-password}:${uid}:${gid}:${comment}:${home-directory}:${shell}";
+
+  mkEtcPasswd = { pkgs, users, groups }:
+    lib.pipe users [
+
+      # turn the attrset into a list of attrvalues, with the attrname stored as
+      # a `name` attribute
+      (lib.mapAttrsToList (name: user:
+        (types.user user) // { inherit name; }))
+
+      # sort the entries by uid while checking for duplicates
+      (lib.sort (u1: u2: assert u1.uid != u2.uid; u1.uid < u2.uid))
+
+      # convert the attrsets into /etc/passwd lines
+      (lib.map (mkUser pkgs groups))
+      (lib.concatStringsSep "\n")
+    ];
+
+  mkEtcGroup = { users, groups }:
+    let
+      # for each user with no `.gid` attribute and for which there is no
+      # identically-named group, synthesize a group whose gid is the user's uid
+      # and whose group name is the user's user name.
+      synthetic-groups = lib.pipe users [
+        # filter for the users with no `.gid` attribute and no identically-named group
+        (lib.filterAttrs (name: user: !(user?gid) && !(groups?name)))
+
+        # synthesize the group
+        (lib.mapAttrsToList (name: user: lib.nameValuePair name user.uid))
+        lib.listToAttrs
+      ];
+
+      # derive the membership of each group
+      groupMembers = lib.pipe users [
+        # turn each user into a list of groups to which it belongs
+        (lib.mapAttrsToList (name: user:
+          lib.map (groupname: { username = name; inherit groupname; })
+            (user.groups or [])))
+        lib.concatLists
+
+        # turn the list into an attrset with an attribute for each groupname
+        (lib.groupBy (usergroup: usergroup.groupname))
+
+        # turn the attrset-of-lists-of-attrsets into an attrset-of-lists-of-usernames
+        (lib.mapAttrs (groupname: usergroup-list:
+          lib.map (usergroup: usergroup.username) usergroup-list))
+
+        # sort by username for normalization purposes
+        (lib.mapAttrs (groupname: username-list:
+          builtins.sort (user1: user2: user1 < user2) username-list))
+
+        # FIXME need to verify that every attrname of `groupMembers` is an
+        # attrname of `groups // synthetic-groups`
+      ];
+
+    in
+    lib.pipe groups [
+
+      # merge in the synthetic-groups; no need to check for conflicts because we
+      # already checked when forming synthetic-groups.
+      (groups: groups // synthetic-groups)
+
+      # turn the attrset into a list of attrvalues, with the attrname stored as
+      # a `name` attribute
+      (lib.mapAttrsToList (name: gid:
+        assert lib.isInt gid;
+        { inherit name gid; }))
+
+      # sort the entries by gid while checking for duplicates
+      (lib.sort (g1: g2: assert g1.gid != g2.gid; g1.gid < g2.gid))
+
+      # turn each entry into a line of /etc/group
+      (lib.map ({ name, gid }:
+        "${name}:x:${toString gid}:${
+          lib.concatStringsSep "," (groupMembers.${name} or [])}"
+      ))
+      (lib.concatStringsSep "\n")
+    ];
+
+in
+
+
+{
+  inherit mkEtcPasswd;
+  inherit mkEtcGroup;
+}

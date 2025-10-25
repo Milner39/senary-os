@@ -174,6 +174,15 @@ let
     ln -s ${source}                $out/six/s6-rc/source
     ln -s ${compiled}/six/s6-rc/db $out/six/s6-rc/db
     ln -s ${scandir}               $out/six/scandir
+  '' + lib.optionalString (host-final.users != {}) ''
+    mkdir -p $out/etc
+    ln -s ${pkgs.writeText "etc-passwd" (root.users.mkEtcPasswd {
+      inherit (host-final) pkgs users groups;
+    })} $out/etc/passwd
+    ln -s ${pkgs.writeText "etc-group" (root.users.mkEtcGroup {
+      inherit (host-final) users groups;
+    })} $out/etc/group
+  '' + ''
 
     mkdir -p $out/bin
 
@@ -190,7 +199,11 @@ let
       # first activation after a new bootup
 
       # root filesystem is not yet initialized
+  '' + lib.optionalString (host-final.users != {}) ''
+      if [[ ! -e /etc/passwd && ! -L /etc/passwd ]]; then
+  '' + lib.optionalString (host-final.users == {}) ''
       if [[ ! -e /etc/passwd ]]; then
+  '' + ''
 
         # We don't want to remount / read-write, so instead we bind-mount it and
         # remount *that* as read-write.  To do so, we need an empty directory,
@@ -208,6 +221,7 @@ let
           ${pkgs.busybox}/bin/mkdir -m 0555 -p $RWMOUNT/usr/bin
           ${pkgs.busybox}/bin/ln -sfT /run/current-system/sw/bin/env $RWMOUNT/usr/bin/env
         fi
+  '' + lib.optionalString (host-final.users == {}) ''
         if [ ! -e /etc/passwd ]; then
           ${pkgs.busybox}/bin/mkdir -m 0555 -p $RWMOUNT/etc
           echo 'root:x:0:0:root:/root:/run/current-system/sw/bin/sh' > $RWMOUNT/etc/passwd
@@ -226,6 +240,16 @@ let
           echo 'video:x:907:'  >> $RWMOUNT/etc/group
           echo 'input:x:908:'  >> $RWMOUNT/etc/group
         fi
+  '' + lib.optionalString (host-final.users != {}) ''
+        if [[ ! -e /etc/passwd && ! -L /etc/passwd ]]; then
+          ${pkgs.busybox}/bin/mkdir -m 0555 -p $RWMOUNT/etc
+          ${pkgs.busybox}/bin/ln -s /run/current-system/etc/passwd $RWMOUNT/etc/passwd
+        fi
+        if [[ ! -e /etc/group && ! -L /etc/group ]]; then
+          ${pkgs.busybox}/bin/mkdir -m 0555 -p $RWMOUNT/etc
+          ${pkgs.busybox}/bin/ln -s /run/current-system/etc/group $RWMOUNT/etc/group
+        fi
+  '' + ''
         ${pkgs.busybox}/bin/mkdir -p $RWMOUNT/tmp
         ${pkgs.busybox}/bin/mkdir -p $RWMOUNT/sys
         ${pkgs.busybox}/bin/mkdir -p $RWMOUNT/dev

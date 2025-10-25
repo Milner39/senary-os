@@ -88,24 +88,14 @@ let
     # Using `list tty-dev` would allow duplicates and be ordering-sensitive.
     tty-dev-map = attrs (option yants.int);
 
-    # basically one line of /etc/passwd (with shadow passwords)
     user = struct "user" {
-      name = string;
-
-      # if missing, password logins are disabled
-      # FIXME: get `busybox mkpasswd --algorithm=yescrypt` working
-      hashedPassword = option string;
-
+      hashed-password = option string;  # if missing, "!" will be written
       uid = int;
-
-      gid = int;
-
-      # this is usually the user's full name ("Mr. First Last")
+      gid = option int;                 # if missing, `uid` is used
       comment = option string;
-
-      home-directory = string;
-
-      shell = option string;   # for root user, use `/run/current-system/boot/ash`
+      home-directory = option string;   # if missing, /var/empty is used
+      shell = option string;            # if missing, ${util-linux}/bin/nologin
+      groups = option (list string);
     };
 
     host = struct "host" {
@@ -126,6 +116,9 @@ let
       delete-generations = option string;
 
       service-overlays = option (list function);
+
+      users = option (attrs user);
+      groups = option (attrs int);
 
       boot = struct "boot" {
         loader = option (struct "loader" {
@@ -202,6 +195,7 @@ in
     inherit ifname;
     inherit host;
     inherit site;
+    inherit user;
     inherit default-tag-values;
     inherit set-tag-values;
   }
