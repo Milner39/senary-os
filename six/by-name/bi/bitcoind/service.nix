@@ -45,7 +45,7 @@ six.mkFunnel {
   passthru = {
     after = [ targets.global.coldplug ];
     inherit datadir;
-    inherit (config) rpccookiefile;
+    inherit config;
   };
 }
 

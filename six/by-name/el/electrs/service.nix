@@ -22,7 +22,7 @@ let
     ({
       log-filters = "INFO";
       daemon-dir = bitcoind.passthru.datadir;
-      cookie-file = bitcoind.passthru.rpccookiefile;
+      cookie-file = bitcoind.passthru.config.rpccookiefile;
       db-dir = datadir;
       network = "bitcoin";
       inherit electrum-rpc-addr;
@@ -40,7 +40,7 @@ six.mkFunnel {
       "service.electrs.run"
       { argMode = "none"; }
       (six.util.execline.seq [
-        [ "${pkgs.busybox}/bin/chmod" "g+r" bitcoind.passthru.rpccookiefile ]
+        [ "${pkgs.busybox}/bin/chmod" "g+r" bitcoind.passthru.config.rpccookiefile ]
         (six.util.chpst {
           inherit user;
           inherit group;
