@@ -102,5 +102,5 @@ assert envdir==null || envfile==null;
 ] ++ lib.optionals (dir != null) [
   "${execline}/bin/execline-cd" dir
 ] ++ lib.optionals (argv0 != null) [
-  "${s6}/bin/s6-exec" "-a" argv0
+  "${execline}/bin/exec" "-a" argv0
 ] ++ argv
