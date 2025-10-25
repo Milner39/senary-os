@@ -16,9 +16,6 @@ options snd_hda_intel power_save=999 power_save_controller=0 bdl_pos_adj=256
 ${alsa-utils}/bin/amixer -c HDMI set IEC958,3 unmute
 */
 
-# FIXME: every user/group in mdev.conf needs to appear in /etc/{passwd,group} --
-# if not, mdevd will refuse to start (or coldplug)
-
 let
   mdev-like-a-boss =
     let
@@ -58,127 +55,284 @@ let
       };
   helpers = "${mdev-like-a-boss}/bin";
   busybox = "${pkgs.busybox}/bin/busybox ";
+
+  mkMdevConfLine =
+    { stop-if-match ? true,
+      user ? "root",
+      group ? "root",
+      octal-mode ? "660",
+
+      devname-regex ? ".*",
+      env-regexes ? {},
+
+      create-device-node ? true,
+      symlink-device-node ? false,   # if false then move rather than symlink
+      path ? null,
+
+      remove-argv ? null,
+      add-argv ? null,
+      change-argv ? null,
+
+      use-execline ? false,
+  }:
+    assert lib.isString octal-mode;
+/*
+    assert !(builtins.hasAttr user host.users) ->
+            throw "mdev.conf mentions ${user} which is not in host.users";
+    assert !(builtins.hasAttr group host.groups) ->
+            throw "mdev.conf mentions ${group} which is not in host.groups";
+*/
+    assert (devname-regex==null && env-regexes=={}) ->
+           throw "you must specify either devname-regex or env-regexes";
+    assert
+      (if remove-argv==null then 0 else 1) +
+      (if change-argv==null then 0 else 1) +
+      (if add-argv==null then 0 else 1)
+      > 1 -> throw "at most one of {add,change,remove}-argv must be specified";
+
+    let
+
+      conditions =
+        # There is a third type of condition supported by mdevd, "@maj,min[-min2]"
+        # which is not supported here.  You can simulate it using environment
+        # regexes.
+        lib.mapAttrsToList (varname: regex: "${varname}=${regex}") env-regexes ++
+        lib.optionals (devname-regex!=null) [ devname-regex ];
+
+      device-node-action =
+        if !create-device-node
+        then "!"
+        else if path == null
+        then ""
+        else if symlink-device-node
+        then ">${path}"
+        else "=${path}";
+
+      argv-prefix =
+        if use-execline
+        then
+          # FIXME: must ensure that `execline` is reachable via $PATH
+          if change-argv!=null then "&"
+          else if remove-argv!=null then "-"
+          else if add-argv!=null then "+"
+          else ""
+        else
+          if change-argv!=null then "*"
+          else if remove-argv!=null then "$"
+          else if add-argv!=null then "@"
+          else "";
+
+      argv' =
+        if change-argv!=null then change-argv
+        else if remove-argv!= null then remove-argv
+        else if add-argv!=null then add-argv
+        else [];
+    in
+      # Syntax:
+      # [-]devicename_regex user:group mode [=path]|[>path]|[!] [@|$|*cmd args...]
+      # [-]$ENVVAR=regex    user:group mode [=path]|[>path]|[!] [@|$|*cmd args...]
+      # [-]@maj,min[-min2]  user:group mode [=path]|[>path]|[!] [@|$|*cmd args...]
+      #
+      # [-]: do not stop on this match, continue reading mdev.conf
+      # =: move, >: move and create a symlink
+      # !: do not create device node
+      # @|$|*: run cmd if $ACTION=remove, @cmd if $ACTION=add, *cmd in all cases
+      lib.concatStringsSep " " [
+        (lib.optionalString (!stop-if-match) "-" + (lib.concatStringsSep ";" conditions))
+        "${user}:${group}"
+        octal-mode
+        device-node-action
+        (argv-prefix + (lib.concatStringsSep " " argv'))
+      ];
 in
-pkgs.writeText "mdevd-conf" (''
-# mdev-like-a-boss
+# Based on the example mdev.conf from mdev-like-a-boss
+pkgs.writeText "mdevd-conf"
+  (lib.concatStringsSep "\n" ([
+    (mkMdevConfLine {
+      stop-if-match = false;
+      create-device-node = false;
+      devname-regex = ".*";
+      path = null;
+      change-argv = [
+        busybox "sh" "-c"
+        "'(${busybox}/env | ${busybox}/sort; echo) >> /run/mdevd-events.log'"
+      ];
+    })
 
-# Syntax:
-# [-]devicename_regex user:group mode [=path]|[>path]|[!] [@|$|*cmd args...]
-# [-]$ENVVAR=regex    user:group mode [=path]|[>path]|[!] [@|$|*cmd args...]
-# [-]@maj,min[-min2]  user:group mode [=path]|[>path]|[!] [@|$|*cmd args...]
-#
-# [-]: do not stop on this match, continue reading mdev.conf
-# =: move, >: move and create a symlink
-# !: do not create device node
-# @|$|*: run cmd if $ACTION=remove, @cmd if $ACTION=add, *cmd in all cases
+    # support module loading on hotplug
+    (mkMdevConfLine {
+      devname-regex = null;
+      env-regexes = { "$MODALIAS" = ".*"; };
+      add-argv = [ modprobe-command "\"$MODALIAS\"" ];
+      path = null;
+    })
 
--.* root:root 660 ! *${busybox} sh -c '(${busybox}/env | ${busybox}/sort; echo) >> /run/mdevd-events.log'
+    # /dev/null may already exist; therefore ownership has to be changed with command
+    (mkMdevConfLine {
+      devname-regex = "null";
+      octal-mode = "666";
+      add-argv = [ busybox "chmod" "666" "$MDEV" ];
+    })
+    (mkMdevConfLine { devname-regex = "zero"; octal-mode = "666"; })
+    (mkMdevConfLine { devname-regex = "full"; octal-mode = "666"; })
+    (mkMdevConfLine { devname-regex = "random"; octal-mode = "444"; })
+    (mkMdevConfLine { devname-regex = "urandom"; octal-mode = "444"; })
+    (mkMdevConfLine { devname-regex = "hwrandom"; octal-mode = "444"; })
+    (mkMdevConfLine { devname-regex = "grsec"; })
 
-# support module loading on hotplug
-$MODALIAS=.*    root:root 660 @${modprobe-command} "$MODALIAS"
+    # Kernel-based Virtual Machine.
+    (mkMdevConfLine { devname-regex = "kvm"; })
 
-# null may already exist; therefore ownership has to be changed with command
-null        root:root 666 @${busybox} chmod 666 $MDEV
-zero        root:root 666
-full        root:root 666
-random      root:root 444
-urandom     root:root 444
-hwrandom    root:root 444
-grsec       root:root 660
+    # vhost-net, to be used with kvm.
+    (mkMdevConfLine { devname-regex = "vhost-net"; })
 
-# Kernel-based Virtual Machine.
-kvm     root:root 660
+    (mkMdevConfLine { devname-regex = "kmem"; octal-mode = "640"; })
+    (mkMdevConfLine { devname-regex = "mem"; octal-mode = "640"; })
+    (mkMdevConfLine { devname-regex = "port"; octal-mode = "640"; })
+    # console may already exist; therefore ownership has to be changed with command
+    (mkMdevConfLine {
+      devname-regex = "console";
+      octal-mode = "600";
+      add-argv = [ busybox "chmod" "600" "$MDEV" ];
+    })
+    (mkMdevConfLine { devname-regex = "ptmx"; octal-mode = "666"; })
+    (mkMdevConfLine { devname-regex = "pty.*"; })
 
-# vhost-net, to be used with kvm.
-vhost-net   root:root 660
+    # Typical devices
+    (mkMdevConfLine { devname-regex = "tty"; octal-mode = "666"; })
+    (mkMdevConfLine { devname-regex = "tty[0-9]*"; })
+    (mkMdevConfLine { devname-regex = "vcsa*[0-9]*"; })
+    (mkMdevConfLine { devname-regex = "ttyS[0-9]*"; })
 
-kmem        root:root 640
-mem         root:root 640
-port        root:root 640
-# console may already exist; therefore ownership has to be changed with command
-console     root:root 600 @${busybox} chmod 600 $MDEV
-ptmx        root:root 666
-pty.*       root:root 660
+    # block devices
+    (mkMdevConfLine { devname-regex = "ram([0-9]*)"; octal-mode = "660 >rd/%1"; })
+    (mkMdevConfLine { devname-regex = "loop([0-9]+)"; octal-mode = "660 >loop/%1"; })
+    (mkMdevConfLine {
+      devname-regex = "sr[0-9]*";
+      octal-mode = "660";
+      add-argv = [ busybox "ln" "-sf" "$MDEV" "cdrom" ];
+    })
+    (mkMdevConfLine { devname-regex = "fd[0-9]*"; })
+    (mkMdevConfLine {
+      env-regexes = { SUBSYSTEM = "block"; };
+      octal-mode = "660";
+      change-argv = [ "${helpers}/storage-device" ];
+    })
 
-# Typical devices
-tty         root:root 666
-tty[0-9]*   root:root 660
-vcsa*[0-9]* root:root 660
-ttyS[0-9]*  root:root 660
+    # Run settle-nics every time new NIC appear.
+    # If you don't want to auto-populate /etc/mactab with NICs, run 'settle-nis' without '--write-mactab' param.
+    #-SUBSYSTEM=net;DEVPATH=.*/net/.*;.*     root:root 600 @${helpers}/settle-nics --write-mactab
 
-# block devices
-ram([0-9]*)        root:root 660 >rd/%1
-loop([0-9]+)       root:root 660 >loop/%1
-sr[0-9]*           root:root 660 @${busybox} ln -sf $MDEV cdrom
-fd[0-9]*           root:root 660
-SUBSYSTEM=block;.* root:root 660 *${helpers}/storage-device
+    (mkMdevConfLine { devname-regex = "net/tun[0-9]*"; })
+    (mkMdevConfLine { devname-regex = "net/tap[0-9]*"; octal-mode = "600"; })
 
-# Run settle-nics every time new NIC appear.
-# If you don't want to auto-populate /etc/mactab with NICs, run 'settle-nis' without '--write-mactab' param.
-#-SUBSYSTEM=net;DEVPATH=.*/net/.*;.*     root:root 600 @${helpers}/settle-nics --write-mactab
+  ] ++ lib.optionals alsaSupport [
+    # alsa sound devices and audio stuff
+    (mkMdevConfLine {
+      env-regexes = { SUBSYSTEM = "sound"; };
+      group = "audio";
+      octal-mode = "660";
+      add-argv = [ "${helpers}/sound-control" ];
+    })
+  ] ++ [
 
-net/tun[0-9]*   root:root 660
-net/tap[0-9]*   root:root 600
+    (mkMdevConfLine {
+      devname-regex = "adsp";
+      group = "audio";
+      octal-mode = "660";
+      path = "sound/";
+      symlink-device-node = true;
+    })
+    (mkMdevConfLine {
+      devname-regex = "audio";
+      group = "audio";
+      octal-mode = "660";
+      path = "sound/";
+      symlink-device-node = true;
+    })
+    (mkMdevConfLine {
+      devname-regex = "dsp";
+      group = "audio";
+      octal-mode = "660";
+      path = "sound/";
+      symlink-device-node = true;
+    })
+    (mkMdevConfLine {
+      devname-regex = "mixer";
+      group = "audio";
+      octal-mode = "660";
+      path = "sound/";
+      symlink-device-node = true;
+    })
+    (mkMdevConfLine {
+      devname-regex = "sequencer.*";
+      group = "audio";
+      octal-mode = "660";
+      path = "sound/";
+      symlink-device-node = true;
+    })
 
-'' + lib.optionalString alsaSupport ''
-# alsa sound devices and audio stuff
-SUBSYSTEM=sound;.*  root:audio 660 @${helpers}/sound-control
-'' + ''
 
-adsp        root:audio 660 >sound/
-audio       root:audio 660 >sound/
-dsp         root:audio 660 >sound/
-mixer       root:audio 660 >sound/
-sequencer.* root:audio 660 >sound/
+    # raid controllers
+    (mkMdevConfLine { devname-regex = "cciss!(.*)"; path = "cciss/%1"; })
+    (mkMdevConfLine { devname-regex = "ida!(.*)"; path = "ida/%1"; })
+    (mkMdevConfLine { devname-regex = "rd!(.*)"; path = "rd/%1"; })
 
+    (mkMdevConfLine { devname-regex = "fuse"; octal-mode = "666"; })
 
-# raid controllers
-cciss!(.*)  root:root 660 =cciss/%1
-ida!(.*)    root:root 660 =ida/%1
-rd!(.*)     root:root 660 =rd/%1
+    (mkMdevConfLine { devname-regex = "card[0-9]"; group = "video"; path = "dri/"; })
+    (mkMdevConfLine { devname-regex = "dri/.*"; group = "video"; })
 
+    (mkMdevConfLine { devname-regex = "agpgart"; path = "misc/"; symlink-device-node = true; })
+    (mkMdevConfLine { devname-regex = "psaux"; path = "misc/"; symlink-device-node = true; })
+    (mkMdevConfLine { devname-regex = "rtc"; octal-mode = "664"; path = "misc/"; symlink-device-node = true; })
 
-fuse        root:root 666
+    # input stuff
+    (mkMdevConfLine { devname-regex = "SUBSYSTEM=input;.*"; })
 
-card[0-9]   root:video 660 =dri/
-dri/.*      root:video 660
+    # v4l stuff
+    (mkMdevConfLine { devname-regex = "vbi[0-9]"; group = "video"; path = "v4l/"; symlink-device-node = true; })
+    (mkMdevConfLine { devname-regex = "video[0-9]"; group = "video"; path = "v4l/"; symlink-device-node = true; })
 
-agpgart     root:root 660 >misc/
-psaux       root:root 660 >misc/
-rtc         root:root 664 >misc/
+    # dvb stuff
+    (mkMdevConfLine { devname-regex = "dvb.*"; group = "video"; })
 
+    # Don't create old usbdev* devices.
+    (mkMdevConfLine { devname-regex = "usbdev[0-9].[0-9]*"; create-device-node = false; })
 
-# input stuff
-SUBSYSTEM=input;.* root:root 660
+    # Stop creating x:x:x:x which looks like /dev/dm-*
+    (mkMdevConfLine { devname-regex = "[0-9]+\\:[0-9]+\\:[0-9]+\\:[0-9]+"; create-device-node = false; })
 
+    # /dev/cpu support.
+    (mkMdevConfLine { devname-regex = "microcode"; octal-mode = "600"; path = "cpu/"; })
+    (mkMdevConfLine { devname-regex = "cpu([0-9]+)"; octal-mode = "600"; path = "cpu/%1/cpuid"; })
+    (mkMdevConfLine { devname-regex = "msr([0-9]+)"; octal-mode = "600"; path = "cpu/%1/msr"; })
 
-# v4l stuff
-vbi[0-9]    root:video 660 >v4l/
-video[0-9]  root:video 660 >v4l/
+    # Populate /dev/bus/usb.
+    (mkMdevConfLine {
+      stop-if-match = false;
+      env-regexes = {
+        SUBSYSTEM = "usb";
+        DEVTYPE = "usb_device";
+      };
+      octal-mode = "660";
+      change-argv = [ "${helpers}/dev-bus-usb" ];
+    })
 
-# dvb stuff
-dvb.*       root:video 660
+    ] ++ lib.optionals (host.name == "ostraka") [
+    # gnuk
+    # FIXME move this out of the sixos repo!
+    (mkMdevConfLine {
+      env-regexes = {
+        SUBSYSTEM = "usb";
+        PRODUCT = "234b/0/200";
+        user = "user";
+        group = "user";
+        octal-mode = "660";
+      };
+    })
+    ] ++ [
 
-# Don't create old usbdev* devices.
-usbdev[0-9].[0-9]* root:root 660 !
-
-# Stop creating x:x:x:x which looks like /dev/dm-*
-[0-9]+\:[0-9]+\:[0-9]+\:[0-9]+ root:root 660 !
-
-# /dev/cpu support.
-microcode       root:root 600 =cpu/
-cpu([0-9]+)     root:root 600 =cpu/%1/cpuid
-msr([0-9]+)     root:root 600 =cpu/%1/msr
-
-# Populate /dev/bus/usb.
--SUBSYSTEM=usb;DEVTYPE=usb_device;.* root:root 660 *${helpers}/dev-bus-usb
-
-'' + lib.optionalString (host.name == "ostraka") ''
-# gnuk
-SUBSYSTEM=usb;PRODUCT=234b/0/200;.* user:user 660
-'' + ''
-
-# Catch-all other devices, Right now useful only for debuging.
-#.* root:root 660 *${helpers}/catch-all
-
-'')
+    # Catch-all other devices, Right now useful only for debuging.
+    #.* root:root 660 *${helpers}/catch-all
+  ]))
