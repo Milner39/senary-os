@@ -22,7 +22,7 @@ let
     rpccookiefile = "${datadir}/rpc-cookie";
     printtoconsole = true;
     disablewallet = true;
-    nodebuglogfile =true;
+    nodebuglogfile = true;
     rpccookieperms = "group";  # readable-by
   } // extraConfig;
 
