@@ -24,6 +24,9 @@ let
     inherit (root.lib) toPrettyTry;
   };
 
+  network = pkgs.callPackage ./network {
+    inherit lib;
+  };
 
 in {
   inherit
