@@ -79,14 +79,18 @@ exec ${pkgs.sway}/bin/sway ${lib.escapeShellArgs sway-args} -c "${sway-config}"
 
 in
 six.mkFunnel {
-  passthru.after = [ targets.global.coldplug seatd ];
-  passthru.essential = true;
+  passthru = {
+    after = [ targets.global.coldplug seatd ];
+    essential = true;
+    inherit user /*group*/;
+  };
   run = pkgs.writeScript "run"
 (''
   #!${pkgs.runtimeShell}
   exec 2>&1
 
   # make sure the opengl driver link exists
+  # FIXME move this to the activation script?
   ${pkgs.coreutils}/bin/ln -sfT /run/current-system/sw /run/opengl-driver || exit -1
 
   # swaylock wont start on non-pam systems unless it can read /etc/shadow
