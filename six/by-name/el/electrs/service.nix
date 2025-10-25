@@ -7,6 +7,7 @@
 , group ? "bitcoind"
 , datadir ? throw "you must specify datadir"
 , bitcoind ? throw "you must specify targets.bitcoind"
+, network ? "bitcoin"
 , electrum-rpc-addr ? throw "you must specify electrum-rpc-addr"
 , monitoring-addr ? throw "you must specify monitoring-addr"
 , daemon-rpc-addr ? throw "you must specify daemon-rpc-addr"
@@ -24,7 +25,7 @@ let
       daemon-dir = bitcoind.passthru.datadir;
       cookie-file = bitcoind.passthru.config.rpccookiefile;
       db-dir = datadir;
-      network = "bitcoin";
+      inherit network;
       inherit electrum-rpc-addr;
       inherit monitoring-addr;
       inherit daemon-rpc-addr;
