@@ -27,6 +27,9 @@ let
 
 in
 
+assert config?rpcbind && !(config?rpcallowip)
+  -> throw "-rpcbind is ignored if -rpcallowip is missing";
+
 six.mkFunnel {
 
   run =
