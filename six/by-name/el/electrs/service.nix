@@ -9,9 +9,9 @@
 , bitcoind ? throw "you must specify targets.bitcoind"
 , network ? "bitcoin"
 , electrum-rpc-addr ? throw "you must specify electrum-rpc-addr"
-, monitoring-addr ? throw "you must specify monitoring-addr"
-, daemon-rpc-addr ? throw "you must specify daemon-rpc-addr"
-, daemon-p2p-addr ? throw "you must specify daemon-p2p-addr"
+, monitoring-addr ? "127.0.0.1:4224"
+, daemon-rpc-addr ? bitcoind.passthru.config.daemon-rpc-addr or "127.0.0.1:8332"
+, daemon-p2p-addr ? "${bitcoind.passthru.config.bind}:8333"
 , extraArgs ? {}
 }:
 
