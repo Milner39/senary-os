@@ -328,7 +328,6 @@ let
   ''
     # need WAY more sanity checks at the time nextboot is executed, especially
     # when installing for the first time using a chroot:
-    # - mkdir -m 0000 -p /mnt/tmp/{run,dev,proc,sys}
     # - all mountpoints must exist, since root is read-only initially
     # might be worth checking for this stuff at kexec-time
   + ''
