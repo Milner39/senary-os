@@ -8,7 +8,8 @@
 , targets
 , host
 
-, conf ? pkgs.callPackage ./conf.nix { inherit host; }
+, extraStructuredConfig ? []
+, conf ? pkgs.callPackage ./conf.nix { inherit host extraStructuredConfig; }
 
 , firmwarePath ? "/run/current-system/boot/firmware/lib/firmware"
 , performColdplug ? false

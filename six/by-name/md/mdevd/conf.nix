@@ -4,6 +4,9 @@
 , alsaSupport ? !stdenv.hostPlatform.isMips
 , modprobe-command ? "/run/current-system/boot/modprobe-wrapped"
 , host
+
+# This is a list of attrsets, each of which will be passed to mkMdevConfLine
+, extraStructuredConfig ? []
 }:
 
 let
@@ -317,19 +320,7 @@ pkgs.writeText "mdevd-conf"
       change-argv = [ "${helpers}/dev-bus-usb" ];
     })
 
-    ] ++ lib.optionals (host.name == "ostraka") [
-    # gnuk
-    # FIXME move this out of the sixos repo!
-    (mkMdevConfLine {
-      env-regexes = {
-        SUBSYSTEM = "usb";
-        PRODUCT = "234b/0/200";
-        user = "user";
-        group = "user";
-        octal-mode = "660";
-      };
-    })
-    ] ++ [
+    ] ++ (lib.map mkMdevConfLine extraStructuredConfig) ++ [
 
     # Catch-all other devices, Right now useful only for debuging.
     #.* root:root 660 *${helpers}/catch-all
