@@ -31,11 +31,6 @@
 , delete-generations
 }:
 
-let
-  s6-linux-init   = pkgs.callPackage ./s6-linux-init.nix { };
-in
-
-
 host-final:
 host-prev:
 
@@ -87,7 +82,7 @@ let
       ])} $out/six/s6-rc/db ${source}
   '');
 
-  s6-linux-init-cpio = s6-linux-init.override {
+  s6-linux-init-cpio = (pkgs.callPackage ./s6-linux-init.nix { }).override {
     inherit early-getty;
     initial-path = "/run/current-system/sw/bin";
   };
