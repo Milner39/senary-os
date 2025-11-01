@@ -61,6 +61,7 @@ in
   run = pkgs.writeScript "run"
 ''
 #!${pkgs.runtimeShell}
+exec >& /run/mdevd-errors.log
 exec 2>&1
 
 # to force explicit $PATH, since mdevd is painful to debug
