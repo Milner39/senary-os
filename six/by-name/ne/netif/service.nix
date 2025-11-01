@@ -32,6 +32,8 @@
 
 , master ? null    # if non-null, specifies the master interface of the bridge to which this interface belongs
 
+, cannot-be-taken-down ? false  # set to true if this interface is essential, ie nfsroot
+
 , passthru ? {}
 }:
 
@@ -47,7 +49,9 @@ assert dhcp -> (gw==null || gw==true);
 
 let passthru' = passthru; in
 let
-  passthru = passthru' // {
+  passthru = lib.optionalAttrs cannot-be-taken-down {
+    essential = true;
+  } // passthru' // {
     inherit ifname;
     after = (passthru'.after or []) ++ (with targets.global; [
       coldplug      # note: udhcpc expects /dev/random
@@ -151,7 +155,7 @@ let
   ];
 
 in if dhcp
-   then six.mkFunnel {
+   then six.mkFunnel ({
      inherit passthru;
      run = pkgs.writeScript "run-dhcp-${ifname}" (''
        #!${pkgs.runtimeShell}
@@ -159,9 +163,10 @@ in if dhcp
        ${up}
        exec ${pkgs.busybox}/bin/busybox udhcpc ${lib.escapeShellArgs udhcpc-args}
      '');
+   } // lib.optionalAttrs (!cannot-be-taken-down) {
      finish = down;
-   }
-   else six.mkOneshot {
+   })
+   else six.mkOneshot ({
      up = pkgs.writeScript "up-${ifname}" (''
        #!${pkgs.runtimeShell}
        exec 2>&1
@@ -175,5 +180,8 @@ in if dhcp
      '' + lib.optionalString (post-up != null) ''
        ${post-up}
      '');
-     inherit down passthru;
-   }
+     inherit passthru;
+   } // lib.optionalAttrs (!cannot-be-taken-down) {
+     inherit down;
+   })
+
