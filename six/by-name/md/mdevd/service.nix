@@ -67,6 +67,9 @@ exec 2>&1
 # to force explicit $PATH, since mdevd is painful to debug
 export PATH=
 
+# execlineb must be in mdevd's path in order for {+,-,&}-commands to work
+export PATH=$PATH:${pkgs.execline}/bin
+
 exec \
   ${lib.getBin pkgs.mdevd}/bin/mdevd \
   -f ${scandir}/$1/data/mdev.conf \
