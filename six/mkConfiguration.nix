@@ -264,11 +264,7 @@ let
 
       # ectool (and other things) expect /run/lock (formerly /var/lock) to exist
       ${pkgs.busybox}/bin/mkdir /run/lock
-      # FIXME: root filesystem is still read-only at this point
-      #${pkgs.busybox}/bin/mkdir -m 0555 -p /bin
-      #${pkgs.busybox}/bin/ln -sfT /run/current-system/sw/bin/sh /bin/sh
-      #${pkgs.busybox}/bin/mkdir -m 0555 -p /usr/bin
-      #${pkgs.busybox}/bin/ln -sfT /run/current-system/sw/bin/env /usr/bin/env
+
       ${pkgs.busybox}/bin/mkdir -p ${scandir}
       ${pkgs.s6-rc}/bin/s6-rc-init -d -c /run/current-system/six/s6-rc/db $@ ${scandir}
       # Presumably / is still read-only at this point, so we don't try to
