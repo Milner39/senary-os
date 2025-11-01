@@ -10,43 +10,9 @@
 }:
 
 let
-  mdev-like-a-boss =
-    let
-      pname = "mdev-like-a-boss";
-      version = "20200119";
-    in
-      stdenv.mkDerivation {
-        inherit pname version;
-        src = pkgs.fetchFromGitHub {
-          owner = "slashbeast";
-          repo = pname;
-          rev = "f77310ea8e039282a545f17df676f2e42f112746";
-          hash = "sha256-dGUSyE4/0od7CGM600+51JZZsJtYt1qLK2oSa92blzw=";
-        };
-        nativeBuildInputs = [ pkgs.buildPackages.makeWrapper ];
-        dontBuild = true;
-        installPhase = ''
-          runHook preInstall
-        '' + lib.optionalString alsaSupport ''
-          substituteInPlace helpers/sound-control \
-            --replace "alsactl " \
-                      "alsactl -f /run/alsa-state "
-        '' + ''
-          mkdir $out
-          mv helpers $out/bin
-        '' + lib.optionalString alsaSupport ''
-          wrapProgram $out/bin/sound-control  --prefix PATH : ${with pkgs; lib.makeBinPath [ coreutils alsa-utils ]}
-        '' + lib.optionalString (!alsaSupport) ''
-          rm -f $out/bin/sound-control
-        '' + ''
-          wrapProgram $out/bin/settle-nics    --prefix PATH : ${with pkgs; lib.makeBinPath [ coreutils iproute2 nettools]}
-          wrapProgram $out/bin/dev-bus-usb    --prefix PATH : ${with pkgs; lib.makeBinPath [ coreutils gnugrep ]}
-          wrapProgram $out/bin/storage-device --prefix PATH : ${with pkgs; lib.makeBinPath [ coreutils gawk util-linux ]}
-          chmod +x $out/bin/*
-          runHook postInstall
-        '';
-      };
-  helpers = "${mdev-like-a-boss}/bin";
+  helpers = import ./helpers.nix
+    { inherit lib stdenv pkgs alsaSupport; };
+
   busybox = "${pkgs.busybox}/bin/busybox ";
 
   mkMdevConfLine =
@@ -215,12 +181,12 @@ in
     {
       env-regexes = { SUBSYSTEM = "block"; };
       octal-mode = "660";
-      change-argv = [ "${helpers}/storage-device" ];
+      change-argv = [ "${helpers}/bin/storage-device" ];
     }
 
     # Run settle-nics every time new NIC appear.
     # If you don't want to auto-populate /etc/mactab with NICs, run 'settle-nis' without '--write-mactab' param.
-    #-SUBSYSTEM=net;DEVPATH=.*/net/.*;.*     root:root 600 @${helpers}/settle-nics --write-mactab
+    #-SUBSYSTEM=net;DEVPATH=.*/net/.*;.*     root:root 600 @${helpers}/bin/settle-nics --write-mactab
 
     { devname-regex = "net/tun[0-9]*"; }
     { devname-regex = "net/tap[0-9]*"; octal-mode = "600"; }
@@ -231,7 +197,7 @@ in
       env-regexes = { SUBSYSTEM = "sound"; };
       group = "audio";
       octal-mode = "660";
-      add-argv = [ "${helpers}/sound-control" ];
+      add-argv = [ "${helpers}/bin/sound-control" ];
     }
 
   ] ++ (lib.map (devname-regex: {
@@ -291,13 +257,13 @@ in
         DEVTYPE = "usb_device";
       };
       octal-mode = "660";
-      change-argv = [ "${helpers}/dev-bus-usb" ];
+      change-argv = [ "${helpers}/bin/dev-bus-usb" ];
     }
 
   ] ++ extraStructuredConfig ++ [
 
     # Catch-all other devices, Right now useful only for debuging.
-    #.* root:root 660 *${helpers}/catch-all
+    #.* root:root 660 *${helpers}/bin/catch-all
   ]) [
     (lib.map mkMdevConfLine)
     (lib.concatStringsSep "\n")
