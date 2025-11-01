@@ -32,6 +32,7 @@ let
         # consider automatically allowing arguments `before` and `after` which, if
         # present, become `overrideAttrs` applied to `passthru`
         callService = path: final.callPackage path;
+        host = final;
 
         six = {
           mkService       = final.callPackage ../six/mkService.nix;
