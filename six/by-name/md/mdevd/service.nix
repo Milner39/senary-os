@@ -6,8 +6,10 @@
 , six
 , services
 , targets
+, host
 
-, conf ? throw "you must pass conf with your mdev.conf file"
+, conf ? pkgs.callPackage ./conf.nix { inherit host; }
+
 , firmwarePath ? "/run/current-system/boot/firmware/lib/firmware"
 , performColdplug ? false
 , kernelBufferSize ?

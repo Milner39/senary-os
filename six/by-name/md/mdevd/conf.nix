@@ -6,16 +6,6 @@
 , host
 }:
 
-# FIXME still need:
-/*
-# conway
-options snd_hda_intel tsched=0 power_save=0
-
-# ostraka
-options snd_hda_intel power_save=999 power_save_controller=0 bdl_pos_adj=256
-${alsa-utils}/bin/amixer -c HDMI set IEC958,3 unmute
-*/
-
 let
   mdev-like-a-boss =
     let
@@ -147,15 +137,23 @@ let
 in
 # Based on the example mdev.conf from mdev-like-a-boss
 pkgs.writeText "mdevd-conf"
+
   (lib.concatStringsSep "\n" ([
+
+    # log each event to /run/mdevd-events.log
     (mkMdevConfLine {
       stop-if-match = false;
       create-device-node = false;
       devname-regex = ".*";
       path = null;
       change-argv = [
-        busybox "sh" "-c"
-        "'(${busybox}/env | ${busybox}/sort; echo) >> /run/mdevd-events.log'"
+        "(${lib.concatStringsSep "; " [
+          "unset TZ"
+          "echo -n $ACTION \" \"" "unset ACTION"
+          "echo -n $SEQNUM \" \"" "unset SEQNUM"
+          "${busybox} env | ${busybox} grep -v \"^\\(_\\|SHLVL\\|PATH\\|PWD\\)=\" | ${busybox} sort | ${busybox} tr \"\\n\" \" \" "
+          "echo"
+        ]}) >> /run/mdevd-events.log"
       ];
     })
 

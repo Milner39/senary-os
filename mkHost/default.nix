@@ -245,9 +245,7 @@ let
       })
       {
         targets = {
-          mdevd = _: final.services.mdevd {
-            conf = final.pkgs.callPackage ../mdev-conf.nix { host = final; };
-          };
+          mdevd.__assign     = final.services.mdevd { };
           mdevd-coldplug     = _: final.services.mdevd-coldplug { };
           dnscache           = _: final.services.dnscache { };
           nix-daemon         = _: final.services.nix-daemon {};
