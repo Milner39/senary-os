@@ -233,44 +233,20 @@ in
       octal-mode = "660";
       add-argv = [ "${helpers}/sound-control" ];
     }
-  ] ++ [
 
-    {
-      devname-regex = "adsp";
-      group = "audio";
-      octal-mode = "660";
-      path = "sound/";
-      symlink-device-node = true;
-    }
-    {
-      devname-regex = "audio";
-      group = "audio";
-      octal-mode = "660";
-      path = "sound/";
-      symlink-device-node = true;
-    }
-    {
-      devname-regex = "dsp";
-      group = "audio";
-      octal-mode = "660";
-      path = "sound/";
-      symlink-device-node = true;
-    }
-    {
-      devname-regex = "mixer";
-      group = "audio";
-      octal-mode = "660";
-      path = "sound/";
-      symlink-device-node = true;
-    }
-    {
-      devname-regex = "sequencer.*";
-      group = "audio";
-      octal-mode = "660";
-      path = "sound/";
-      symlink-device-node = true;
-    }
-
+  ] ++ (lib.map (devname-regex: {
+    inherit devname-regex;
+    group = "audio";
+    octal-mode = "660";
+    path = "sound/";
+    symlink-device-node = true;
+  }) [
+    "adsp"
+    "audio"
+    "dsp"
+    "mixer"
+    "sequencer.*"
+  ]) ++ [
 
     # raid controllers
     { devname-regex = "cciss!(.*)"; path = "cciss/%1"; }
