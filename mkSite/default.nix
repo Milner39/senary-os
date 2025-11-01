@@ -203,6 +203,7 @@ let
   ] ++ (map root.lib.apply-to-hosts site.overlay) ++ [
 
     # apply tags
+    # FIXME: throw an error if host.tags contains attributes that aren't in site.tags
   ] ++ (lib.pipe tags-unprocessed [
 
     (lib.mapAttrs (tag: overlay:
