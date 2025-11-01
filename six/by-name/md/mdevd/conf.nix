@@ -6,7 +6,7 @@
 , host
 
 # This is a list of attrsets, each of which will be passed to mkMdevConfLine
-, extraStructuredConfig ? []
+, extraStructuredConfig
 }:
 
 let
