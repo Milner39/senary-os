@@ -204,8 +204,8 @@ in
     { devname-regex = "ttyS[0-9]*"; }
 
     # block devices
-    { devname-regex = "ram([0-9]*)"; octal-mode = "660 >rd/%1"; }
-    { devname-regex = "loop([0-9]+)"; octal-mode = "660 >loop/%1"; }
+    { devname-regex = "ram([0-9]*)"; octal-mode = "660"; symlink-device-node = true; path = "rd/%1"; }
+    { devname-regex = "loop([0-9]+)"; octal-mode = "660"; symlink-device-node = true; path = "loop/%1"; }
     {
       devname-regex = "sr[0-9]*";
       octal-mode = "660";
@@ -287,7 +287,7 @@ in
     { devname-regex = "rtc"; octal-mode = "664"; path = "misc/"; symlink-device-node = true; }
 
     # input stuff
-    { devname-regex = "SUBSYSTEM=input;.*"; }
+    { env-regexes.SUBSYSTEM = "input"; }
 
     # v4l stuff
     { devname-regex = "vbi[0-9]"; group = "video"; path = "v4l/"; symlink-device-node = true; }
