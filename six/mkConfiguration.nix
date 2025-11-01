@@ -288,6 +288,10 @@ let
     #!${pkgs.runtimeShell} -ex
     mkdir -p /run/kexec
     chmod 0700 /run/kexec
+  ''
+  # FIXME(amjoseph): start requiring that boot.initrd.image is *uncompressed*;
+  # compress on-the-fly when writing it to /run
+  + ''
     ${pkgs.busybox}/bin/zcat ${boot.initrd.image} > /run/kexec/initrd
   ''
 
