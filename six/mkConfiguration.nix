@@ -32,7 +32,6 @@
 }:
 
 let
-  services = root.six.by-name;
   util = root.six.util;
   s6-linux-init   = pkgs.callPackage ./s6-linux-init.nix { };
 in
