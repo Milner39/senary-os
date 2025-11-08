@@ -82,9 +82,9 @@ let
                             system = lib.systems.parse.mkSystemFromString canonical;
                             name = "system-${predicate-name}";
                             value = predicate-function system;
-                          in {
-                            inherit name value;
-                          })
+                          in
+                            lib.nameValuePair name value
+                        )
                     ))
                   ];
                 };
