@@ -7,8 +7,8 @@ final: prev: infuse prev {
   boot.loader.update.__assign = let
     inherit (final) pkgs;
   in pkgs.writeShellScript "update-syslinux" ''
-    ${pkgs.busybox}/bin/busybox blkid | ${pkgs.busybox}/bin/busybox grep -q 'LABEL="${final.boot.rootfs.label}"' || \
-      (echo -e '\n***\nno device with LABEL=${final.boot.rootfs.label}, refusing to update bootloader (sanity check)\n***\n'; exit -1)
+    ${pkgs.busybox}/bin/busybox blkid | ${pkgs.busybox}/bin/busybox grep -q 'LABEL="${final.boot.loader.filesystem.label}"' || \
+      (echo -e '\n***\nno device with LABEL=${final.boot.loader.filesystem.label}, refusing to update bootloader (sanity check)\n***\n'; exit -1)
     ${pkgs.busybox}/bin/mkdir -p /run/six/update-bootloader-mountpoint
     ${pkgs.busybox}/bin/umount /run/six/update-bootloader-mountpoint 2>/dev/null || true # in case it was mounted
     ${pkgs.busybox}/bin/mount LABEL=${final.boot.loader.filesystem.label} /run/six/update-bootloader-mountpoint
