@@ -5,7 +5,7 @@
 }:
 
 # you have to pass the site.tags in, since we derive types from it
-{ tags }@args:
+{ tag-overlays }@args:
 
 with yants;
 let
@@ -20,7 +20,7 @@ let
 
     # the default tag attrset (i.e. all leaves false) for a host in this site
     default-tag-values =
-      lib.mapAttrsRecursive (path: val: false) tags;
+      lib.mapAttrsRecursive (path: val: false) tag-overlays;
 
     # because `final.host.${hostname}.tags` is a frequent source of infinite
     # recursion, all functions which modify `host.${hostname}.tags` use this
@@ -103,7 +103,7 @@ let
       canonical = string;      # gnu-config triple
       hostid = option string;  # identifier for diskless hosts
 
-      tags = attrs2yants "tags" args.tags;
+      tags = attrs2yants "tags" args.tag-overlays;
 
       # in the `final` parameter, site.host.${name}.site == site
       site = option any;

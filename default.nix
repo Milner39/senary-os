@@ -103,9 +103,9 @@ let
       #types.site
         site-unchecked;
 
-  tags-unprocessed = lib.attrsets.unionOfDisjoint root.tags site-dir.tags;
+  tag-overlays = lib.attrsets.unionOfDisjoint root.tags site-dir.tags;
 
-  types = root.types { tags = tags-unprocessed; };
+  types = root.types { tag-overlays = tag-overlays; };
 
   mapDerivations' =
     path: f: val:
@@ -141,7 +141,7 @@ let
 
   site =
     lib.pipe (root.mkSite {
-      inherit site-dir tags-unprocessed types;
+      inherit site-dir tag-overlays types;
     }) ([
       # compose the extensions into a single (final: prev: ...)
       (lib.foldr lib.composeExtensions (_: _: {}))

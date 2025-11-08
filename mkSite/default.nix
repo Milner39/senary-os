@@ -12,7 +12,7 @@
 
 {
   site-dir,
-  tags-unprocessed,
+  tag-overlays,
   types,
 }:
 
@@ -28,7 +28,7 @@ let
       #types.site
         ({
           inherit (site) subnets overlay globals;
-          tags = tags-unprocessed;
+          tag-overlays = tag-overlays;
           # This is a copy of site.hosts built by passing in an attrset full of
           # `throw` values as the fixpoint argument.  This ensures that the
           # `canonical` and `name` fields of `final.hosts.${name}` do not depend
@@ -221,7 +221,7 @@ let
       lib.pipe host-final.tags [
         (lib.filterAttrs (_: v: v))
         lib.attrNames
-        (lib.map (name: tags-unprocessed.${name} host-final))
+        (lib.map (name: tag-overlays.${name} host-final))
         (lib.foldl' (acc: func: func acc) host-prev)
       ])
 
