@@ -8,7 +8,6 @@
 [
 
  # basic minimal initrd
- (root.lib.forall-hosts
    (final: prev: infuse prev {
      boot.initrd.image.__assign =
        (six-initrd {
@@ -16,16 +15,14 @@
          inherit (final) pkgs;
        })
          .minimal;
-  }))
+  })
 
- (root.lib.forall-hosts
    (final: prev: infuse prev {
      boot.initrd.image.__input.contents.__init =
        final.boot.initrd.contents;
-   }))
+   })
 
  # abduco-enabled initrd
- (root.lib.forall-hosts
   (final: prev: infuse prev ({
     boot.initrd.contents =
       lib.mapAttrs
@@ -36,10 +33,9 @@
         }).abduco {
           ttys = final.boot.initrd.ttys;
         });
-  })))
+  }))
 
  # minimum necessary contents
- (root.lib.forall-hosts
   (final: prev: let
     inherit (final) pkgs;
   in infuse prev ({
@@ -78,9 +74,8 @@
         blacklist snd_pcsp
       '';
     });
-  })))
+  }))
 
- (root.lib.forall-hosts
   (final: prev: let inherit (final) pkgs; in infuse prev ( {
     boot.initrd.image.__input.contents =
       lib.optionalAttrs final.tags.is-nfsroot {
@@ -94,10 +89,9 @@
         modprobe dwmac_rk
       ''];
     };
-  })))
+  }))
 
  # cryptsetup-enabled initrd
- (root.lib.forall-hosts
   (final: prev: let inherit (final) pkgs; in infuse prev ({
     boot.initrd.image.__input.contents = lib.optionalAttrs (!final.tags.is-nfsroot) {
       "early/run".__append = [''
@@ -128,10 +122,9 @@
           });
         in "${lib.getBin cryptsetup}/bin/cryptsetup";
     };
-  })))
+  }))
 
  # lvm-enabled initrd
- (root.lib.forall-hosts
   (final: prev: let inherit (final) pkgs; in infuse prev ( {
     boot.initrd.image.__input.contents = lib.optionalAttrs (!final.tags.is-nfsroot && !final.tags.dont-mount-root) {
       "early/run".__append = [''
@@ -150,10 +143,9 @@
       mount -o ro          LABEL=boot /root || \
       exit 1
     ''];
-  })))
+  }))
 
  # switch_root into the chosen profile
- (root.lib.forall-hosts
   (final: prev: let
     inherit (final) pkgs;
   in infuse prev ({
@@ -175,11 +167,10 @@
         && exec switch_root /root $CONFIGURATION/boot/init
       exec /bin/sh
     ''];
-  })))
+  }))
 
- (root.lib.forall-hosts
   (host-final: prev: infuse prev ({
     boot.initrd.image.__input.contents."early/run".__append =
       host-final.boot.initrd.mount-root;
-  })))
+  }))
 ]

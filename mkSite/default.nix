@@ -198,7 +198,7 @@ let
         }.${prev.canonical or ""})  # FIXME: use final.canonical
       ))
 
-  ] ++ (root.initrd) ++ [
+  ] ++ (map root.lib.forall-hosts root.initrd) ++ [
 
   ] ++ (map root.lib.apply-to-hosts site.overlay) ++ [
 
