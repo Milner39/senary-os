@@ -192,8 +192,14 @@ let
             import ../arch/arm64 {
               inherit lib final infuse;
             };
-          mips-unknown-linux-gnu = {};
-          armv7l-unknown-linux-gnueabi = {};
+          mips-unknown-linux-gnu =
+            import ../arch/mips32 {
+              inherit lib final infuse;
+            };
+          armv7l-unknown-linux-gnueabi =
+            import ../arch/arm32 {
+              inherit lib final infuse;
+            };
           "" = {};
         }.${prev.canonical or ""})  # FIXME: use final.canonical
       ))

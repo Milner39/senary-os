@@ -6,9 +6,9 @@
 
 {
   boot.kernel.image.__assign = "${final.boot.kernel.package}/Image";
-  boot.kernel.payload = prev:
+  boot.kernel.payload.__assign =
     if !final.tags.is-bootloader-uboot
-    then prev
+    then "${final.boot.kernel.package}/bzImage"  # probably wrong
     else let
       preload-hex     =  "9800800";
       loadaddr-hex    =  "6000000";
