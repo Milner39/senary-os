@@ -9,12 +9,11 @@
   ...
 }:
 {
-  hosts-final,
-  hosts-prev,
-  name,
+  host-final,
   host-prev,
 }:
 let
+  inherit (host-final) name;
 
   add-spath =
     spath: v:

@@ -200,7 +200,7 @@ let
 
   ] ++ (map root.lib.forall-hosts root.initrd) ++ [
 
-  ] ++ (map root.lib.apply-to-hosts site.overlay) ++ [
+  ] ++ site.overlay ++ [
 
     # apply tags
     # FIXME: throw an error if host.tags contains attributes that aren't in site.tags
@@ -234,16 +234,12 @@ let
           boot.kernel.firmware.__default = [];
         }))
 
-    (root.lib.apply-to-hosts
-      (hosts-final: hosts-prev:
-        lib.flip lib.mapAttrs hosts-prev
-          (name: host-prev:
-            mkHost {
-              inherit hosts-final;
-              inherit hosts-prev;
-              inherit name;
-              inherit host-prev;
-            })))
+    (root.lib.forall-hosts
+      (host-final: host-prev:
+        mkHost {
+          inherit host-final;
+          inherit host-prev;
+        }))
 
   ] ++ [
 

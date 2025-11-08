@@ -145,7 +145,6 @@ in {
     maybe-invoke-readTree
     forall-hosts
     forall-hosts'
-    apply-to-hosts
     make-host-attrnames-deterministic
     toPrettyTryWrapper
     toPrettyTry
