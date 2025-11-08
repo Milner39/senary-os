@@ -160,8 +160,7 @@ let
             + lib.optionalString (baud!=null) ",${toString baud}";
         in infuse prev {
           boot.kernel.params   = _: [
-            #"root=${final.boot.rootfs.parameter}"
-            "root=LABEL=boot"
+            "root=${final.boot.rootfs.parameter}"
           ] ++ lib.optionals final.boot.rootfs.first-mount-is-readonly [
             "ro"
           ] ++ lib.optionals (final.boot?kernel.console) [
