@@ -27,7 +27,6 @@ let
       prev // {
 
         inherit lib yants;
-        #inherit (hosts-final.${name}) pkgs;
 
         # consider automatically allowing arguments `before` and `after` which, if
         # present, become `overrideAttrs` applied to `passthru`
