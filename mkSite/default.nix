@@ -178,19 +178,19 @@ let
         ({
           x86_64-unknown-linux-gnu =
             import ../arch/amd64 {
-              inherit final infuse name;
+              inherit final infuse;
             };
           mips64el-unknown-linux-gnuabi64 =
             import ../arch/mips64 {
-              inherit final infuse name;
+              inherit final infuse;
             };
           powerpc64le-unknown-linux-gnu =
             import ../arch/powerpc64 {
-              inherit final infuse name;
+              inherit final infuse;
             };
           aarch64-unknown-linux-gnu =
             import ../arch/arm64 {
-              inherit lib final infuse name;
+              inherit lib final infuse;
             };
           mips-unknown-linux-gnu = {};
           armv7l-unknown-linux-gnueabi = {};

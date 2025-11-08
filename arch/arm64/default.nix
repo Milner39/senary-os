@@ -1,5 +1,4 @@
 { final
-, name
 , infuse
 , pkgs ? final.pkgs
 , lib /*? pkgs.lib*/          # no default in order to prevent infinite recursion

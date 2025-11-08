@@ -1,5 +1,4 @@
 { final
-, name
 , infuse
 , pkgs ? final.pkgs
 , lib ? pkgs.lib
