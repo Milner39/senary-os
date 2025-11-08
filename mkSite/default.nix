@@ -160,7 +160,9 @@ let
             + lib.optionalString (baud!=null) ",${toString baud}";
         in infuse prev {
           boot.kernel.params   = _: [
+            #"root=${final.boot.rootfs.parameter}"
             "root=LABEL=boot"
+          ] ++ lib.optionals final.boot.rootfs.first-mount-is-readonly [
             "ro"
           ] ++ lib.optionals (final.boot?kernel.console) [
             (mkKernelConsoleBootArg final.boot.kernel.console)
@@ -168,6 +170,12 @@ let
           boot.kernel.modules  = _: "${final.boot.kernel.package}";
           boot.kernel.package  = _: final.pkgs.callPackage ../kernel.nix { };
           boot.rootfs.label.__assign = "root";
+          boot.rootfs.parameter.__assign = "LABEL=${final.boot.rootfs.label}";
+          boot.rootfs.first-mount-is-readonly.__assign = true;
+
+          # If the bootloader or its configuration is stored on a mountable
+          # filesystem, this should be set to that filesystem's LABEL.  Mainly
+          # used for uboot.
           boot.loader.filesystem.label.__assign = "boot";
         }
       ))
