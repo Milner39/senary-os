@@ -215,28 +215,17 @@ let
 
   ] ++ site.overlay ++ [
 
+  ] ++ lib.map root.lib.forall-hosts [
     # apply tags
-    # FIXME: throw an error if host.tags contains attributes that aren't in site.tags
-  ] ++ (lib.pipe tags-unprocessed [
+    (host-final: host-prev:
+      lib.pipe host-final.tags [
+        (lib.filterAttrs (_: v: v))
+        lib.attrNames
+        (lib.map (name: tags-unprocessed.${name} host-final))
+        (lib.foldl' (acc: func: func acc) host-prev)
+      ])
 
-    (lib.mapAttrs (tag: overlay:
-      root.lib.forall-hosts
-        (host-final: host-prev:
-         host-prev //
-          (if host-final.tags.${tag}
-           then overlay host-final host-prev
-           else {}))))
-
-    lib.attrValues
-
-    # FIXME: make attrvalues of site.tags be a list-of-extensions, not a single
-    # extension -- that way concatenating the identity element has no
-    # performance penalty
-    #(lib.map (o: [o] ++ fixup))
-
-    lib.flatten
-
-  ]) ++ lib.map root.lib.forall-hosts [
+  ] ++ lib.map root.lib.forall-hosts [
 
     # set defaults
       (final: prev:
