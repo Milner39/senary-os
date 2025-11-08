@@ -102,7 +102,7 @@ let
           (name: host-prev:
             (make-host-attrnames-deterministic
               (host-prev
-               // (host-overlay name hosts-final.${name} host-prev))
+               // (host-overlay hosts-final.${name} host-prev))
             // { inherit (host-prev) tags; }))
           hosts-prev
       );
@@ -117,7 +117,7 @@ let
           (name: host-prev:
             (make-host-attrnames-deterministic
               (host-prev
-               // (host-overlay name hosts-final.${name} host-prev))
+               // (host-overlay hosts-final.${name} host-prev))
             ))
           hosts-prev
       );

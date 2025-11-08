@@ -99,7 +99,7 @@ let
         }))
 
     # build the ifconns and interfaces attributes
-    (root.lib.forall-hosts (host-name: final: prev:
+    (root.lib.forall-hosts (final: prev:
       let
         ifconns =
           # all the subnets to which it is directly attached.
@@ -149,7 +149,7 @@ let
 
     # default kernel setup
     (root.lib.forall-hosts
-      (host-name: final: prev:
+      (final: prev:
         let
           mkKernelConsoleBootArg =
             { device
@@ -174,7 +174,7 @@ let
 
     # arch stage is allowed to alter the tags
     (root.lib.forall-hosts'
-      (name: final: prev: infuse prev
+      (final: prev: infuse prev
         ({
           x86_64-unknown-linux-gnu =
             import ../arch/amd64 {
@@ -208,7 +208,7 @@ let
 
     (lib.mapAttrs (tag: overlay:
       root.lib.forall-hosts
-        (name: host-final: host-prev:
+        (host-final: host-prev:
          host-prev //
           (if host-final.tags.${tag}
            then overlay host-final host-prev
@@ -227,7 +227,7 @@ let
 
     # set defaults
     (root.lib.forall-hosts
-      (host-name: final: prev:
+      (final: prev:
         infuse prev {
           boot.initrd.ttys.__default = { tty0 = null; };
           boot.initrd.contents.__default = { };

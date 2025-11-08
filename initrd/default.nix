@@ -9,7 +9,7 @@
 
  # basic minimal initrd
  (root.lib.forall-hosts
-   (host-name: final: prev: infuse prev {
+   (final: prev: infuse prev {
      boot.initrd.image.__assign =
        (six-initrd {
          inherit lib;
@@ -19,14 +19,14 @@
   }))
 
  (root.lib.forall-hosts
-   (host-name: final: prev: infuse prev {
+   (final: prev: infuse prev {
      boot.initrd.image.__input.contents.__init =
        final.boot.initrd.contents;
    }))
 
  # abduco-enabled initrd
  (root.lib.forall-hosts
-  (host-name: final: prev: infuse prev ({
+  (final: prev: infuse prev ({
     boot.initrd.contents =
       lib.mapAttrs
         (_: val: { __default = val; })
@@ -40,7 +40,7 @@
 
  # minimum necessary contents
  (root.lib.forall-hosts
-  (host-name: final: prev: let
+  (final: prev: let
     inherit (final) pkgs;
   in infuse prev ({
     boot.initrd.image.__input.compress = _: "gzip";
@@ -81,7 +81,7 @@
   })))
 
  (root.lib.forall-hosts
-  (host-name: final: prev: let inherit (final) pkgs; in infuse prev ( {
+  (final: prev: let inherit (final) pkgs; in infuse prev ( {
     boot.initrd.image.__input.contents =
       lib.optionalAttrs final.tags.is-nfsroot {
       # TODO: identify "scratch drives" using the partition table uuid:
@@ -98,7 +98,7 @@
 
  # cryptsetup-enabled initrd
  (root.lib.forall-hosts
-  (host-name: final: prev: let inherit (final) pkgs; in infuse prev ({
+  (final: prev: let inherit (final) pkgs; in infuse prev ({
     boot.initrd.image.__input.contents = lib.optionalAttrs (!final.tags.is-nfsroot) {
       "early/run".__append = [''
         for DEV in $(blkid | grep 'TYPE="crypto_LUKS"' | sed 's_^\([^\:]*\):.*$_\1_;t;d'); do
@@ -132,7 +132,7 @@
 
  # lvm-enabled initrd
  (root.lib.forall-hosts
-  (host-name: final: prev: let inherit (final) pkgs; in infuse prev ( {
+  (final: prev: let inherit (final) pkgs; in infuse prev ( {
     boot.initrd.image.__input.contents = lib.optionalAttrs (!final.tags.is-nfsroot && !final.tags.dont-mount-root) {
       "early/run".__append = [''
         # lvm lvchange --addtag @boot vg/lv
@@ -154,7 +154,7 @@
 
  # switch_root into the chosen profile
  (root.lib.forall-hosts
-  (host-name: final: prev: let
+  (final: prev: let
     inherit (final) pkgs;
   in infuse prev ({
     boot.initrd.contents."early/finish".__append = [''
@@ -178,7 +178,7 @@
   })))
 
  (root.lib.forall-hosts
-  (host-name: host-final: prev: infuse prev ({
+  (host-final: prev: infuse prev ({
     boot.initrd.image.__input.contents."early/run".__append =
       host-final.boot.initrd.mount-root;
   })))
