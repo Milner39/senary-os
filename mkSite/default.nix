@@ -98,8 +98,10 @@ let
                 });
         }))
 
+  ] ++ map root.lib.forall-hosts [
     # build the ifconns and interfaces attributes
-    (root.lib.forall-hosts (final: prev:
+    (
+      (final: prev:
       let
         ifconns =
           # all the subnets to which it is directly attached.
@@ -148,7 +150,7 @@ let
     ))
 
     # default kernel setup
-    (root.lib.forall-hosts
+    (
       (final: prev:
         let
           mkKernelConsoleBootArg =
@@ -171,7 +173,7 @@ let
           boot.loader.filesystem.label.__assign = "boot";
         }
       ))
-
+  ] ++ [
     # arch stage is allowed to alter the tags
     (root.lib.forall-hosts'
       (final: prev: infuse prev
@@ -198,7 +200,7 @@ let
         }.${prev.canonical or ""})  # FIXME: use final.canonical
       ))
 
-  ] ++ (map root.lib.forall-hosts root.initrd) ++ [
+  ] ++ map root.lib.forall-hosts root.initrd ++ [
 
   ] ++ site.overlay ++ [
 
@@ -223,23 +225,21 @@ let
 
     lib.flatten
 
-  ]) ++ [
+  ]) ++ lib.map root.lib.forall-hosts [
 
     # set defaults
-    (root.lib.forall-hosts
       (final: prev:
         infuse prev {
           boot.initrd.ttys.__default = { tty0 = null; };
           boot.initrd.contents.__default = { };
           boot.kernel.firmware.__default = [];
-        }))
+        })
 
-    (root.lib.forall-hosts
       (host-final: host-prev:
         mkHost {
           inherit host-final;
           inherit host-prev;
-        }))
+        })
 
   ] ++ [
 
