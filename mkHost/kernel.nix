@@ -1,5 +1,8 @@
 { lib
-, stdenv
+, ...
+}:
+
+{ stdenv
 , buildLinux
 , ignoreConfigErrors ? true
 , version ? "6.6.41"

@@ -79,7 +79,7 @@ let
             (mkKernelConsoleBootArg final.boot.kernel.console)
           ];
           boot.kernel.modules  = _: "${final.boot.kernel.package}";
-          boot.kernel.package  = _: final.pkgs.callPackage ../kernel.nix { };
+          boot.kernel.package  = _: final.pkgs.callPackage root.mkHost.kernel { };
           boot.rootfs.label.__assign = "root";
           boot.rootfs.parameter.__assign = "LABEL=${final.boot.rootfs.label}";
           boot.rootfs.first-mount-is-readonly.__assign = true;
