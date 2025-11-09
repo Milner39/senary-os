@@ -28,11 +28,11 @@ let
         host = final;
 
         six = {
-          mkService       = final.callPackage ../six/mkService.nix;
-          mkBundle        = final.callPackage ../six/mkBundle.nix;
-          mkOneshot       = final.callPackage ../six/mkOneshot.nix;
-          mkFunnel        = final.callPackage ../six/mkFunnel.nix;
-          mkLogger        = final.callPackage ../six/mkLogger.nix;
+          mkService       = final.callPackage ../mkConfiguration/mkService.nix;
+          mkBundle        = final.callPackage ../mkConfiguration/mkBundle.nix;
+          mkOneshot       = final.callPackage ../mkConfiguration/mkOneshot.nix;
+          mkFunnel        = final.callPackage ../mkConfiguration/mkFunnel.nix;
+          mkLogger        = final.callPackage ../mkConfiguration/mkLogger.nix;
           util            = root.util { inherit (final) pkgs; };
         };
 
@@ -324,7 +324,7 @@ let
         (host-final: host-prev:
           # FIXME: need to add after=target-mounts to almost everything
           # above... right now I'm getting away with it only because of logging
-          (root.six.mkConfiguration {
+          (root.mkConfiguration {
             inherit (host-final) pkgs;
             inherit (host-final) boot sw;
             delete-generations = host-final.delete-generations or null;
