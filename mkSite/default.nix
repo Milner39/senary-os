@@ -16,7 +16,25 @@
   types,
 }:
 
-let site = site-dir; in
+let
+  site = site-dir;
+  tag-overlays-with-recursion-check =
+    lib.mapAttrs
+      (tag-name: overlay:
+        host-final: host-prev:
+        let
+          host-applied = overlay host-final host-prev;
+        in
+          if host-applied.tags != host-prev.tags
+          then throw "overlay for tag ${tag-name} attempted to modify the tags!"
+          else
+            # although this is equal to `host-applied` (due to the if-then
+            # check), it is less strict (I think)
+            host-applied // {
+              inherit (host-prev) tags;
+            })
+      tag-overlays;
+in
 
 let
   mkHost = root.mkHost;
@@ -28,7 +46,8 @@ let
       #types.site
         ({
           inherit (site) subnets overlay globals;
-          tag-overlays = tag-overlays;
+          tag-overlays = tag-overlays-with-recursion-check;
+
           # This is a copy of site.hosts built by passing in an attrset full of
           # `throw` values as the fixpoint argument.  This ensures that the
           # `canonical` and `name` fields of `final.hosts.${name}` do not depend
@@ -98,120 +117,7 @@ let
                 });
         }))
 
-  ] ++ map root.lib.forall-hosts [
-    # build the ifconns and interfaces attributes
-    (
-      (final: prev:
-      let
-        ifconns =
-          # all the subnets to which it is directly attached.
-          lib.pipe site.subnets [
-            (
-              lib.mapAttrs (subnetName: subnet:
-                lib.pipe subnet [
-                  # drop the __netmask key, which is not a host
-                  (lib.filterAttrs (hostName: _:
-                    !(lib.strings.hasPrefix "__" hostName)
-                  ))
-
-                  # add ${host}.netmask
-                  (lib.mapAttrs
-                    (hostName: ifconn: {
-                      netmask = subnet.__netmask;
-                    } // ifconn))
-                ])
-            )
-            (lib.mapAttrsToList
-              (subnetName: subnet:
-                if subnet?${prev.name}
-                then lib.nameValuePair subnetName subnet.${prev.name}
-                else null))
-            (lib.filter (v: v!=null))
-            lib.listToAttrs
-          ];
-      in prev // {
-        inherit ifconns;
-        interfaces =
-          { lo.type = "loopback"; } //
-          lib.pipe ifconns [
-            (lib.mapAttrsToList
-              (subnetName: ifconn:
-                if ifconn?ifname
-                then lib.nameValuePair ifconn.ifname ({
-                  subnet = subnetName;
-                } // lib.optionalAttrs (site.subnets.${subnetName}?__type) {
-                  type = site.subnets.${subnetName}.__type;
-                })
-                else null))
-            (lib.filter (v: v!=null))
-            lib.listToAttrs
-          ];
-      }
-    ))
-
-    # default kernel setup
-    (
-      (final: prev:
-        let
-          mkKernelConsoleBootArg =
-            { device
-            , baud ? null }:
-            "console=${device}"
-            + lib.optionalString (baud!=null) ",${toString baud}";
-        in infuse prev {
-          boot.kernel.params   = _: [
-            "root=${final.boot.rootfs.parameter}"
-          ] ++ lib.optionals final.boot.rootfs.first-mount-is-readonly [
-            "ro"
-          ] ++ lib.optionals (final.boot?kernel.console) [
-            (mkKernelConsoleBootArg final.boot.kernel.console)
-          ];
-          boot.kernel.modules  = _: "${final.boot.kernel.package}";
-          boot.kernel.package  = _: final.pkgs.callPackage ../kernel.nix { };
-          boot.rootfs.label.__assign = "root";
-          boot.rootfs.parameter.__assign = "LABEL=${final.boot.rootfs.label}";
-          boot.rootfs.first-mount-is-readonly.__assign = true;
-
-          # If the bootloader or its configuration is stored on a mountable
-          # filesystem, this should be set to that filesystem's LABEL.  Mainly
-          # used for uboot.
-          boot.loader.filesystem.label.__assign = "boot";
-        }
-      ))
-  ] ++ [
-    # arch stage is allowed to alter the tags
-    (root.lib.forall-hosts'
-      (final: prev: infuse prev
-        ({
-          x86_64-unknown-linux-gnu =
-            import ../arch/amd64 {
-              inherit final infuse;
-            };
-          mips64el-unknown-linux-gnuabi64 =
-            import ../arch/mips64 {
-              inherit final infuse;
-            };
-          powerpc64le-unknown-linux-gnu =
-            import ../arch/powerpc64 {
-              inherit final infuse;
-            };
-          aarch64-unknown-linux-gnu =
-            import ../arch/arm64 {
-              inherit lib final infuse;
-            };
-          mips-unknown-linux-gnu =
-            import ../arch/mips32 {
-              inherit lib final infuse;
-            };
-          armv7l-unknown-linux-gnueabi =
-            import ../arch/arm32 {
-              inherit lib final infuse;
-            };
-          "" = {};
-        }.${prev.canonical or ""})  # FIXME: use final.canonical
-      ))
-
-  ] ++ map root.lib.forall-hosts root.initrd ++ [
+  ] ++ map root.lib.forall-hosts' mkHost.host-stages ++ [
 
   ] ++ site.overlay ++ [
 
@@ -221,11 +127,11 @@ let
       lib.pipe host-final.tags [
         (lib.filterAttrs (_: v: v))
         lib.attrNames
-        (lib.map (name: tag-overlays.${name} host-final))
-        (lib.foldl' (acc: func: func acc) host-prev)
+        (lib.map (name: tag-overlays-with-recursion-check.${name} host-final))
+        (lib.foldl' (acc: func: func acc // { inherit (acc) tags; }) host-prev)
       ])
 
-  ] ++ lib.map root.lib.forall-hosts [
+  ] ++ lib.map root.lib.forall-hosts' [
 
     # set defaults
       (final: prev:
@@ -236,7 +142,7 @@ let
         })
 
       (host-final: host-prev:
-        mkHost {
+        mkHost.mkHost {
           inherit host-final;
           inherit host-prev;
         })

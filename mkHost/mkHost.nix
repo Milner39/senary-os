@@ -8,12 +8,7 @@
   root,
   ...
 }:
-{
-  host-final,
-  host-prev,
-}:
 let
-  inherit (host-final) name;
 
   add-spath =
     spath: v:
@@ -313,26 +308,32 @@ let
                     */
   ];
 
-  host-with-overlays-applied' =
-              ((lib.makeScope lib.callPackageWith (self: {})).overrideScope
-                (lib.composeManyExtensions ([
-                  (final: prev: host-prev)  # yuck
-                  init
-                ] ++ host-overlays ++ [
-                  add-spaths
-                  add-loggers
-                  convert-before-to-after
-                  (host-final: host-prev:
-                    # FIXME: need to add after=target-mounts to almost everything
-                    # above... right now I'm getting away with it only because of logging
-                    (root.six.mkConfiguration {
-                      inherit (host-final) pkgs;
-                      inherit (host-final) boot sw;
-                      delete-generations = host-final.delete-generations or null;
-                      nixpkgs-version = "unknown-nixpkgs-version";
-                      verbosity = 3;
-                    }
-                  ) host-final host-prev)
-                ]
-                )));
-            in host-with-overlays-applied'
+  mkHost =
+    {
+      host-final,
+      host-prev,
+    }:
+    ((lib.makeScope lib.callPackageWith (self: {})).overrideScope
+      (lib.composeManyExtensions ([
+        (final: prev: host-prev)  # yuck
+        init
+      ] ++ host-overlays ++ [
+        add-spaths
+        add-loggers
+        convert-before-to-after
+        (host-final: host-prev:
+          # FIXME: need to add after=target-mounts to almost everything
+          # above... right now I'm getting away with it only because of logging
+          (root.six.mkConfiguration {
+            inherit (host-final) pkgs;
+            inherit (host-final) boot sw;
+            delete-generations = host-final.delete-generations or null;
+            nixpkgs-version = "unknown-nixpkgs-version";
+            verbosity = 3;
+          }
+          ) host-final host-prev)
+      ]
+      )));
+
+in
+  mkHost
