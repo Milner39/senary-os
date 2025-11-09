@@ -49,13 +49,15 @@ let
           # on the fixpoint.
           hosts =
             lib.flip lib.mapAttrs site-dir.hosts
-              (name: host-func: let
+              (name: host-overlay: let
+
+                host-final = site-final.hosts.${name};
 
                 # an attrset where the forbidden (see below) attributes are
                 # replaced with maximally-helpful error messages
                 diagnostic-attributes = dependee: {
                   host =
-                    lib.flip lib.mapAttrs site-final.hosts.${name}
+                    lib.flip lib.mapAttrs host-final
                       (key: _: throw "${dependee} may not recursively depend on host.\${name}.${key}")
                     // restricted-recursive-host-fields;
                   pkgs = throw "${dependee} may not recursively depend on the pkgs attribute";
@@ -70,7 +72,7 @@ let
                   prev = (nonrecursive-host-fields // diagnostic-attributes "host.\${name}.canonical");
                 in {
                   inherit name;
-                  inherit (host-func prev prev) canonical;
+                  inherit (host-overlay prev prev) canonical;
                 };
 
                 # `tags` is allowed to be recursive only in itself (not in other attributes)
@@ -79,7 +81,7 @@ let
                   # may depend recursively only on the nonrecursive fields and itself
                   tags = lib.pipe restricted-recursive-host-fields [
                     (x: x // diagnostic-attributes "host.\${name}.tags")
-                    (prev: host-func prev prev)
+                    (prev: host-overlay prev prev)
                     (x: types.set-tag-values (
                       (x.tags or {}) //
 
@@ -103,11 +105,11 @@ let
                   ];
                 };
 
-                host-func-arg = {
+                host-prev = {
                   inherit (restricted-recursive-host-fields) name canonical tags;
                 };
               in
-                host-func site-final.hosts.${name} host-func-arg // {
+                host-overlay host-final host-prev // {
                   inherit (restricted-recursive-host-fields) name canonical tags;
                 });
         }))
