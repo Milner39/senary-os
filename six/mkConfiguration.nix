@@ -169,10 +169,10 @@ let
     ln -s ${scandir}               $out/six/scandir
   '' + lib.optionalString (host-final.users != {}) ''
     mkdir -p $out/etc
-    ln -s ${pkgs.writeText "etc-passwd" (root.users.mkEtcPasswd {
+    ln -s ${pkgs.writeText "etc-passwd" (root.mkHost.users.mkEtcPasswd {
       inherit (host-final) pkgs users groups;
     })} $out/etc/passwd
-    ln -s ${pkgs.writeText "etc-group" (root.users.mkEtcGroup {
+    ln -s ${pkgs.writeText "etc-group" (root.mkHost.users.mkEtcGroup {
       inherit (host-final) users groups;
     })} $out/etc/group
   '' + ''
