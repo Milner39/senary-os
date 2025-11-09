@@ -17,7 +17,6 @@
 }:
 
 let
-  site = site-dir;
   tag-overlays-with-recursion-check =
     lib.mapAttrs
       (tag-name: overlay:
@@ -34,10 +33,6 @@ let
               inherit (host-prev) tags;
             })
       tag-overlays;
-in
-
-let
-  mkHost = root.mkHost;
 
   site-overlays = [
 
@@ -45,7 +40,7 @@ let
     (site-final: site-prev:
       #types.site
         ({
-          inherit (site) subnets overlay globals;
+          inherit (site-dir) subnets overlay globals;
           tag-overlays = tag-overlays-with-recursion-check;
 
           # This is a copy of site.hosts built by passing in an attrset full of
@@ -53,7 +48,7 @@ let
           # `canonical` and `name` fields of `final.hosts.${name}` do not depend
           # on the fixpoint.
           hosts =
-            lib.flip lib.mapAttrs site.hosts
+            lib.flip lib.mapAttrs site-dir.hosts
               (name: host-func: let
 
                 # an attrset where the forbidden (see below) attributes are
@@ -117,9 +112,9 @@ let
                 });
         }))
 
-  ] ++ map root.lib.forall-hosts' mkHost.host-stages ++ [
+  ] ++ map root.lib.forall-hosts' root.mkHost.host-stages ++ [
 
-  ] ++ site.overlay ++ [
+  ] ++ site-dir.overlay ++ [
 
   ] ++ lib.map root.lib.forall-hosts [
     # apply tags
@@ -142,7 +137,7 @@ let
         })
 
       (host-final: host-prev:
-        mkHost.mkHost {
+        root.mkHost.mkHost {
           inherit host-final;
           inherit host-prev;
         })
