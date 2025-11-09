@@ -41,7 +41,7 @@ let
         # defines one service.  See also `targets` below, which include service
         # *derivations*.
         services =
-          (lib.flip builtins.mapAttrs root.six.by-name
+          (lib.flip builtins.mapAttrs root.by-name
             (name: service:
               final.callService service))
           // {
