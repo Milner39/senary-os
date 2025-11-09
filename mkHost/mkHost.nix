@@ -33,7 +33,7 @@ let
           mkOneshot       = final.callPackage ../six/mkOneshot.nix;
           mkFunnel        = final.callPackage ../six/mkFunnel.nix;
           mkLogger        = final.callPackage ../six/mkLogger.nix;
-          util = root.six.util { inherit (final) pkgs; };
+          util            = root.util { inherit (final) pkgs; };
         };
 
         # A service is a Nix function which can be applied to various arguments,
