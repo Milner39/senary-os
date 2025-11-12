@@ -166,8 +166,8 @@ let
 
     };
 
-    site = struct "site" {
-      hosts = attrs host;
+    site-dir = struct "site-dir" {
+      hosts = attrs function;
       globals = any;  # "junk drawer" for passing things down the hierarchy
 
       # tag-name -> (list function)
@@ -194,7 +194,7 @@ in
     inherit ifconn;
     inherit ifname;
     inherit host;
-    inherit site;
+    inherit site-dir;
     inherit user;
     inherit default-tag-values;
     inherit set-tag-values;

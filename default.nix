@@ -99,7 +99,7 @@ let
         auto-args = auto-args';
       };
     in
-      #types.site
+      #types.site-dir
         site-unchecked;
 
   tag-overlays = lib.attrsets.unionOfDisjoint root.tags site-dir.tags;
