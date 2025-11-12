@@ -75,30 +75,31 @@ let
   };
 
   # automatically-provided arguments (e.g. callPackage and readTree)
-  auto-args = {
-    inherit lib yants infuse readTree;
-    inherit types;
-    inherit root;
-    inherit nixpkgs;
-    inherit extra-by-name-dirs six-initrd;
-  };
 
   # readTree invocation on the sixos source code
   root = readTree.fix (self: (readTree {
-    args = auto-args;
     path = ./.;
+    args = {
+      inherit lib yants infuse readTree;
+      inherit types;
+      inherit root;
+      inherit nixpkgs;
+      inherit extra-by-name-dirs six-initrd;
+    };
   }));
 
   # readTree invocation on the `site` directory
   site-dir =
     let
-      site-unchecked = root.lib.maybe-invoke-readTree auto-args' args.site-dir;
-      auto-args' = {
-        inherit lib yants infuse readTree;
-        inherit types;
-      } // extra-auto-args // {
-        site = site-unchecked;
-      };
+      site-unchecked =
+        root.lib.maybe-invoke-readTree
+          ({
+            inherit lib yants infuse readTree;
+            inherit types;
+          } // extra-auto-args // {
+            site = site-unchecked;
+          })
+          args.site-dir;
     in
       types.site-dir
         site-unchecked;
