@@ -3,7 +3,7 @@
   yants,
   extra-by-name-dirs,
   infuse,
-  root,
+  sixos,
   ...
 }:
 let
@@ -31,7 +31,7 @@ let
           mkOneshot       = final.callPackage ../mkConfiguration/mkOneshot.nix;
           mkFunnel        = final.callPackage ../mkConfiguration/mkFunnel.nix;
           mkLogger        = final.callPackage ../mkConfiguration/mkLogger.nix;
-          util            = root.util { inherit (final) pkgs; };
+          util            = sixos.util { inherit (final) pkgs; };
         };
 
         # A service is a Nix function which can be applied to various arguments,
@@ -39,7 +39,7 @@ let
         # defines one service.  See also `targets` below, which include service
         # *derivations*.
         services =
-          (lib.flip builtins.mapAttrs root.by-name
+          (lib.flip builtins.mapAttrs sixos.by-name
             (name: service:
               final.callService service))
           // {
@@ -88,7 +88,7 @@ let
   # means.
   add-spaths =
     final: prev: prev // {
-      targets = root.lib.mapDerivations (path: v:
+      targets = sixos.lib.mapDerivations (path: v:
         if !(lib.isDerivation v)
         then v
         else if v?overrideAttrs
@@ -106,7 +106,7 @@ let
       beforeFunc =
         after-spath:
         lib.pipe prev.targets [
-          root.lib.extractDerivations
+          sixos.lib.extractDerivations
           builtins.attrValues
           (lib.filter (x: x!=null))
           (lib.filter
@@ -117,7 +117,7 @@ let
             (target: (lib.attrByPath target.passthru.spath (throw "missing") final.targets)))
         ];
     in prev // {
-      targets = lib.flip root.lib.mapDerivations prev.targets
+      targets = lib.flip sixos.lib.mapDerivations prev.targets
         (_: target:
           target.overrideAttrs
             (previousAttrs: {
@@ -134,7 +134,7 @@ let
           (lib.take ((lib.length path) - 1) path) ++ [ "${lib.last path}-log" ];
     in final: prev: prev // {
       targets =
-        lib.flip root.lib.mapDerivations prev.targets
+        lib.flip sixos.lib.mapDerivations prev.targets
           (path: v:
             if false
                || v.passthru.stype or null != "longrun"
@@ -154,7 +154,7 @@ let
                })
           ) // {
       loggers =
-        lib.flip root.lib.mapDerivations prev.targets
+        lib.flip sixos.lib.mapDerivations prev.targets
           (path: v:
             if false
                || v.passthru.stype or null != "longrun"
@@ -322,7 +322,7 @@ let
         (host-final: host-prev:
           # FIXME: need to add after=target-mounts to almost everything
           # above... right now I'm getting away with it only because of logging
-          (root.mkConfiguration {
+          (sixos.mkConfiguration {
             inherit (host-final) pkgs;
             inherit (host-final) boot sw;
             delete-generations = host-final.delete-generations or null;

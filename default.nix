@@ -70,19 +70,19 @@ let
   # `tryEval` around invocations of `lib.generators.toPretty`.
   yants = yants' {
     lib = infuse lib {
-      generators.toPretty = root.lib.toPrettyTryWrapper;
+      generators.toPretty = sixos.lib.toPrettyTryWrapper;
     };
   };
 
   # automatically-provided arguments (e.g. callPackage and readTree)
 
   # readTree invocation on the sixos source code
-  root = readTree.fix (self: (readTree {
+  sixos = readTree.fix (self: (readTree {
     path = ./.;
     args = {
       inherit lib yants infuse readTree;
       inherit types;
-      inherit root;
+      inherit sixos;
       inherit nixpkgs;
       inherit extra-by-name-dirs six-initrd;
     };
@@ -92,7 +92,7 @@ let
   site-dir =
     let
       site-unchecked =
-        root.lib.maybe-invoke-readTree
+        sixos.lib.maybe-invoke-readTree
           ({
             inherit lib yants infuse readTree;
             inherit types;
@@ -104,12 +104,12 @@ let
       types.site-dir
         site-unchecked;
 
-  tag-overlays = lib.attrsets.unionOfDisjoint root.tags site-dir.tags;
+  tag-overlays = lib.attrsets.unionOfDisjoint sixos.tags site-dir.tags;
 
-  types = root.types { tag-overlays = tag-overlays; };
+  types = sixos.types { tag-overlays = tag-overlays; };
 
   site =
-    lib.pipe (root.mkSite {
+    lib.pipe (sixos.mkSite {
       inherit site-dir tag-overlays types;
     }) ([
       # compose the extensions into a single (final: prev: ...)

@@ -1,6 +1,6 @@
 { lib
 , yants
-, root
+, sixos
 , ...
 }:
 
@@ -40,7 +40,7 @@ let
   # "convert-before-to-after", to be sure that it is able to "see" any
   # additional services added by earlier overlays
   sorted-collected-targets = lib.pipe host-final [
-    (host: (lib.mapAttrsToList (_: v: v) (root.lib.extractDerivations host.targets)))
+    (host: (lib.mapAttrsToList (_: v: v) (sixos.lib.extractDerivations host.targets)))
     (lib.filter (v: v?passthru.spath))
     (map (s: lib.nameValuePair (lib.concatStringsSep "." s.spath) s))
     lib.listToAttrs
@@ -168,10 +168,10 @@ let
     ln -s ${scandir}               $out/six/scandir
   '' + lib.optionalString (host-final.users != {}) ''
     mkdir -p $out/etc
-    ln -s ${pkgs.writeText "etc-passwd" (root.mkHost.users.mkEtcPasswd {
+    ln -s ${pkgs.writeText "etc-passwd" (sixos.mkHost.users.mkEtcPasswd {
       inherit (host-final) pkgs users groups;
     })} $out/etc/passwd
-    ln -s ${pkgs.writeText "etc-group" (root.mkHost.users.mkEtcGroup {
+    ln -s ${pkgs.writeText "etc-group" (sixos.mkHost.users.mkEtcGroup {
       inherit (host-final) users groups;
     })} $out/etc/group
   '' + ''

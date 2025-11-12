@@ -1,7 +1,7 @@
 { lib
 , infuse
 , six-initrd
-, root
+, sixos
 , ...
 }:
 

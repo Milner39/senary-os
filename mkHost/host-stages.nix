@@ -3,7 +3,7 @@
   yants,
   extra-by-name-dirs,
   infuse,
-  root,
+  sixos,
   ...
 }:
 let
@@ -77,7 +77,7 @@ let
             (mkKernelConsoleBootArg final.boot.kernel.console)
           ];
           boot.kernel.modules  = _: "${final.boot.kernel.package}";
-          boot.kernel.package  = _: final.pkgs.callPackage root.mkHost.kernel { };
+          boot.kernel.package  = _: final.pkgs.callPackage sixos.mkHost.kernel { };
           boot.rootfs.label.__assign = "root";
           boot.rootfs.parameter.__assign = "LABEL=${final.boot.rootfs.label}";
           boot.rootfs.first-mount-is-readonly.__assign = true;
@@ -121,6 +121,6 @@ let
         }.${prev.canonical or ""})  # FIXME: use final.canonical
       ))
 
-  ] ++ root.mkHost.initrd;
+  ] ++ sixos.mkHost.initrd;
 in
 host-stages

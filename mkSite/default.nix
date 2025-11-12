@@ -3,7 +3,7 @@
   yants,
   extra-by-name-dirs,
   infuse,
-  root,
+  sixos,
   six-initrd,
   ...
 }:
@@ -44,7 +44,7 @@ let
           hosts =
             lib.flip lib.mapAttrs site-dir.hosts
               (name: host-overlay:
-                root.mkHost.init {
+                sixos.mkHost.init {
                   host-final = site-final.hosts.${name};
                   inherit host-overlay;
                   inherit types;
@@ -52,11 +52,11 @@ let
                 });
         }))
 
-  ] ++ map root.lib.forall-hosts' root.mkHost.host-stages ++ [
+  ] ++ map sixos.lib.forall-hosts' sixos.mkHost.host-stages ++ [
 
   ] ++ site-dir.overlay ++ [
 
-  ] ++ lib.map root.lib.forall-hosts [
+  ] ++ lib.map sixos.lib.forall-hosts [
     # apply tags
     (host-final: host-prev:
       lib.pipe host-final.tags [
@@ -66,7 +66,7 @@ let
         (lib.foldl' (acc: func: func acc // { inherit (acc) tags; }) host-prev)
       ])
 
-  ] ++ lib.map root.lib.forall-hosts' [
+  ] ++ lib.map sixos.lib.forall-hosts' [
 
     # set defaults
       (final: prev:
@@ -77,7 +77,7 @@ let
         })
 
       (host-final: host-prev:
-        root.mkHost.mkHost {
+        sixos.mkHost.mkHost {
           inherit host-final;
           inherit host-prev;
         })

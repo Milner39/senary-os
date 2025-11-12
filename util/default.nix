@@ -3,7 +3,7 @@
 # beyond just nixpkgs/lib)
 #
 { lib,
-  root,
+  sixos,
   ...
 }:
 
@@ -21,7 +21,7 @@ let
   };
   execline = pkgs.callPackage ./execline {
     inherit lib;
-    inherit (root.lib) toPrettyTry;
+    inherit (sixos.lib) toPrettyTry;
   };
 
   network = pkgs.callPackage ./network {
