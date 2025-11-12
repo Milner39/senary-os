@@ -74,8 +74,6 @@ let
     };
   };
 
-  # automatically-provided arguments (e.g. callPackage and readTree)
-
   # readTree invocation on the sixos source code
   sixos = readTree.fix (self: (readTree {
     path = ./.;
