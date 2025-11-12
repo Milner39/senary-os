@@ -94,7 +94,10 @@ let
   site-dir =
     let
       site-unchecked = root.lib.maybe-invoke-readTree auto-args' args.site-dir;
-      auto-args' = auto-args // extra-auto-args // {
+      auto-args' = {
+        inherit lib yants infuse readTree;
+        inherit types;
+      } // extra-auto-args // {
         site = site-unchecked;
         auto-args = auto-args';
       };
