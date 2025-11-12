@@ -84,7 +84,7 @@ let
     inherit extra-by-name-dirs six-initrd;
   };
 
-  # readTree invocation on the directory containing this file
+  # readTree invocation on the sixos source code
   root = readTree.fix (self: (readTree {
     args = auto-args;
     path = ./.;
