@@ -1,7 +1,6 @@
 { lib
 , yants
 , root
-, extractDerivations
 , ...
 }:
 
@@ -41,7 +40,7 @@ let
   # "convert-before-to-after", to be sure that it is able to "see" any
   # additional services added by earlier overlays
   sorted-collected-targets = lib.pipe host-final [
-    (host: (lib.mapAttrsToList (_: v: v) (extractDerivations host.targets)))
+    (host: (lib.mapAttrsToList (_: v: v) (root.lib.extractDerivations host.targets)))
     (lib.filter (v: v?passthru.spath))
     (map (s: lib.nameValuePair (lib.concatStringsSep "." s.spath) s))
     lib.listToAttrs

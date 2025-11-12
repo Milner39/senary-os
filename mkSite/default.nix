@@ -2,11 +2,9 @@
   lib,
   yants,
   extra-by-name-dirs,
-  mapDerivations,
   infuse,
   root,
   six-initrd,
-  extractDerivations,
   ...
 }:
 

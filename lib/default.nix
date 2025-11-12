@@ -139,6 +139,41 @@ let
 
   toPrettyTry = toPrettyTryWrapper lib.generators.toPretty;
 
+  # walk a tree of attrsets, applying a function to any derivations
+  mapDerivations = let
+    mapDerivations' =
+      path: f: val:
+      if path == [ "pkgs" ] then val else  # FIXME HACK
+      if path == [ "lib" ] then val else  # FIXME HACK
+      if lib.isDerivation val
+      then f path val
+      else if !(lib.isAttrs val)
+      then val
+      else lib.mapAttrs
+        (k: v: mapDerivations' (path ++ [k]) f v)
+        val;
+  in
+    mapDerivations' [];
+
+  # walks a tree of attrsets, extracting attrvalues which are derivations
+  extractDerivations = let
+    flatten' =
+      path: val:
+      if !(lib.isAttrs val) || lib.isDerivation val
+      then [(lib.nameValuePair (lib.concatStringsSep "." path) val)]
+      else lib.concatLists
+        (lib.mapAttrsToList
+          (k: v: flatten' (path ++ [k]) v)
+          val);
+    in
+      attrs:
+      lib.pipe attrs [
+        (lib.mapAttrsToList (k: v: flatten' [k] v))
+        lib.concatLists
+        lib.listToAttrs
+      ];
+
+
 in {
   inherit
     canonicalize
@@ -148,6 +183,8 @@ in {
     make-host-attrnames-deterministic
     toPrettyTryWrapper
     toPrettyTry
+    mapDerivations
+    extractDerivations
     ;
 }
 

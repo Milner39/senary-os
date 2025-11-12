@@ -2,8 +2,6 @@
   lib,
   yants,
   extra-by-name-dirs,
-  mapDerivations,
-  extractDerivations,
   infuse,
   root,
   ...
@@ -90,7 +88,7 @@ let
   # means.
   add-spaths =
     final: prev: prev // {
-      targets = mapDerivations (path: v:
+      targets = root.lib.mapDerivations (path: v:
         if !(lib.isDerivation v)
         then v
         else if v?overrideAttrs
@@ -108,7 +106,7 @@ let
       beforeFunc =
         after-spath:
         lib.pipe prev.targets [
-          extractDerivations
+          root.lib.extractDerivations
           builtins.attrValues
           (lib.filter (x: x!=null))
           (lib.filter
@@ -119,7 +117,7 @@ let
             (target: (lib.attrByPath target.passthru.spath (throw "missing") final.targets)))
         ];
     in prev // {
-      targets = lib.flip mapDerivations prev.targets
+      targets = lib.flip root.lib.mapDerivations prev.targets
         (_: target:
           target.overrideAttrs
             (previousAttrs: {
@@ -136,7 +134,7 @@ let
           (lib.take ((lib.length path) - 1) path) ++ [ "${lib.last path}-log" ];
     in final: prev: prev // {
       targets =
-        lib.flip mapDerivations prev.targets
+        lib.flip root.lib.mapDerivations prev.targets
           (path: v:
             if false
                || v.passthru.stype or null != "longrun"
@@ -156,7 +154,7 @@ let
                })
           ) // {
       loggers =
-        lib.flip mapDerivations prev.targets
+        lib.flip root.lib.mapDerivations prev.targets
           (path: v:
             if false
                || v.passthru.stype or null != "longrun"
