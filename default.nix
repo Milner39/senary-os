@@ -55,7 +55,7 @@
 
   check-types ? true,
 
-  site,
+  site-dir,
 
   extra-by-name-dirs ? [],
 
@@ -93,7 +93,7 @@ let
   # readTree invocation on the `site` directory
   site-dir =
     let
-      site-unchecked = root.lib.maybe-invoke-readTree auto-args' args.site;
+      site-unchecked = root.lib.maybe-invoke-readTree auto-args' args.site-dir;
       auto-args' = auto-args // extra-auto-args // {
         site = site-unchecked;
         auto-args = auto-args';
