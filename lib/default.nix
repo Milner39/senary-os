@@ -143,8 +143,6 @@ let
   mapDerivations = let
     mapDerivations' =
       path: f: val:
-      if path == [ "pkgs" ] then val else  # FIXME HACK
-      if path == [ "lib" ] then val else  # FIXME HACK
       if lib.isDerivation val
       then f path val
       else if !(lib.isAttrs val)
