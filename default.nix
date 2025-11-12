@@ -80,7 +80,6 @@ let
     inherit types;
     inherit root;
     inherit auto-args;
-    inherit site-dir;
     inherit nixpkgs;
     inherit extra-by-name-dirs six-initrd;
   };
