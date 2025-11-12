@@ -79,7 +79,6 @@ let
     inherit lib yants infuse readTree;
     inherit types;
     inherit root;
-    inherit auto-args;
     inherit nixpkgs;
     inherit extra-by-name-dirs six-initrd;
   };
@@ -99,7 +98,6 @@ let
         inherit types;
       } // extra-auto-args // {
         site = site-unchecked;
-        auto-args = auto-args';
       };
     in
       types.site-dir
