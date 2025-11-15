@@ -172,6 +172,16 @@ let
         lib.listToAttrs
       ];
 
+  # A version of builtins.toString that does the sane thing to booleans,
+  # rendering false as "false" (instead of "0") and true as "true" instead of
+  # "1"
+  toString = arg:
+    if lib.isBool arg
+      then if arg
+           then "true"
+           else "false"
+    else
+      builtins.toString arg;
 
 in {
   inherit
@@ -184,6 +194,7 @@ in {
     toPrettyTry
     mapDerivations
     extractDerivations
+    toString
     ;
 }
 
