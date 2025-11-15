@@ -32,6 +32,7 @@ let
           mkFunnel        = final.callPackage ../mkConfiguration/mkFunnel.nix;
           mkLogger        = final.callPackage ../mkConfiguration/mkLogger.nix;
           util            = sixos.util { inherit (final) pkgs; };
+          inherit (sixos) lib;
         };
 
         # A service is a Nix function which can be applied to various arguments,
