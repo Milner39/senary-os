@@ -15,6 +15,8 @@
 , conf ? throw "you must provide the path to an ntp.conf file"
 }:
 let
+  # FIXME: verify that privsepUser is in host.users
+  # FIXME: verify that privsepPath is the home directory of that user
   inherit (package.passthru) stateDir privsepPath privsepUser;
 in
 assert lib.hasPrefix "/run/" stateDir;
@@ -30,14 +32,6 @@ six.mkFunnel {
   run = pkgs.writeScript "run" ''
 #!${pkgs.runtimeShell}
 exec 2>&1
-
-# FIXME: ugly
-${pkgs.shadow}/bin/useradd \
-  --system \
-  --shell /run/current-system/sw/bin/nologin \
-  --home ${lib.escapeShellArg privsepPath} \
-  ${lib.escapeShellArg privsepUser} \
-  || true
 
 ${pkgs.busybox}/bin/busybox mkdir -p ${stateDir}/db/
 echo 0.0 > ${stateDir}/db/ntpd.drift
