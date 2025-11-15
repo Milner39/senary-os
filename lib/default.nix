@@ -1,3 +1,4 @@
+# sixos utility functions that do not require a nixpkgs `pkgs` packageset
 {
   lib,
   yants,
