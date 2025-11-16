@@ -27,13 +27,6 @@ let
   run = pkgs.writeScript "run" ''
     #!${pkgs.runtimeShell}
     exec 2>&1
-    ${pkgs.shadow}/bin/useradd \
-      --system \
-      --shell /run/current-system/sw/bin/nologin \
-      --no-create-home \
-      --force-badname \
-      ${lib.escapeShellArg gpsd-user} \
-      < /dev/null 2>/dev/null || true
     chown ${gpsd-user}:${gpsd-group} ${gps-device}
     #rm -rf /var/run/gpsd/
     mkdir -p /var/run/gpsd/
