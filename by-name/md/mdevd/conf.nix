@@ -35,12 +35,12 @@ let
       use-execline ? false,
   }:
     assert lib.isString octal-mode;
-/*
-    assert !(builtins.hasAttr user host.users) ->
-            throw "mdev.conf mentions ${user} which is not in host.users";
-    assert !(builtins.hasAttr group host.groups) ->
-            throw "mdev.conf mentions ${group} which is not in host.groups";
-*/
+    assert (host.users!={}) && !(builtins.hasAttr user host.users) ->
+            throw "mdev.conf mentions user ${user} which is not in host.users";
+    assert (host.users!={})
+           && !(builtins.hasAttr group host.groups) ->
+            throw "mdev.conf mentions group ${group} which is not in host.groups";
+
     assert (devname-regex==null && env-regexes=={}) ->
            throw "you must specify either devname-regex or env-regexes";
     assert
