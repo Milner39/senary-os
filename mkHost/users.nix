@@ -61,12 +61,16 @@ let
         # sort by username for normalization purposes
         (lib.mapAttrs (groupname: username-list:
           builtins.sort (user1: user2: user1 < user2) username-list))
-
-        # FIXME need to verify that every attrname of `groupMembers` is an
-        # attrname of `groups`
       ];
 
     in
+      # verify that every attrname of `groupMembers` is an attrname of `groups`;
+      # this will catch spelling errors in users.${user}.groups.
+      assert lib.all (lib.mapAttrsToList (groupName: _:
+        if !(builtins.hasAttr groupName groups)
+        then throw "group ${groupName} appears in host.users.\${user}.groups, but does not appear in host.groups"
+        else true) groupMembers);
+
     lib.pipe groups [
 
       # turn the attrset into a list of attrvalues, with the attrname stored as
