@@ -36,7 +36,14 @@ let
 
   mkEtcGroup = { users, groups }:
     let
-      # derive the membership of each group
+      #
+      # for each ${user} in users,
+      #   for each ${group} in users.${user}.groups,
+      #     append ${user} to groupMembers.${group}
+      #
+      # The result is an attrset whose keys are group names and whose values are
+      # lists of user names.
+      #
       groupMembers = lib.pipe users [
         # turn each user into a list of groups to which it belongs
         (lib.mapAttrsToList (name: user:
