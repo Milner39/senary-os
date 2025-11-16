@@ -175,6 +175,8 @@ let
       inherit (host-final) users groups;
     })} $out/etc/group
   '' + ''
+    ln -s ${pkgs.iana-etc}/etc/services $out/etc/services
+    ln -s ${pkgs.iana-etc}/etc/protocols $out/etc/protocols
 
     mkdir -p $out/bin
 
@@ -189,7 +191,6 @@ let
       ${pkgs.nix}/bin/nix-env -p /nix/var/nix/profiles/activated --set ${builtins.placeholder "out"}
     else
       # first activation after a new bootup
-
   '' +
 # TODO (from nixos)
 #
@@ -257,6 +258,13 @@ let
         if [[ ! -e /etc/group && ! -L /etc/group ]]; then
           ${pkgs.busybox}/bin/mkdir -m 0555 -p $RWMOUNT/etc
           ${pkgs.busybox}/bin/ln -s /run/current-system/etc/group $RWMOUNT/etc/group
+        fi
+  '' + ''
+        if [[ ! -e /etc/services ]]; then
+          ${pkgs.busybox}/bin/busybox ln -sfT /run/current-system/etc/services  $RWMOUNT/etc/services
+        fi
+        if [[ ! -e /etc/protocols ]]; then
+          ${pkgs.busybox}/bin/busybox ln -sfT /run/current-system/etc/protocols $RWMOUNT/etc/protocols
         fi
   '' + ''
         ${pkgs.busybox}/bin/mkdir -p $RWMOUNT/tmp

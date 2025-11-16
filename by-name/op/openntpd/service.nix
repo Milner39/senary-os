@@ -32,10 +32,6 @@ six.mkFunnel {
 exec 2>&1
 
 # FIXME: ugly
-${pkgs.busybox}/bin/busybox ln -sfT ${pkgs.iana-etc}/etc/services  /etc/services
-${pkgs.busybox}/bin/busybox ln -sfT ${pkgs.iana-etc}/etc/protocols /etc/protocols
-
-# FIXME: ugly
 ${pkgs.shadow}/bin/useradd \
   --system \
   --shell /run/current-system/sw/bin/nologin \
