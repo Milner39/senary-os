@@ -302,7 +302,11 @@ let
           (lib.filterAttrs (name: user: !(user?gid) && !(prevGroups?name)))
 
           # synthesize the group
-          (lib.mapAttrsToList (name: user: lib.nameValuePair name user.uid))
+          (lib.mapAttrsToList
+            (user-name: user: lib.nameValuePair user-name {
+              gid = user.uid;
+              members = [ user-name ];
+            }))
           lib.listToAttrs
         ];
 

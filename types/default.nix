@@ -94,7 +94,12 @@ let
       comment = option string;
       home-directory = option string;   # if missing, /var/empty is used
       shell = option string;            # if missing, ${util-linux}/bin/nologin
-      groups = option (list string);
+      groups = option (list string);    # this will be used to build group.*.members
+    };
+
+    group = struct "group" {
+      gid = int;
+      members = option (list string);   # list of usernames
     };
 
     host = struct "host" {
@@ -117,7 +122,7 @@ let
       service-overlays = option (list function);
 
       users = option (attrs user);
-      groups = option (attrs int);
+      groups = option (attrs group);
 
       boot = struct "boot" {
         loader = option (struct "loader" {

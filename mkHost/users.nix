@@ -66,7 +66,7 @@ let
     in
       # verify that every attrname of `groupMembers` is an attrname of `groups`;
       # this will catch spelling errors in users.${user}.groups.
-      assert lib.all (lib.mapAttrsToList (groupName: _:
+      assert lib.all lib.id (lib.mapAttrsToList (groupName: _:
         if !(builtins.hasAttr groupName groups)
         then throw "group ${groupName} appears in host.users.\${user}.groups, but does not appear in host.groups"
         else true) groupMembers);
@@ -75,9 +75,9 @@ let
 
       # turn the attrset into a list of attrvalues, with the attrname stored as
       # a `name` attribute
-      (lib.mapAttrsToList (name: gid:
-        assert lib.isInt gid;
-        { inherit name gid; }))
+      (lib.mapAttrsToList (name: group:
+        assert lib.isInt group.gid;
+        { inherit name; inherit (group) gid; }))
 
       # sort the entries by gid while checking for duplicates
       (lib.sort (g1: g2: assert g1.gid != g2.gid; g1.gid < g2.gid))
