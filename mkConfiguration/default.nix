@@ -196,17 +196,12 @@ let
 #
 #   mkdir -m 1777 /var/tmp
 #
-#   mkdir -p /var/empty
+#   ${pkgs.busybox}/bin/mkdir -p /var/empty
 #   ${pkgs.e2fsprogs}/bin/chattr -f -i /var/empty || true
-#   find /var/empty -mindepth 1 -delete
-#   chmod 0555 /var/empty
-#   chown root:root /var/empty
+#   ${pkgs.findutils}/bin/find /var/empty -mindepth 1 -delete
+#   ${pkgs.busybox}/bin/chmod 0555 /var/empty
+#   ${pkgs.busybox}/bin/chown root:root /var/empty
 #   ${pkgs.e2fsprogs}/bin/chattr -f +i /var/empty || true
-#
-#   mkdir -p /usr/bin
-#   chmod 0755 /usr/bin
-#   ln -sf ${config.environment.usrbinenv} /usr/bin/.env.tmp
-#   mv /usr/bin/.env.tmp /usr/bin/env # atomically replace /usr/bin/env
   ''
       # root filesystem is not yet initialized
   '' + lib.optionalString (host-final.users != {}) ''
@@ -227,6 +222,9 @@ let
           ${pkgs.busybox}/bin/mkdir -m 0555 -p $RWMOUNT/bin
           ${pkgs.busybox}/bin/ln -sfT /run/current-system/sw/bin/sh $RWMOUNT/bin/sh
         fi
+  ''
+    # FIXME: use s6-ln here for atomicity
+  + ''
         if [ "$(${pkgs.busybox}/bin/readlink /usr/bin/sh)" != "/run/current-system/sw/bin/env" ]; then
           ${pkgs.busybox}/bin/mkdir -m 0555 -p $RWMOUNT/usr/bin
           ${pkgs.busybox}/bin/ln -sfT /run/current-system/sw/bin/env $RWMOUNT/usr/bin/env
