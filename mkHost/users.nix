@@ -36,18 +36,6 @@ let
 
   mkEtcGroup = { users, groups }:
     let
-      # for each user with no `.gid` attribute and for which there is no
-      # identically-named group, synthesize a group whose gid is the user's uid
-      # and whose group name is the user's user name.
-      synthetic-groups = lib.pipe users [
-        # filter for the users with no `.gid` attribute and no identically-named group
-        (lib.filterAttrs (name: user: !(user?gid) && !(groups?name)))
-
-        # synthesize the group
-        (lib.mapAttrsToList (name: user: lib.nameValuePair name user.uid))
-        lib.listToAttrs
-      ];
-
       # derive the membership of each group
       groupMembers = lib.pipe users [
         # turn each user into a list of groups to which it belongs
@@ -68,15 +56,11 @@ let
           builtins.sort (user1: user2: user1 < user2) username-list))
 
         # FIXME need to verify that every attrname of `groupMembers` is an
-        # attrname of `groups // synthetic-groups`
+        # attrname of `groups`
       ];
 
     in
     lib.pipe groups [
-
-      # merge in the synthetic-groups; no need to check for conflicts because we
-      # already checked when forming synthetic-groups.
-      (groups: groups // synthetic-groups)
 
       # turn the attrset into a list of attrvalues, with the attrname stored as
       # a `name` attribute
