@@ -65,14 +65,6 @@ let
   run = pkgs.writeScript "run" ''
     #!${pkgs.runtimeShell}
     exec 2>&1
-    # FIXME: ugly
-    ${pkgs.shadow}/bin/useradd \
-      --system \
-      --shell /run/current-system/sw/bin/nologin \
-      --no-create-home \
-      --force-badname \
-      ${lib.escapeShellArg chrony-username} \
-      < /dev/null 2>/dev/null || true
     #mkdir -p /var/run/gpsd/
     #mkdir -p /var/log/chrony/
     #chown ${chrony-username} /var/log/chrony
