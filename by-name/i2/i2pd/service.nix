@@ -50,15 +50,6 @@ six.mkFunnel {
 #!${pkgs.runtimeShell}
 exec 2>&1
 
-# FIXME: ugly
-${pkgs.shadow}/bin/useradd \
-  --system \
-  --shell /run/current-system/sw/bin/nologin \
-  --no-create-home \
-  --force-badname \
-  ${lib.escapeShellArg user-name} \
-  < /dev/null 2>/dev/null || true
-
 export HOME=$(${pkgs.getent}/bin/getent passwd ${user-name} | cut -f6 -d:)
 cd $HOME
 exec ${pkgs.runit}/bin/chpst ${lib.escapeShellArgs args}
