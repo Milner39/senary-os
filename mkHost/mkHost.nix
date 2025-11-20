@@ -271,7 +271,7 @@ let
     })
 
     (final: prev:
-      # this prevents the overlays from adding any new attrs to the attrset
+      # this prevents the service overlays from adding any new attrs to the attrset
       (lib.mapAttrs (k: _:
         ((lib.composeManyExtensions final.service-overlays) final prev).${k}) prev
       ) // {
