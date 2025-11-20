@@ -90,28 +90,11 @@ let
     };
 
   #
-  # Turns an overlay-on-one-host into an overlay-on-the-set-of-hosts; also
-  # does two additional things to avoid hard-to-debug infinite recursions:
-  #
-  #   1. applies `make-host-attrnames-deterministic` after each overlay
-  #   2. prevents overlays from changing `host.${name}.tags`
+  # Turns an overlay-on-one-host into an overlay-on-the-set-of-hosts; also does
+  # applies `make-host-attrnames-deterministic` after each overlay to prevent
+  # infinite recursions.
   #
   forall-hosts = host-overlay:
-    apply-to-hosts
-      (hosts-final: hosts-prev:
-        lib.mapAttrs
-          (name: host-prev:
-            (make-host-attrnames-deterministic
-              (host-prev
-               // (host-overlay hosts-final.${name} host-prev))
-            // { inherit (host-prev) tags; }))
-          hosts-prev
-      );
-
-  #
-  # Like forall-hosts, but allows modification of the tags
-  #
-  forall-hosts' = host-overlay:
     apply-to-hosts
       (hosts-final: hosts-prev:
         lib.mapAttrs
@@ -202,7 +185,6 @@ in {
     canonicalize
     maybe-invoke-readTree
     forall-hosts
-    forall-hosts'
     make-host-attrnames-deterministic
     toPrettyTryWrapper
     toPrettyTry

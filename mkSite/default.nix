@@ -52,27 +52,31 @@ let
                 });
         }))
 
-  ] ++ map sixos.lib.forall-hosts' sixos.mkHost.host-stages ++ [
+  ] ++ map sixos.lib.forall-hosts sixos.mkHost.host-stages ++ [
 
   ] ++ site-dir.overlay ++ [
 
   ] ++ lib.map sixos.lib.forall-hosts [
-    # apply tags
+
     (host-final: host-prev:
-      lib.pipe host-final.tags [
+      (sixos.lib.pipe host-final.tags [
         (lib.filterAttrs (_: v: v))
         lib.attrNames
         (lib.map (name: tag-overlays-with-recursion-check.${name} host-final))
-        (lib.foldl' (host: overlay: overlay host // { inherit (host-prev) tags; }) host-prev)
-      ])
+        (lib.foldl'
+          (host: overlay:
+            sixos.lib.make-host-attrnames-deterministic (host // overlay host)
+            // { inherit (host-prev) tags; })
+          host-prev)
+        sixos.lib.make-host-attrnames-deterministic
+        (host: host-prev // host // { inherit (host-prev) tags; })
+      ]))
 
-  ] ++ lib.map sixos.lib.forall-hosts' [
-
-      (host-final: host-prev:
-        sixos.mkHost.mkHost {
-          inherit host-final;
-          inherit host-prev;
-        })
+    (host-final: host-prev:
+      sixos.mkHost.mkHost {
+        inherit host-final;
+        inherit host-prev;
+      })
 
   ] ++ [
 
