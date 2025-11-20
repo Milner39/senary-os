@@ -80,9 +80,8 @@ let
 
   ] ++ [
 
-    # Add `site.host.${name}.site`, but only after all user overlays.  This
-    # forces user overlays to reach it by way of `host-final.site` so they don't
-    # accidentally use `host-prev.site`.
+    # Add `site` attribute to each host, but do this only after all user
+    # overlays so they can't accidentally use `host-prev.site`.
     (site-final: site-prev: site-prev // {
       hosts = lib.mapAttrs (name: host-prev:
         host-prev // {
