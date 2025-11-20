@@ -7,10 +7,19 @@
 , types
 }:
 
-# This is a copy of site.hosts built by passing in an attrset full of
-# `throw` values as the fixpoint argument.  This ensures that the
-# `canonical` and `name` fields of `final.hosts.${name}` do not depend
-# on the fixpoint.
+#
+# This file constructs the initial "blank" attrset for a host and passes it to
+# the host-overlay (which comes from the site-dir).  It then enforces certain
+# dependency requirements to avoid infinite recursion headaches:
+#
+# - The `name` attribute may not depend on any other attribute
+# - The `canonical` attribute may depend on only the `name` attribute
+# - The `tags` attribute may depend only on itself, `name`, and `canonical`
+#
+# This file is also responsible for setting the `system-isFooBar` tags (like
+# `system-isAarch64`) based on `canonical`.
+#
+
 let
   # an attrset where the forbidden (see below) attributes are
   # replaced with maximally-helpful error messages
@@ -25,8 +34,8 @@ let
     site = throw "${dependee} may not recursively depend on the site attribute";
   };
 
-  # these fields of the `host` fixpoint must not depend on any
-  # part of the final result
+  # The `name` and `canonical` attribute of the `host` fixpoint must not depend on
+  # any part of the final result.
   nonrecursive-host-fields = let
     prev = (nonrecursive-host-fields // diagnostic-attributes "host.\${name}.canonical");
   in {
@@ -34,9 +43,11 @@ let
     inherit (host-overlay prev prev) canonical;
   };
 
-  # `tags` is allowed to be recursive only in itself (not in other attributes)
+  # The `tags` attribute of the `host` fixpoint may depend on itself, but not on
+  # any other attribute.
   restricted-recursive-host-fields = {
     inherit (nonrecursive-host-fields) name canonical;
+
     # may depend recursively only on the nonrecursive fields and itself
     tags = lib.pipe restricted-recursive-host-fields [
       (x: x // diagnostic-attributes "host.\${name}.tags")
@@ -64,10 +75,8 @@ let
     ];
   };
 
-  host-prev = {
+  host-initial = {
     inherit (restricted-recursive-host-fields) name canonical tags;
   };
 in
-host-overlay host-final host-prev // {
-  inherit (restricted-recursive-host-fields) name canonical tags;
-}
+host-initial // host-overlay host-final host-initial
