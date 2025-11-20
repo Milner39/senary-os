@@ -1,6 +1,6 @@
 # sixos utility functions that do not require a nixpkgs `pkgs` packageset
 {
-  lib,
+  lib,    # from nixpkgs
   yants,
   readTree,
   infuse,
@@ -183,8 +183,22 @@ let
     else
       builtins.toString arg;
 
+
+  #
+  # builtins.foldl' is stricter than you would expect; it diverges if *any* of
+  # the accumulated values diverges, rather than only if the *last* accumulator
+  # value diverges.  Example:
+  #
+  #  builtins.foldl' (x: f: f x) 0 [ (_: throw "fail") (_: 3) ]
+  #
+  # Since nixpkgs' lib.pipe is defined in terms of builtins.foldl', it inherits
+  # this problem.  So we define a lazier version using foldl instead of foldl'.
+  #
+  pipe = lib.foldl (x: f: f x);
+
 in {
   inherit
+    pipe
     canonicalize
     maybe-invoke-readTree
     forall-hosts
