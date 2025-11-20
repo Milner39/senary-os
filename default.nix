@@ -92,21 +92,21 @@ let
   # readTree invocation on the `site` directory
   site-dir =
     let
-      site-unchecked =
+      site-dir-unchecked =
         sixos.lib.maybe-invoke-readTree
           ({
             inherit lib yants infuse readTree;
             inherit types;
             inherit sixos;
           } // extra-auto-args // {
-            site = site-unchecked;
+            site = site-dir-unchecked;
           })
           args.site-dir;
     in
       (if check-types
        then types.site-dir
        else lib.id)
-        site-unchecked;
+        site-dir-unchecked;
 
   tag-overlays =
     lib.attrsets.unionOfDisjoint
