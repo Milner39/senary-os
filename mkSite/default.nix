@@ -16,6 +16,8 @@ let
   types = sixos.types { inherit tag-overlays; };
 
   overlays = [
+
+    # initial site
     (site-final: site-prev: site-prev // {
       inherit types;
       inherit (site-dir) subnets globals;
@@ -37,10 +39,13 @@ let
           site-dir.hosts;
     })
 
+    # apply mkHost.host-stages to each host
   ] ++ map sixos.lib.forall-hosts sixos.mkHost.host-stages ++ [
 
+    # apply the site-dir's sitewide overlay
   ] ++ site-dir.overlay ++ [
 
+    # finish up the hosts
     (sixos.lib.forall-hosts sixos.mkHost.mkHost)
 
   ] ++ [
@@ -55,6 +60,7 @@ let
     })
   ];
 in
+
 lib.pipe overlays [
   # compose the extensions into a single (final: prev: ...)
   (lib.foldr lib.composeExtensions (_: _: {}))
