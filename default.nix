@@ -110,22 +110,14 @@ let
        else lib.id)
         site-dir-unchecked;
 
-
   site =
-    lib.pipe (sixos.mkSite {
+    sixos.mkSite {
       inherit site-dir;
-      types = sixos.types { tag-overlays = site.tag-overlays; };
       tag-overlays =
         lib.attrsets.unionOfDisjoint
           sixos.tags
           site-dir.tags;
-    }) ([
-      # compose the extensions into a single (final: prev: ...)
-      (lib.foldr lib.composeExtensions (_: _: {}))
-
-      # tie the fixpoint knot
-      (composed: lib.fix (final: composed final {}))
-    ]);
+    };
 
 in
 
