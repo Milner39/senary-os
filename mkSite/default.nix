@@ -4,7 +4,6 @@
   extra-by-name-dirs,
   infuse,
   sixos,
-  six-initrd,
   ...
 }:
 
