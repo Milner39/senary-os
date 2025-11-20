@@ -89,7 +89,9 @@ let
         };
       })));
 
-  # readTree invocation on the `site` directory
+  # readTree invocation on the `site` directory.  This is done as a convenience,
+  # to avoid the site repository needing to fetchGit readTree and yants like
+  # sixos does.
   site-dir =
     let
       site-dir-unchecked =
