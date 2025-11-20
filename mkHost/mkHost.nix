@@ -331,9 +331,8 @@ let
   mkHost =
     host-final:
     host-prev:
-    ((lib.makeScope lib.callPackageWith (self: {})).overrideScope
+    ((lib.makeScope lib.callPackageWith (self: host-prev)).overrideScope
       (lib.composeManyExtensions ([
-        (final: prev: host-prev)  # yuck
         init
       ] ++ host-overlays ++ [
         add-spaths
