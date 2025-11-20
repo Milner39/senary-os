@@ -15,32 +15,26 @@
 let
   types = sixos.types { inherit tag-overlays; };
 
+  # initial site
+  site-initial = {
+    inherit types;
+    inherit (site-dir) subnets globals;
+    tag-overlays =
+      lib.mapAttrs
+        sixos.lib.add-tag-mutation-check-to-overlay
+        tag-overlays;
+
+    # initial host set: populate attrnames from site.hosts
+    hosts =
+      lib.mapAttrs
+        (name: host-overlay: { inherit name; })
+        site-dir.hosts;
+  };
+
   overlays = [
 
-    # initial site
-    (site-final: site-prev: site-prev // {
-      inherit types;
-      inherit (site-dir) subnets globals;
-      tag-overlays =
-        lib.mapAttrs
-          sixos.lib.add-tag-mutation-check-to-overlay
-          tag-overlays;
-
-      # initial host set: populate attrnames from site.hosts
-      hosts =
-        lib.mapAttrs
-          (name: host-overlay:
-            sixos.mkHost.init {
-              host-final = site-final.hosts.${name};
-              inherit host-overlay;
-              inherit types;
-              inherit name;
-            })
-          site-dir.hosts;
-    })
-
     # apply mkHost.host-stages to each host
-  ] ++ map sixos.lib.forall-hosts sixos.mkHost.host-stages ++ [
+  ] ++ map sixos.lib.forall-hosts (sixos.mkHost.host-stages site-dir.hosts) ++ [
 
     # apply the site-dir's sitewide overlay
   ] ++ site-dir.overlay ++ [
@@ -66,5 +60,5 @@ lib.pipe overlays [
   (lib.foldr lib.composeExtensions (_: _: {}))
 
   # tie the fixpoint knot
-  (composed: lib.fix (final: composed final {}))
+  (composed: lib.fix (final: composed final site-initial))
 ]
