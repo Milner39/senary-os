@@ -51,11 +51,11 @@ let
 
     # build the ifconns and interfaces attributes
     (
-      (final: prev:
+      (host-final: host-prev:
         let
           ifconns =
             # all the subnets to which it is directly attached.
-            lib.pipe final.site.subnets [
+            lib.pipe host-final.site.subnets [
               (
                 lib.mapAttrs (subnetName: subnet:
                   lib.pipe subnet [
@@ -73,13 +73,13 @@ let
               )
               (lib.mapAttrsToList
                 (subnetName: subnet:
-                  if subnet?${prev.name}
-                  then lib.nameValuePair subnetName subnet.${prev.name}
+                  if subnet?${host-prev.name}
+                  then lib.nameValuePair subnetName subnet.${host-prev.name}
                   else null))
               (lib.filter (v: v!=null))
               lib.listToAttrs
             ];
-        in prev // {
+        in host-prev // {
           inherit ifconns;
           interfaces =
             { lo.type = "loopback"; } //
@@ -89,8 +89,8 @@ let
                   if ifconn?ifname
                   then lib.nameValuePair ifconn.ifname ({
                     subnet = subnetName;
-                  } // lib.optionalAttrs (final.site.subnets.${subnetName}?__type) {
-                    type = final.site.subnets.${subnetName}.__type;
+                  } // lib.optionalAttrs (host-final.site.subnets.${subnetName}?__type) {
+                    type = host-final.site.subnets.${subnetName}.__type;
                   })
                   else null))
               (lib.filter (v: v!=null))
@@ -101,25 +101,25 @@ let
 
     # default kernel setup
     (
-      (final: prev:
+      (host-final: host-prev:
         let
           mkKernelConsoleBootArg =
             { device
             , baud ? null }:
             "console=${device}"
             + lib.optionalString (baud!=null) ",${toString baud}";
-        in infuse prev {
+        in infuse host-prev {
           boot.kernel.params   = _: [
-            "root=${final.boot.rootfs.parameter}"
-          ] ++ lib.optionals final.boot.rootfs.first-mount-is-readonly [
+            "root=${host-final.boot.rootfs.parameter}"
+          ] ++ lib.optionals host-final.boot.rootfs.first-mount-is-readonly [
             "ro"
-          ] ++ lib.optionals (final.boot?kernel.console) [
-            (mkKernelConsoleBootArg final.boot.kernel.console)
+          ] ++ lib.optionals (host-final.boot?kernel.console) [
+            (mkKernelConsoleBootArg host-final.boot.kernel.console)
           ];
-          boot.kernel.modules  = _: "${final.boot.kernel.package}";
-          boot.kernel.package  = _: final.pkgs.callPackage sixos.mkHost.kernel { };
+          boot.kernel.modules  = _: "${host-final.boot.kernel.package}";
+          boot.kernel.package  = _: host-final.pkgs.callPackage sixos.mkHost.kernel { };
           boot.rootfs.label.__assign = "root";
-          boot.rootfs.parameter.__assign = "LABEL=${final.boot.rootfs.label}";
+          boot.rootfs.parameter.__assign = "LABEL=${host-final.boot.rootfs.label}";
           boot.rootfs.first-mount-is-readonly.__assign = true;
 
           # If the bootloader or its configuration is stored on a mountable
@@ -135,34 +135,34 @@ let
 
     # arch stage is allowed to alter the tags
     (
-      (final: prev: infuse prev
+      (host-final: host-prev: infuse host-prev
         ({
           x86_64-unknown-linux-gnu =
             import ./arch/amd64 {
-              inherit final infuse;
+              final = host-final; inherit infuse;
             };
           mips64el-unknown-linux-gnuabi64 =
             import ./arch/mips64 {
-              inherit final infuse;
+              final = host-final; inherit infuse;
             };
           powerpc64le-unknown-linux-gnu =
             import ./arch/powerpc64 {
-              inherit final infuse;
+              final = host-final; inherit infuse;
             };
           aarch64-unknown-linux-gnu =
             import ./arch/arm64 {
-              inherit lib final infuse;
+              final = host-final; inherit lib infuse;
             };
           mips-unknown-linux-gnu =
             import ./arch/mips32 {
-              inherit lib final infuse;
+              final = host-final; inherit lib infuse;
             };
           armv7l-unknown-linux-gnueabi =
             import ./arch/arm32 {
-              inherit lib final infuse;
+              final = host-final; inherit lib infuse;
             };
           "" = {};
-        }.${prev.canonical or ""})  # FIXME: use final.canonical
+        }.${host-prev.canonical or ""})  # FIXME: use host-final.canonical
       ))
 
   ] ++ sixos.mkHost.initrd;
