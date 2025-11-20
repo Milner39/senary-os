@@ -42,7 +42,7 @@ let
       lib.filterAttrsRecursive
         (name: value: !(lib.hasPrefix "__readTree" name))
         (readTree.fix (self: (readTree {
-          args = { root = self; } // args;
+          inherit args;
           path = arg;
           rootDir = false;
         })))

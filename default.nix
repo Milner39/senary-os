@@ -94,6 +94,7 @@ let
           ({
             inherit lib yants infuse readTree;
             inherit types;
+            inherit sixos;
           } // extra-auto-args // {
             site = site-unchecked;
           })
