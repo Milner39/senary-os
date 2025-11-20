@@ -99,7 +99,9 @@ let
           })
           args.site-dir;
     in
-      types.site-dir
+      (if check-types
+       then types.site-dir
+       else lib.id)
         site-unchecked;
 
   tag-overlays =
