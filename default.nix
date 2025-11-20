@@ -82,7 +82,7 @@ let
         path = ./.;
         args = {
           inherit lib yants infuse readTree;
-          inherit types;
+          inherit (site) types;
           inherit sixos;
           inherit nixpkgs;
           inherit extra-by-name-dirs six-initrd;
@@ -96,7 +96,7 @@ let
         sixos.lib.maybe-invoke-readTree
           ({
             inherit lib yants infuse readTree;
-            inherit types;
+            inherit (site) types;
             inherit sixos;
           } // extra-auto-args // {
             site = site-dir-unchecked;
@@ -104,32 +104,30 @@ let
           args.site-dir;
     in
       (if check-types
-       then types.site-dir
+       then site.types.site-dir
        else lib.id)
         site-dir-unchecked;
 
-  tag-overlays =
-    lib.attrsets.unionOfDisjoint
-      sixos.tags
-      site-dir.tags;
-
-  types = sixos.types { tag-overlays = tag-overlays; };
 
   site =
     lib.pipe (sixos.mkSite {
-      inherit site-dir tag-overlays types;
+      inherit site-dir;
+      types = sixos.types { tag-overlays = site.tag-overlays; };
+      tag-overlays =
+        lib.attrsets.unionOfDisjoint
+          sixos.tags
+          site-dir.tags;
     }) ([
       # compose the extensions into a single (final: prev: ...)
       (lib.foldr lib.composeExtensions (_: _: {}))
 
       # tie the fixpoint knot
       (composed: lib.fix (final: composed final {}))
-
-      # typecheck the result
-    ] ++ lib.optionals check-types [
-      types.site
     ]);
 
-in {
-  host = site.hosts;
-}
+in
+
+# typecheck the result *after* the fixpoint (otherwise we get infinite
+# recursion because yants checking is strict)
+(if check-types then site.types.site else lib.id) site
+

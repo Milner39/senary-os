@@ -16,6 +16,7 @@
 
 [
   (site-final: site-prev: {
+    inherit types;
     inherit (site-dir) subnets globals;
     tag-overlays =
       lib.mapAttrs
