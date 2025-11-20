@@ -114,9 +114,12 @@ let
     sixos.mkSite {
       inherit site-dir;
       tag-overlays =
-        lib.attrsets.unionOfDisjoint
-          sixos.tags
-          site-dir.tags;
+        sixos.tags //
+        lib.flip lib.mapAttrs site-dir.tags
+          (tag-name: site-overlay:
+            if sixos.tags?${tag-name}
+            then lib.composeExtensions sixos.tags.${tag-name} site-overlay
+            else site-overlay);
     };
 
 in
