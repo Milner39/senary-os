@@ -63,7 +63,7 @@ let
         (lib.filterAttrs (_: v: v))
         lib.attrNames
         (lib.map (name: tag-overlays-with-recursion-check.${name} host-final))
-        (lib.foldl' (acc: func: func acc // { inherit (acc) tags; }) host-prev)
+        (lib.foldl' (host: overlay: overlay host // { inherit (host-prev) tags; }) host-prev)
       ])
 
   ] ++ lib.map sixos.lib.forall-hosts' [
