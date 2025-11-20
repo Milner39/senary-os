@@ -19,13 +19,6 @@ let
         tags = types.default-tag-values;
       })
 
-    # apply host overlays from the site-dir
-    (host-final: host-prev:
-      host-prev //
-      host-overlays.${host-prev.name}
-        host-final
-        host-prev)
-
     # set system-isFooBar tags
     (host-final: host-prev:
       host-prev // {
@@ -47,6 +40,24 @@ let
                   lib.nameValuePair name value
               )
           );
+      })
+
+    # yuck, gross layering violation.  can't fix this until tags are allowed to
+    # (monotonically) modify other tags.
+    (host-final: host-prev:
+      host-prev // {
+        tags =
+          host-prev.tags //
+          lib.optionalAttrs host-prev.tags.system-isAarch64 {
+            has-hwclock-fake = true;
+            has-hwclock = false;
+          } // lib.optionalAttrs host-prev.tags.system-isMips64 {
+            is-bootloader-uboot = true;
+          } // lib.optionalAttrs host-prev.tags.system-isPower64 {
+            # powerpc workstations generally have battery-backed hardware clocks
+            has-hwclock = true;
+            is-bootloader-petitboot = true;
+          };
       })
 
     # build the ifconns and interfaces attributes
@@ -133,38 +144,15 @@ let
         }
       ))
 
-    # arch stage is allowed to alter the tags
-    (
-      (host-final: host-prev: infuse host-prev
-        ({
-          x86_64-unknown-linux-gnu =
-            import ./arch/amd64 {
-              final = host-final; inherit infuse;
-            };
-          mips64el-unknown-linux-gnuabi64 =
-            import ./arch/mips64 {
-              final = host-final; inherit infuse;
-            };
-          powerpc64le-unknown-linux-gnu =
-            import ./arch/powerpc64 {
-              final = host-final; inherit infuse;
-            };
-          aarch64-unknown-linux-gnu =
-            import ./arch/arm64 {
-              final = host-final; inherit lib infuse;
-            };
-          mips-unknown-linux-gnu =
-            import ./arch/mips32 {
-              final = host-final; inherit lib infuse;
-            };
-          armv7l-unknown-linux-gnueabi =
-            import ./arch/arm32 {
-              final = host-final; inherit lib infuse;
-            };
-          "" = {};
-        }.${host-prev.canonical or ""})  # FIXME: use host-final.canonical
-      ))
+    # apply host overlays from the site-dir
+    (host-final: host-prev:
+      host-prev //
+      host-overlays.${host-prev.name}
+        host-final
+        host-prev)
 
-  ] ++ sixos.mkHost.initrd;
+  ] ++ sixos.mkHost.initrd ++ [
+
+  ];
 in
 host-stages

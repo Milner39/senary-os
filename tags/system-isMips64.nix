@@ -1,3 +1,8 @@
+{ lib
+, yants
+, infuse
+, ...
+}:
 
 #
 # TODO(amjoseph): a bunch of this is only applicable to Octeons, not to all
@@ -128,17 +133,13 @@ eject ${DEV}
 
 */
 
-{ final
-, infuse
-, pkgs ? final.pkgs
-, lib ? pkgs.lib
-
 #
 # For some utterly strange reason the kernel and initrd must both be
 # placed within the 16mbyte window between 0.5gb and 0.5gb+16mbyte.
 # Need to figure out why.
 #
-, preloadaddr-hex      ?   "22000000"  # where the uImage is placed when first loaded from network or disk
+final: prev: infuse prev ((
+{ preloadaddr-hex      ?   "22000000"  # where the uImage is placed when first loaded from network or disk
 , fdtaddr-hex          ?      "80000"  # where the devicetree is located when we jump to the kernel
 , loadaddr-hex         ?   "20000000"  # where the kernel is located when we jump to it
 , initrd-alignment-hex ?      "10000"  # initrd address will be aligned to multiples of this
@@ -174,8 +175,9 @@ eject ${DEV}
 }:
 
 let
+  pkgs = final.pkgs;
 
-  payload = pkgs.callPackage ../uboot ({
+  payload = pkgs.callPackage ../mkHost/uboot ({
     inherit (final.boot) kernel;
     initrd = final.boot.initrd.image;
     params = final.boot.kernel.params;
@@ -194,6 +196,7 @@ let
     inherit (final.boot.loader) uboot-commands;
   });
 in
+
 {
   boot.kernel.payload  = _: "${payload}/uImage";
   boot.kernel.image.__assign = "${final.boot.kernel.package}/vmlinux-${final.boot.kernel.package.version}";
@@ -211,7 +214,7 @@ in
   # the device exists... like one or two full seconds after the
   # kernel-to-userspace handoff.  So we have to wait for the root device to
   # appear.
-  boot.initrd.mount-root.__append = [''
+  boot.initrd.mount-root.__assign = [''
     while ! (busybox blkid | busybox grep -q 'LABEL="${final.boot.rootfs.label}"'); do
       echo waiting for a device with 'LABEL="${final.boot.rootfs.label}"' to appear
       sleep 1
@@ -222,12 +225,10 @@ in
   # mips devices have very small disks
   delete-generations = _: "5d";
 
-  tags.is-bootloader-uboot.__assign = true;
-
   # mips devices have really tiny internal mmc devices
   service-overlays.__append = [(final: prev: infuse prev {
     targets.mounts."".__input.options.__append = [ "compress=zstd" ];
   })];
 
 }
-
+) {})

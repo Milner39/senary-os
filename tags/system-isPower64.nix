@@ -6,12 +6,16 @@
 
 final: prev: infuse prev ({
 
-  # powerpc workstations generally have battery-backed hardware clocks
-  tags.has-hwclock.__default = true;
-
   boot.kernel.package.__input.structuredExtraConfig = {
     CRYPTO_AES_GCM_P10.__assign  = "n";
     CRYPTO_CHACHA20_P10.__assign = "n";
     CRYPTO_POLY1305_P10.__assign = "n";
   };
+
+  boot.initrd.ttys.__assign = { hvc0 = 115200; };
+  boot.kernel.console.device = _: "hvc0";
+  boot.kernel.console.baud.__assign = 115200;
+  boot.kernel.payload = _: "${final.boot.kernel.package}/vmlinux";
+  boot.kernel.image.__assign = "${final.boot.kernel.package}/vmlinux";
+
 })

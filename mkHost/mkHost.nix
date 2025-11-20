@@ -80,20 +80,20 @@ let
       };
 
   apply-tags =
-    host-final: host-prev:
-    (sixos.lib.pipe host-final.tags [
-      (lib.filterAttrs (_: v: v))
-      lib.attrNames
-      (lib.map (name:
-        host-final.site.tag-overlays.${name} host-final))
-      (lib.foldl'
-        (host: overlay:
-          sixos.lib.make-host-attrnames-deterministic (host // overlay host)
-          // { inherit (host-prev) tags; })
-        host-prev)
-      sixos.lib.make-host-attrnames-deterministic
-      (host: host-prev // host // { inherit (host-prev) tags canonical; })
-    ]);
+    (host-final: host-prev:
+      (sixos.lib.pipe host-final.tags [
+        (lib.filterAttrs (_: v: v))
+        lib.attrNames
+        (lib.map (name:
+          host-final.site.tag-overlays.${name} host-final))
+        (lib.foldl'
+          (host: overlay:
+            sixos.lib.make-host-attrnames-deterministic (host // overlay host)
+            // { inherit (host-prev) tags; })
+          host-prev)
+        sixos.lib.make-host-attrnames-deterministic
+        (host: host-prev // host // { inherit (host-prev) tags canonical; })
+      ]));
 
   # After and before references must always be made via `final.${spath}`
   # references to services which are part of the top-level service set.  Because
