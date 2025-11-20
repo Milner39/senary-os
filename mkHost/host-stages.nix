@@ -11,15 +11,20 @@ let
 
   host-stages = host-overlays: [
 
+    # initial host attrset
+    (host-final: host-prev:
+      host-prev // {
+        inherit (host-prev) name;
+        inherit (host-final) canonical;
+        tags = types.default-tag-values;
+      })
+
     # apply host overlays from the site-dir
     (host-final: host-prev:
       host-prev //
       host-overlays.${host-prev.name}
         host-final
-        (sixos.mkHost.init {
-          inherit (host-prev) name;
-          inherit (host-final) canonical;
-        }))
+        host-prev)
 
     # set system-isFooBar tags
     (host-final: host-prev:
