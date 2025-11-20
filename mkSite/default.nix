@@ -15,28 +15,16 @@
 }:
 
 [
-  # initial host set: populate attrnames from site.hosts
   (site-final: site-prev:
     #types.site
     ({
       inherit (site-dir) subnets overlay globals;
       tag-overlays =
         lib.mapAttrs
-          (tag-name: overlay:
-            host-final: host-prev:
-            let
-              host-applied = overlay host-final host-prev;
-            in
-              if host-applied.tags != host-prev.tags
-              then throw "overlay for tag ${tag-name} attempted to modify the tags!"
-              else
-                # although this is equal to `host-applied` (due to the if-then
-                # check), it is less strict (I think)
-                host-applied // {
-                  inherit (host-prev) tags;
-                })
+          sixos.lib.add-tag-mutation-check-to-overlay
           tag-overlays;
 
+      # initial host set: populate attrnames from site.hosts
       hosts =
         lib.flip lib.mapAttrs site-dir.hosts
           (name: host-overlay:

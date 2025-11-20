@@ -179,6 +179,25 @@ let
   #
   pipe = lib.foldl (x: f: f x);
 
+  # Given a tag and its overlay, wrap the overlay with a check that the overlay
+  # did not try to modify the tags.  This is important because (for infinite
+  # recursion reasons) we must silently discard any attempts by a tag overlay to
+  # mutate the tags.
+  add-tag-mutation-check-to-overlay =
+    tag-name: overlay:
+    host-final: host-prev:
+    let
+      host-applied = overlay host-final host-prev;
+    in
+      if host-applied.tags != host-prev.tags
+      then throw "overlay for tag ${tag-name} attempted to modify the tags!"
+      else
+        # although this is equal to `host-applied` (due to the if-then
+        # check), it is less strict (I think)
+        host-applied // {
+          inherit (host-prev) tags;
+        };
+
 in {
   inherit
     pipe
@@ -190,6 +209,7 @@ in {
     toPrettyTry
     mapDerivations
     extractDerivations
+    add-tag-mutation-check-to-overlay
     toString
     ;
 }
