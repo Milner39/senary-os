@@ -102,7 +102,10 @@ let
       types.site-dir
         site-unchecked;
 
-  tag-overlays = lib.attrsets.unionOfDisjoint sixos.tags site-dir.tags;
+  tag-overlays =
+    lib.attrsets.unionOfDisjoint
+      (builtins.removeAttrs sixos.tags ["__readTree" "__readTreeChildren"])
+      site-dir.tags;
 
   types = sixos.types { tag-overlays = tag-overlays; };
 
