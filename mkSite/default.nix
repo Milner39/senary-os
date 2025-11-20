@@ -24,7 +24,7 @@ let
         sixos.lib.add-tag-mutation-check-to-overlay
         tag-overlays;
 
-    # initial host set: populate attrnames from site.hosts
+    # initial host set: populate attrnames from site-dir.hosts
     hosts =
       lib.mapAttrs
         (name: host-overlay: { inherit name; })
