@@ -329,10 +329,8 @@ let
   ];
 
   mkHost =
-    {
-      host-final,
-      host-prev,
-    }:
+    host-final:
+    host-prev:
     ((lib.makeScope lib.callPackageWith (self: {})).overrideScope
       (lib.composeManyExtensions ([
         (final: prev: host-prev)  # yuck

@@ -72,11 +72,7 @@ let
         (host: host-prev // host // { inherit (host-prev) tags; })
       ]))
 
-    (host-final: host-prev:
-      sixos.mkHost.mkHost {
-        inherit host-final;
-        inherit host-prev;
-      })
+    sixos.mkHost.mkHost
 
   ] ++ [
 
