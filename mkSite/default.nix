@@ -68,14 +68,6 @@ let
 
   ] ++ lib.map sixos.lib.forall-hosts' [
 
-    # set defaults
-      (final: prev:
-        infuse prev {
-          boot.initrd.ttys.__default = { tty0 = null; };
-          boot.initrd.contents.__default = { };
-          boot.kernel.firmware.__default = [];
-        })
-
       (host-final: host-prev:
         sixos.mkHost.mkHost {
           inherit host-final;

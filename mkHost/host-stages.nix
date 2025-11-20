@@ -86,6 +86,10 @@ let
           # filesystem, this should be set to that filesystem's LABEL.  Mainly
           # used for uboot.
           boot.loader.filesystem.label.__assign = "boot";
+
+          boot.initrd.ttys.__default = { tty0 = null; };
+          boot.initrd.contents.__default = { };
+          boot.kernel.firmware.__default = [];
         }
       ))
 

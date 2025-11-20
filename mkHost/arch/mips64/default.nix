@@ -203,7 +203,7 @@ in
     then "${final.boot.kernel.package}/dtbs/cavium-octeon/cn7130_ubnt_edgerouter_6p.dtb"
     else "${final.boot.kernel.package}/dtbs/cavium-octeon/cn7130_ubnt_edgerouter4.dtb";
 
-  boot.initrd.ttys.ttyS0 = _: 115200;
+  boot.initrd.ttys.__assign = { ttyS0 = 115200; };
   boot.kernel.console.device.__assign = "ttyS0";
   boot.kernel.console.baud.__assign   = 115200;
 
