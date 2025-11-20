@@ -75,16 +75,19 @@ let
   };
 
   # readTree invocation on the sixos source code
-  sixos = readTree.fix (self: (readTree {
-    path = ./.;
-    args = {
-      inherit lib yants infuse readTree;
-      inherit types;
-      inherit sixos;
-      inherit nixpkgs;
-      inherit extra-by-name-dirs six-initrd;
-    };
-  }));
+  sixos =
+    lib.filterAttrsRecursive
+      (name: value: !(lib.hasPrefix "__readTree" name))
+      (readTree.fix (self: (readTree {
+        path = ./.;
+        args = {
+          inherit lib yants infuse readTree;
+          inherit types;
+          inherit sixos;
+          inherit nixpkgs;
+          inherit extra-by-name-dirs six-initrd;
+        };
+      })));
 
   # readTree invocation on the `site` directory
   site-dir =
@@ -107,7 +110,7 @@ let
 
   tag-overlays =
     lib.attrsets.unionOfDisjoint
-      (builtins.removeAttrs sixos.tags ["__readTree" "__readTreeChildren"])
+      sixos.tags
       site-dir.tags;
 
   types = sixos.types { tag-overlays = tag-overlays; };
