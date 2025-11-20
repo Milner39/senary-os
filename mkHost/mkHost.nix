@@ -92,7 +92,7 @@ let
           // { inherit (host-prev) tags; })
         host-prev)
       sixos.lib.make-host-attrnames-deterministic
-      (host: host-prev // host // { inherit (host-prev) tags; })
+      (host: host-prev // host // { inherit (host-prev) tags canonical; })
     ]);
 
   # After and before references must always be made via `final.${spath}`
@@ -294,6 +294,7 @@ let
         # avoids infinite recursion
         inherit (prev) tags;
         inherit (prev) service-overlays;
+        inherit (prev) canonical;
       })
 
     (final: prev:
