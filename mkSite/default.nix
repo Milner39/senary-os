@@ -16,7 +16,7 @@ let
   types = sixos.types { inherit tag-overlays; };
 
   overlays = [
-    (site-final: site-prev: {
+    (site-final: site-prev: site-prev // {
       inherit types;
       inherit (site-dir) subnets globals;
       tag-overlays =
