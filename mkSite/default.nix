@@ -26,14 +26,15 @@ let
 
       # initial host set: populate attrnames from site.hosts
       hosts =
-        lib.flip lib.mapAttrs site-dir.hosts
+        lib.mapAttrs
           (name: host-overlay:
             sixos.mkHost.init {
               host-final = site-final.hosts.${name};
               inherit host-overlay;
               inherit types;
               inherit name;
-            });
+            })
+          site-dir.hosts;
     })
 
   ] ++ map sixos.lib.forall-hosts sixos.mkHost.host-stages ++ [
