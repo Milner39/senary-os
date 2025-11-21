@@ -9,7 +9,7 @@
 }:
 let
 
-  host-stages = host-overlays: [
+  host-stages = [
 
     # initial host attrset
     (host-final: host-prev:
@@ -147,13 +147,6 @@ let
           boot.kernel.firmware.__default = [];
         }
       ))
-
-    # apply host overlays from the site-dir
-    (host-final: host-prev:
-      host-prev //
-      host-overlays.${host-prev.name}
-        host-final
-        host-prev)
 
   ] ++ sixos.mkHost.initrd ++ [
 
