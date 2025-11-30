@@ -14,11 +14,6 @@
 let
   chpst = pkgs.callPackage ./chpst { inherit util; };
   depot = pkgs.callPackage ./depot { inherit lib; };
-  scriptify = pkgs.callPackage ./scriptify {
-    inherit lib;
-    inherit chpst;
-    inherit (depot) writeExecline;
-  };
   execline = pkgs.callPackage ./execline {
     inherit lib;
     inherit (sixos.lib) toPrettyTry;
@@ -32,7 +27,6 @@ let
     inherit
       chpst
       depot
-      scriptify
       execline
     ;
   };

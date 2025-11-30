@@ -33,12 +33,33 @@ assert flag-newpidns ->
 
 let
 
-  scriptify' = args: script:
-    six.util.scriptify
-      args
-      (if lib.isAttrs script && !(lib.isDerivation script) && env!=null
-       then { envdir = "./env"; } // script
-       else script);
+  scriptify =
+    { name
+    , argMode ? "none"
+    , readNArgs ? 0
+    }:
+    script:
+    if   lib.isString script || lib.isDerivation script || lib.isPath script
+    then script
+    else six.util.depot.writeExecline name
+      { inherit argMode readNArgs; }
+      (if !(lib.isAttrs script)
+       then script
+       else six.util.chpst ({
+         redirect-stderr-to-stdout = true;
+       } // lib.optionalAttrs (env != null) {
+         envdir = "./env";
+       } // {
+
+         # TODO: consider these
+         #dir ? null,
+         #new-session ? false,
+         #new-process-group ? new-session,
+         #user ? null,
+         #group ? null,
+         #groups ? [],
+         #env-clear ? false,
+       } // script));
 
   env' =
     if env==null || lib.isPath env || lib.isDerivation env
@@ -82,9 +103,9 @@ in
   '' + lib.optionalString (timeout-finish != null) ''
     echo ${timeout-finish} > $out/timeout-finish
   '' + ''
-    ln -s ${scriptify' { name = "target.${final-sname}.run"; } run} $out/run
+    ln -s ${scriptify { name = "target.${final-sname}.run"; } run} $out/run
   '' + lib.optionalString (finish != null) ''
-    ln -s ${scriptify' { name = "target.${final-sname}.finish"; } finish} $out/finish
+    ln -s ${scriptify { name = "target.${final-sname}.finish"; } finish} $out/finish
   '' + lib.optionalString (data != null && (!(lib.isAttrs data) || lib.isDerivation data)) ''
     ln -s ${data} $out/data
   '' + lib.optionalString (data != null && lib.isAttrs data && !(lib.isDerivation data)) ''
