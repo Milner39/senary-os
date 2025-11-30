@@ -198,6 +198,31 @@ let
           inherit (host-prev) tags;
         };
 
+  # Convert an attribute into a command-line flag.
+  #
+  # - Keys which do not start with "-" are prefixed with "--" if their
+  #   stringLength is at least 2 and "-"otherwise.
+  #
+  # - Non-null values are converted into a string (see six.lib.toString) and
+  #   prefixed with "="
+  #
+  attrToFlag = key: val:
+    lib.concatStrings ([
+      (if lib.strings.hasPrefix "-" key
+       then ""
+       else if builtins.stringLength key <= 1
+       then "-"
+       else "--")
+      key
+    ] ++ lib.optionals (val!=null) [
+      "="
+    ] ++ [
+      (toString val)
+    ]);
+
+  # Convert an attrset into a list of command-line flags
+  attrsToFlags = attrs: lib.mapAttrsToList attrToFlag attrs;
+
 in {
   inherit
     pipe
@@ -211,6 +236,7 @@ in {
     extractDerivations
     add-tag-mutation-check-to-overlay
     toString
+    attrsToFlags
     ;
 }
 
