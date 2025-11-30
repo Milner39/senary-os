@@ -25,7 +25,6 @@ let
       (if !(lib.isAttrs script)
        then script
        else chpst ({
-         envdir = "./env";
          redirect-stderr-to-stdout = true;
          # TODO: consider these
          #dir ? null,

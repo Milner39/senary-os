@@ -33,6 +33,13 @@ assert flag-newpidns ->
 
 let
 
+  scriptify' = args: script:
+    six.util.scriptify
+      args
+      (if lib.isAttrs script && !(lib.isDerivation script) && env!=null
+       then { envdir = "./env"; } // script
+       else script);
+
   env' =
     if env==null || lib.isPath env || lib.isDerivation env
     then env
@@ -75,9 +82,9 @@ in
   '' + lib.optionalString (timeout-finish != null) ''
     echo ${timeout-finish} > $out/timeout-finish
   '' + ''
-    ln -s ${six.util.scriptify { name = "target.${final-sname}.run"; } run} $out/run
+    ln -s ${scriptify' { name = "target.${final-sname}.run"; } run} $out/run
   '' + lib.optionalString (finish != null) ''
-    ln -s ${six.util.scriptify { name = "target.${final-sname}.finish"; } finish} $out/finish
+    ln -s ${scriptify' { name = "target.${final-sname}.finish"; } finish} $out/finish
   '' + lib.optionalString (data != null && (!(lib.isAttrs data) || lib.isDerivation data)) ''
     ln -s ${data} $out/data
   '' + lib.optionalString (data != null && lib.isAttrs data && !(lib.isDerivation data)) ''
@@ -95,8 +102,6 @@ in
     ]}
   '' + lib.optionalString (env' != null) ''
     ln -s ${env'} $out/env
-  '' + lib.optionalString (env' == null && lib.isAttrs run && !(lib.isDerivation run)) ''
-    mkdir $out/env
   '' + lib.optionalString flag-newpidns ''
     touch $out/flag-newpidns
   '' + lib.optionalString (notification-fd != null) ''
