@@ -23,6 +23,10 @@ let
 in
 six.mkFunnel {
 
+  env = {
+    NIX_SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
+  };
+
   run = {
     inherit (geth) user group;
     argv = [
