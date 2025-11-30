@@ -37,16 +37,13 @@ in
 six.mkFunnel {
 
   run =
-    six.util.depot.writeExecline
-      "service.electrs.run"
-      { argMode = "none"; }
-      (six.util.chpst {
-        inherit user;
-        inherit group;
-        argv = [
-          "${package}/bin/electrs"
-        ] ++ args;
-      });
+    (six.util.chpst {
+      inherit user;
+      inherit group;
+      argv = [
+        "${package}/bin/electrs"
+      ] ++ args;
+    });
 
   passthru.after = [ bitcoind ];
 

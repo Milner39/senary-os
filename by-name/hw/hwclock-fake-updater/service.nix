@@ -28,24 +28,18 @@ let
 in six.mkFunnel {
 
   # continuously copy from the system clock to the hwclock-fake file
-  run =
-    six.util.depot.writeExecline
-      "service.hwclock-fake-updater.run"
-      { argMode = "none"; }
-      (six.util.execline.loop
-        { inherit interval-seconds; }
-        execline-update-hwclock-fake);
+  run.argv =
+    (six.util.execline.loop
+      { inherit interval-seconds; }
+      execline-update-hwclock-fake);
 
   # at shutdown, update the hwclock-fake file one last time, but don't obstruct
   # the shutdown process if we're unable to update it.
-  finish =
-    six.util.depot.writeExecline
-      "service.hwclock-fake-updater.finish"
-      { argMode = "none"; } [
-          "${pkgs.execline}/bin/foreground"
-          execline-update-hwclock-fake
-          "${pkgs.execline}/bin/exit" "0"
-        ];
+  finish.argv = [
+    "${pkgs.execline}/bin/foreground"
+    execline-update-hwclock-fake
+    "${pkgs.execline}/bin/exit" "0"
+  ];
 
   passthru.after = [
     # Don't start this until hwclock-fake has copied from the disk to the system

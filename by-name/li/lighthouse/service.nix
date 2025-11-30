@@ -12,12 +12,11 @@ let
 
   defaultConfig = {
     datadir = dataDir;
-    #listen-address = "127.0.0.1";
     disable-upnp = null;
     execution-endpoint = geth.passthru.endpoint;
     execution-jwt = geth.passthru."authrpc.jwtsecret";
-    #checkpoint-sync-url = "https://mainnet.checkpoint.sigp.io";
-    allow-insecure-genesis-sync = null;
+    checkpoint-sync-url = "https://mainnet.checkpoint.sigp.io";
+    #allow-insecure-genesis-sync = null;
   };
 
 in

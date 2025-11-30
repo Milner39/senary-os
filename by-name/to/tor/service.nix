@@ -12,20 +12,17 @@
 six.mkFunnel {
 
   run =
-    six.util.depot.writeExecline
-      "service.tor.run"
-      { argMode = "none"; }
-      (six.util.execline.seq [
-        [ "${pkgs.busybox}/bin/mkdir" "-p" data-directory ]
-        [ "${pkgs.busybox}/bin/chown" "${user-name}:${group-name}" data-directory ]
-        (six.util.chpst {
-          user = user-name;
-          group = group-name;
-          argv = [
-            "${package}/bin/tor" "-f" "${conf-file}"
-          ];
-        })
-      ]);
+    (six.util.execline.seq [
+      [ "${pkgs.busybox}/bin/mkdir" "-p" data-directory ]
+      [ "${pkgs.busybox}/bin/chown" "${user-name}:${group-name}" data-directory ]
+      (six.util.chpst {
+        user = user-name;
+        group = group-name;
+        argv = [
+          "${package}/bin/tor" "-f" "${conf-file}"
+        ];
+      })
+    ]);
 
   passthru.after = [ targets.global.coldplug ];
 

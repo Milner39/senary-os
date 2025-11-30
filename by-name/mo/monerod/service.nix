@@ -23,18 +23,15 @@ in
 six.mkFunnel {
 
   run =
-    six.util.depot.writeExecline
-      "service.monerod.run"
-      { argMode = "none"; }
-      (six.util.execline.seq [
-        (six.util.chpst {
-          inherit user;
-          inherit group;
-          argv = [
-            "${package}/bin/monerod"
-          ] ++ args;
-        })
-      ]);
+    (six.util.execline.seq [
+      (six.util.chpst {
+        inherit user;
+        inherit group;
+        argv = [
+          "${package}/bin/monerod"
+        ] ++ args;
+      })
+    ]);
 
   passthru.after = [ targets.global.coldplug ];
 
