@@ -42,10 +42,8 @@ six.mkFunnel {
   ] ++ lib.optionals (bridge != null) [
     bridge
   ];
-  run = pkgs.writeScript "run" ''
-    #!${pkgs.runtimeShell}
-    exec 2>&1
-    exec ${pkgs.hostapd}/bin/hostapd ${conf-file}
-  '';
+  run.argv = [
+    "${pkgs.hostapd}/bin/hostapd" conf-file
+  ];
 }
 
