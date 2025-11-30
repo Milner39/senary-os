@@ -35,8 +35,8 @@ let
 
   scriptify =
     { name
-    , argMode ? "none"
-    , readNArgs ? 0
+    , argMode ? "var"
+    , readNArgs
     }:
     script:
     if   lib.isString script || lib.isDerivation script || lib.isPath script
@@ -103,9 +103,9 @@ in
   '' + lib.optionalString (timeout-finish != null) ''
     echo ${timeout-finish} > $out/timeout-finish
   '' + ''
-    ln -s ${scriptify { name = "target.${final-sname}.run"; } run} $out/run
+    ln -s ${scriptify { name = "target.${final-sname}.run"; readNArgs = 1; } run} $out/run
   '' + lib.optionalString (finish != null) ''
-    ln -s ${scriptify { name = "target.${final-sname}.finish"; } finish} $out/finish
+    ln -s ${scriptify { name = "target.${final-sname}.finish"; readNArgs = 4; } finish} $out/finish
   '' + lib.optionalString (data != null && (!(lib.isAttrs data) || lib.isDerivation data)) ''
     ln -s ${data} $out/data
   '' + lib.optionalString (data != null && lib.isAttrs data && !(lib.isDerivation data)) ''
