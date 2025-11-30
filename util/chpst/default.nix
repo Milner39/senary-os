@@ -42,6 +42,9 @@
   # create a new process group, and run the program within it
   new-process-group ? new-session,
 
+  # redirfd -w 1 <file>
+  redirect-stdout-to ? null,
+
   # fdmove -c 2 1
   redirect-stderr-to-stdout ? true,
 
@@ -80,6 +83,10 @@ assert envdir==null || envfile==null;
 
 let execline-argv =
 [
+] ++ lib.optionals (redirect-stdout-to != null) [
+  # this goes before redirect-stderr-to-stdout so both are redirected to the
+  # same place when both features are enabled
+  "${execline}/bin/redirfd" "-w" "1" redirect-stdout-to
 ] ++ lib.optionals redirect-stderr-to-stdout [
   # this goes first so that any error messages from the remaining operations end
   # up in the service's logger rather than in uncaught-logs or on the console
