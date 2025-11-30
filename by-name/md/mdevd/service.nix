@@ -46,7 +46,7 @@ let
   scandir = "/run/booted-system/six/scandir";  # which is a symlink to /run/service
 in
 
-(six.mkFunnel {
+six.mkFunnel {
   inherit notification-fd;
 
   data = pkgs.runCommand "mdevd-service-data" {} ''
@@ -61,28 +61,26 @@ in
     # start before filesystems are mounted read-write.
     logger = services.uncaughtLogs;
   };
-  run = pkgs.writeScript "run"
-''
-#!${pkgs.runtimeShell}
-exec >& /run/mdevd-errors.log
-exec 2>&1
 
-# to force explicit $PATH, since mdevd is painful to debug
-export PATH=
+  env = {
+    # we clear the $PATH, since mdevd is painful to debug
+    # execlineb must be in mdevd's path in order for {+,-,&}-commands to work
+    PATH = "${pkgs.execline}/bin";
+  };
 
-# execlineb must be in mdevd's path in order for {+,-,&}-commands to work
-export PATH=$PATH:${pkgs.execline}/bin
-
-exec \
-  ${lib.getBin pkgs.mdevd}/bin/mdevd \
-  -f ${scandir}/$1/data/mdev.conf \
-  -F ${firmwarePath} \
-  -D ${toString notification-fd} \
-  -v ${toString verbosity} \
-  -b ${toString kernelBufferSize} \
-  -s ${sysMountPoint} \
-  -d ${devMountPoint} \
-  ${lib.optionalString performColdplug " -C "} \
-  ${lib.optionalString (rebroadcastEvents!=null) " -O ${toString rebroadcastEvents} "}
-'';
-})
+  run.redirect-stdout-to = "/run/mdevd-errors.log";
+  run.argv = [
+    "${lib.getBin pkgs.mdevd}/bin/mdevd"
+    "-f" "${scandir}/\${1}/data/mdev.conf"
+    "-F" "${firmwarePath}"
+    "-D" "${toString notification-fd}"
+    "-v" "${toString verbosity}"
+    "-b" "${toString kernelBufferSize}"
+    "-s" "${sysMountPoint}"
+    "-d" "${devMountPoint}"
+  ] ++ lib.optionals performColdplug [
+    "-C"
+  ] ++ lib.optionals (rebroadcastEvents!=null) [
+    "-O" (toString rebroadcastEvents)
+  ];
+}
