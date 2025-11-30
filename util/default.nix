@@ -12,7 +12,7 @@
 }:
 
 let
-  chpst = pkgs.callPackage ./chpst {};
+  chpst = pkgs.callPackage ./chpst { inherit util; };
   depot = pkgs.callPackage ./depot { inherit lib; };
   scriptify = pkgs.callPackage ./scriptify {
     inherit lib;
@@ -28,11 +28,13 @@ let
     inherit lib;
   };
 
-in {
-  inherit
-    chpst
-    depot
-    scriptify
-    execline
-  ;
-}
+  util = {
+    inherit
+      chpst
+      depot
+      scriptify
+      execline
+    ;
+  };
+
+in util

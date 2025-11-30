@@ -9,6 +9,7 @@
 
 { lib
 , execline
+, util
 , s6
 , s6-portable-utils
 }:
@@ -53,6 +54,9 @@
   # change to this directory; note that this is relative to `chroot` if it is set
   dir ? null,
 
+  # an argv to execute before changing the userid/groupid
+  pre-argv ? [],
+
   # argv to execute
   argv ? throw "you must set argv to the command you want to execute",
 }:
@@ -74,6 +78,7 @@ assert envdir==null || envfile==null;
 # TODO: put more of these settings into envdirs?
 # TODO: explain why the `-f`, `-g`, and `-d` flags for s6-setsid are not useful here
 
+let execline-argv =
 [
 ] ++ lib.optionals redirect-stderr-to-stdout [
   # this goes first so that any error messages from the remaining operations end
@@ -103,4 +108,10 @@ assert envdir==null || envfile==null;
   "${execline}/bin/execline-cd" dir
 ] ++ lib.optionals (argv0 != null) [
   "${execline}/bin/exec" "-a" argv0
-] ++ argv
+] ++ argv;
+
+in
+
+if pre-argv != []
+then util.execline.seq (pre-argv ++ [ execline-argv ])
+else execline-argv
