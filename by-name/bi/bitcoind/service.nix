@@ -33,15 +33,14 @@ assert config?rpcbind && !(config?rpcallowip)
 
 six.mkFunnel {
 
-  run =
-    (six.util.chpst {
-      inherit user;
-      inherit group;
-      argv = [
-        "${package}/bin/bitcoind"
-        "-conf=${pkgs.writeText "bitcoind.conf" (writeBitcoindConfig config)}"
-      ];
-    });
+  run = {
+    inherit user;
+    inherit group;
+    argv = [
+      "${package}/bin/bitcoind"
+      "-conf=${pkgs.writeText "bitcoind.conf" (writeBitcoindConfig config)}"
+    ];
+  };
 
   passthru = {
     after = [ targets.global.coldplug ];

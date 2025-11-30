@@ -10,7 +10,7 @@
 
 six.mFunnel {
 
-  run = six.util.chpst ({
+  run = {
     inherit user group;
     argv = [
       "${pkgs.swayidle}/bin/swayidle"
@@ -22,7 +22,7 @@ six.mFunnel {
       # after 11 minutes, lock the console
       "timeout" "660" (lib.escapeShellArg lock-command)
     ];
-  })
+  };
 
   passthru.after = [ sway ];
 }

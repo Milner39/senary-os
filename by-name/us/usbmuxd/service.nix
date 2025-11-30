@@ -9,12 +9,9 @@ let
 in six.mkFunnel {
 
   # continuously copy from the system clock to the hwclock-fake file
-  run =
-    (six.util.chpst {
-      argv = [
-        "${pkgs.usbmuxd}/bin/usbmuxd" "-f" "-v"
-      ];
-    });
+  run.argv = [
+    "${pkgs.usbmuxd}/bin/usbmuxd" "-f" "-v"
+  ];
 
   passthru.after = [
     targets.mdevd
