@@ -11,18 +11,17 @@
 
 six.mkFunnel {
 
-  run =
-    (six.util.execline.seq [
+  run = {
+    user = user-name;
+    group = group-name;
+    pre-argv = [
       [ "${pkgs.busybox}/bin/mkdir" "-p" data-directory ]
       [ "${pkgs.busybox}/bin/chown" "${user-name}:${group-name}" data-directory ]
-      (six.util.chpst {
-        user = user-name;
-        group = group-name;
-        argv = [
-          "${package}/bin/tor" "-f" "${conf-file}"
-        ];
-      })
-    ]);
+    ];
+    argv = [
+      "${package}/bin/tor" "-f" "${conf-file}"
+    ];
+  };
 
   passthru.after = [ targets.global.coldplug ];
 

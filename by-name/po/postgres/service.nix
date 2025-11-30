@@ -40,20 +40,19 @@ six.mkFunnel {
     "postgresql.conf" = pkgs.writeText "postgres-postgresql.conf" config;
   };
 
-  run =
-    (six.util.execline.seq [
+  run = {
+    pre-argv = [
       [ "${pkgs.busybox}/bin/mkdir" "-p" "/run/postgresql" ]
       [ "${pkgs.busybox}/bin/chown" "${user}:${group}" "/run/postgresql" ]
       [ "${pkgs.busybox}/bin/chmod" "g+rw" "/run/postgresql" ]
-      (six.util.chpst {
-        inherit user;
-        inherit group;
-        argv = [
-          # ${pkgs.postgresql}/bin/initdb -D /notbackedup/postgres
-          "${pkgs.postgresql}/bin/postgres" "--config-file=data/postgresql.conf"
-        ];
-      })
-    ]);
+    ];
+    inherit user;
+    inherit group;
+    argv = [
+      # ${pkgs.postgresql}/bin/initdb -D /notbackedup/postgres
+      "${pkgs.postgresql}/bin/postgres" "--config-file=data/postgresql.conf"
+    ];
+  };
 
   passthru.after = [ targets.global.coldplug ];
 
