@@ -12,7 +12,7 @@ let
 
   defaultConfig = {
     datadir = dataDir;
-    listen-address = "127.0.0.1";
+    #listen-address = "127.0.0.1";
     disable-upnp = null;
     execution-endpoint = geth.passthru.endpoint;
     execution-jwt = geth.passthru."authrpc.jwtsecret";
@@ -23,22 +23,13 @@ let
 in
 six.mkFunnel {
 
-  run =
-    six.util.depot.writeExecline
-      "service.lighthouse.run"
-      { argMode = "none"; }
-      (six.util.chpst {
-        inherit (geth) user group;
-        argv = [
-          "${package}/bin/lighthouse"
-          "beacon_node"
-
-        ] ++ lib.pipe (defaultConfig // extraConfig) [
-          (lib.mapAttrsToList
-            (key: val:
-              "--${key}${lib.optionalString (val!=null) ("=" + lib.escapeShellArg (six.lib.toString val))}"))
-        ];
-      });
+  run = {
+    inherit (geth) user group;
+    argv = [
+      "${package}/bin/lighthouse"
+      "beacon_node"
+    ] ++ six.lib.attrsToFlags (defaultConfig // extraConfig) ;
+  };
 
   passthru = {
     after = [ geth ];
