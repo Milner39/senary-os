@@ -22,16 +22,13 @@ in
 
 six.mkFunnel {
 
-  run =
-    (six.util.execline.seq [
-      (six.util.chpst {
-        inherit user;
-        inherit group;
-        argv = [
-          "${package}/bin/monerod"
-        ] ++ args;
-      })
-    ]);
+  run = {
+    inherit user;
+    inherit group;
+    argv = [
+      "${package}/bin/monerod"
+    ] ++ args;
+  };
 
   passthru.after = [ targets.global.coldplug ];
 

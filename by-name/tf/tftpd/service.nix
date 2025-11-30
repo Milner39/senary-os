@@ -23,7 +23,7 @@ six.mkFunnel {
   passthru.after = with targets; [ global.coldplug ];
 
   # TODO: factor out a six.mkUdpsvd?
-  run =
+  run.argv =
     [ "${pkgs.busybox}/bin/udpsvd" ] ++
     (lib.optional lookup-peer-hostname "-h") ++
     (lib.optional verbose "-v") ++

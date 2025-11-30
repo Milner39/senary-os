@@ -17,7 +17,7 @@
 
 six.mkFunnel {
   passthru.after = with targets; [ global.coldplug ];
-  run =
+  run.argv =
     [ "${pkgs.unfs3}/bin/unfsd" ] ++
     [ "-u" ] ++                        # do not insist on using port 2049
     [ "-n" (toString nfsd-port)   ] ++ # run on specified port
