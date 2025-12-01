@@ -37,7 +37,8 @@ let
 
   # Sequence a list of argvs, failing immediately if any of them fail.  This
   # uses the somewhat-confusingly-named execline `if` operator, which is
-  # approximately equivalent to the bash `&&` operator.
+  # approximately equivalent to the bash `&&` operator.  Guaranteed
+  # optimization: for one-element argvs, `seq [x] == x`.
   seq = argvs:
     assert (builtins.length argvs) > 0;
     let
