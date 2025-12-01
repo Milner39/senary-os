@@ -22,8 +22,8 @@
 , data  ? null # copied verbatim
 , env   ? null # copied verbatim
 
-, user ? null
-, group ? null
+, user ? 0
+, group ? if user==0 then 0 else null
 , groups ? null
 
 , passthru ? {}
@@ -58,7 +58,7 @@ let
        } // lib.optionalAttrs (env != null) {
          envdir = "./env";
        } // lib.optionalAttrs (user != null) {
-         # TODO: check that this exists in host.users
+         # TODO: if (lib.isString user), check that this exists in host.users
          inherit user;
        } // lib.optionalAttrs (group != null) {
          # TODO: if user!=null && group==null, set group based on host.users
