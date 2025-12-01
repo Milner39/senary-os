@@ -15,11 +15,6 @@
 , extraConf ? {}
 }:
 let
-  opts = [
-    "-P" "${sockdir}/socket"
-    "-F"                     # foreground
-    "-p" "off"               # do not listen for TCP connections
-  ];
 
   printcap = pkgs.writeText "printcap" ''
     lp|double-sided brother laser:\
@@ -94,27 +89,31 @@ let
 
 in
 six.mkFunnel {
-  run = pkgs.writeScript "run" ''
-    #!${pkgs.runtimeShell}
-    exec 2>&1
-    mkdir -p ${sockdir}
-    chown -R ${user}:${group} ${sockdir}
-    chmod g+w ${sockdir}
 
-    mkdir -p ${spooldir}
-    chown ${user}:${group} ${spooldir}
+  run.user = user;
+  run.group = group;
+  run.pre-argv = [
+    [ "${pkgs.busybox}/bin/mkdir" "-p" sockdir ]
+    [ "${pkgs.busybox}/bin/chown" "-R" "${user}:${group}" sockdir ]
+    [ "${pkgs.busybox}/bin/chmod" "g+w" sockdir ]
 
-    mkdir -p ${lockdir}
-    chown ${user}:${group} ${lockdir}
+    [ "${pkgs.busybox}/bin/mkdir" "-p" spooldir ]
+    [ "${pkgs.busybox}/bin/chown" "${user}:${group}" spooldir ]
+    [ "${pkgs.busybox}/bin/mkdir" "-p" "-m" "0700" "${spooldir}/${lpd_conf_options.default_printer}" ]
+    [ "${pkgs.busybox}/bin/chown" "${user}:${group}" "${spooldir}/${lpd_conf_options.default_printer}" ]
 
-    mkdir -p /run/etc/
-    ln -sfT ${lpd_conf} /run/etc/lpd.conf
-    touch /run/etc/lpd.conf.local
+    [ "${pkgs.busybox}/bin/mkdir" "-p" lockdir ]
+    [ "${pkgs.busybox}/bin/chown" "${user}:${group}" lockdir ]
 
-    exec ${pkgs.runit}/bin/chpst \
-      -u ${user}:${group} \
-      -U ${user}:${group} \
-      -- \
-      ${package}/bin/lpd ${lib.concatStringsSep " " (map (o: "'${o}'") opts)}
-  '';
+    [ "${pkgs.busybox}/bin/mkdir" "-p" "/run/etc/" ]
+    [ "${pkgs.busybox}/bin/ln" "-sfT" lpd_conf "/run/etc/lpd.conf" ]
+    [ "${pkgs.busybox}/bin/touch" "/run/etc/lpd.conf.local" ]
+  ];
+
+  run.argv = [
+    "${package}/bin/lpd"
+    "-P" "${sockdir}/socket"
+    "-F"                     # foreground
+    "-p" "off"               # do not listen for TCP connections
+  ];
 }
