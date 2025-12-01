@@ -60,30 +60,10 @@ PermitUserEnvironment yes
 AcceptEnv LANG LC_*
 Subsystem sftp internal-sftp
   '';
-  options = lib.concatStringsSep " " [
-    "-e"   # log to stderr
-    "-4"   # disable ipv6
-    "-D"   # don't detach (double-fork)
-    "-f" configFile
-  ];
-in
-six.mkFunnel {
 
-  # nixpkgs has a patch to pass this variable through from sshd to children
-  env = {
-    LOCALE_ARCHIVE = "/run/current-system/sw/lib/locale/locale-archive";
-  };
-
-  mkdir = {
-    "/var/empty" = "0755";  # configuration activation should take care of this...
-    "/run/sshd" = "0755";
-  };
-
-  run = pkgs.writeScript "run"
+  maybe-generate-host-keys = pkgs.writeScript "maybe-generate-ssh-host-keys"
 ''
 #!${pkgs.runtimeShell}
-exec 2>&1
-
 # generate host keys if not present
 # ugly kludge due to `ssh-keygen -f` taking a prefix rather than a destination
 mkdir -p /etc/ssh
@@ -93,7 +73,31 @@ TEMP="$(mktemp -d)"
  ssh-keygen -A -f ./
  rm etc)
 rmdir "$TEMP"
-
-exec ${package}/bin/sshd ${options}
 '';
+
+in
+six.mkFunnel {
+
+  env = {
+    # nixpkgs has a patch to pass this variable through from sshd to children
+    LOCALE_ARCHIVE = "/run/current-system/sw/lib/locale/locale-archive";
+  };
+
+  mkdir = {
+    "/var/empty" = "0755";  # configuration activation should take care of this...
+    "/run/sshd" = "0755";
+  };
+
+  run.pre-argvs = [
+    [ "${maybe-generate-host-keys}" ]
+  ];
+
+  run.argv = [
+    "${package}/bin/sshd"
+    "-e"   # log to stderr
+    "-4"   # disable ipv6
+    "-D"   # don't detach (double-fork)
+    "-f" configFile
+  ];
+
 }
