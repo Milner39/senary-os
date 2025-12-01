@@ -7,6 +7,7 @@
 , gps-device      ? throw "missing argument: gps-device"
 , debug-level     ? 3
 , daemon-port     ? 2947
+, passthru        ? {}
 }:
 
 let
@@ -37,8 +38,8 @@ let
   '';
 
 in six.mkFunnel {
-  passthru = {
-    after = with targets; [ global.coldplug ];
+  passthru = passthru // {
+    after = (passthru.after or []) ++ [ targets.global.coldplug ];
     inherit gpsd-socket;
   };
   inherit run;
