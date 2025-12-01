@@ -67,7 +67,6 @@ let
         sw = throw "missing sw";
         configuration = throw "missing configuration";
         delete-generations = null;
-        service-overlays = [];
         boot = {};
         users = {};
         groups = {};

@@ -297,18 +297,6 @@ let
         };
     });
 
-  apply-service-overlays =
-    (final: prev:
-      # this prevents the service overlays from adding any new attrs to the attrset
-      (let applied = (lib.composeManyExtensions final.service-overlays) final prev;
-       in (lib.mapAttrs (k: _: applied.${k}) prev)
-          // {
-            # avoids infinite recursion
-            inherit (prev) tags;
-            inherit (prev) service-overlays;
-            inherit (prev) canonical;
-          }));
-
   add-default-target =
     (final: prev:
       infuse prev ({
@@ -366,7 +354,6 @@ let
   ];
 
   mkHost = [
-    apply-service-overlays
     apply-tags
     add-default-logger
     add-default-target

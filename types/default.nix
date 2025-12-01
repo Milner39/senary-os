@@ -119,8 +119,6 @@ let
       configuration = any;    # drv; set to `any` to keep eval times reasonable
       delete-generations = option string;
 
-      service-overlays = option (list function);
-
       users = option (attrs user);
       groups = option (attrs group);
 
