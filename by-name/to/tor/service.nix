@@ -11,9 +11,9 @@
 
 six.mkFunnel {
 
+  user = user-name;
+  group = group-name;
   run = {
-    user = user-name;
-    group = group-name;
     pre-argvs = [
       [ "${pkgs.busybox}/bin/mkdir" "-p" data-directory ]
       [ "${pkgs.busybox}/bin/chown" "${user-name}:${group-name}" data-directory ]

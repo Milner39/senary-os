@@ -22,12 +22,12 @@ let
 in
 six.mkFunnel {
 
+  inherit (geth) user group;
   env = {
     NIX_SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
   };
 
   run = {
-    inherit (geth) user group;
     argv = [
       "${package}/bin/lighthouse"
       "beacon_node"

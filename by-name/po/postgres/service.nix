@@ -36,6 +36,8 @@ in
 
 six.mkFunnel {
 
+  inherit user group;
+
   data = {
     "postgresql.conf" = pkgs.writeText "postgres-postgresql.conf" config;
   };
@@ -46,8 +48,6 @@ six.mkFunnel {
       [ "${pkgs.busybox}/bin/chown" "${user}:${group}" "/run/postgresql" ]
       [ "${pkgs.busybox}/bin/chmod" "g+rw" "/run/postgresql" ]
     ];
-    inherit user;
-    inherit group;
     argv = [
       # ${pkgs.postgresql}/bin/initdb -D /notbackedup/postgres
       "${pkgs.postgresql}/bin/postgres" "--config-file=data/postgresql.conf"

@@ -36,9 +36,8 @@ in
 
 six.mkFunnel {
 
+  inherit user group;
   run = {
-    inherit user;
-    inherit group;
     argv = [
       "${package}/bin/electrs"
     ] ++ args;

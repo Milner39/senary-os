@@ -21,6 +21,11 @@
 # down is not allowed -- s6-rc creates its own ./down
 , data  ? null # copied verbatim
 , env   ? null # copied verbatim
+
+, user ? null
+, group ? null
+, groups ? null
+
 , passthru ? {}
 }@args:
 assert up!=null   -> lib.isPath up || lib.isDerivation up;
@@ -31,6 +36,8 @@ assert flag-newpidns ->
        pkgs.stdenv.hostPlatform.isLinux &&
        lib.versionAtLeast pkgs.s6.version "2.13.1.0";
 
+assert (lib.isAttrs run && run?user) -> throw "please set user in mkFunnel, not in run";
+assert (lib.isAttrs finish && finish?user) -> throw "please set user in mkFunnel, not in finish";
 let
 
   scriptify =
@@ -50,16 +57,21 @@ let
          redirect-stderr-to-stdout = true;
        } // lib.optionalAttrs (env != null) {
          envdir = "./env";
+       } // lib.optionalAttrs (user != null) {
+         # TODO: check that this exists in host.users
+         inherit user;
+       } // lib.optionalAttrs (group != null) {
+         # TODO: if user!=null && group==null, set group based on host.users
+         inherit group;
+       } // lib.optionalAttrs (groups != null) {
+         inherit groups;
        } // {
 
          # TODO: consider these
          #dir ? null,
          #new-session ? false,
          #new-process-group ? new-session,
-         #user ? null,
-         #group ? null,
-         #groups ? [],
-         #env-clear ? false,
+         #env-clear = true,
        } // chpst));
 
   env' =

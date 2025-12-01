@@ -90,8 +90,7 @@ let
 in
 six.mkFunnel {
 
-  run.user = user;
-  run.group = group;
+  inherit user group;
   run.pre-argvs = [
     [ "${pkgs.busybox}/bin/mkdir" "-p" sockdir ]
     [ "${pkgs.busybox}/bin/chown" "-R" "${user}:${group}" sockdir ]

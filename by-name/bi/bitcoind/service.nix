@@ -33,9 +33,8 @@ assert config?rpcbind && !(config?rpcallowip)
 
 six.mkFunnel {
 
+  inherit user group;
   run = {
-    inherit user;
-    inherit group;
     argv = [
       "${package}/bin/bitcoind"
       "-conf=${pkgs.writeText "bitcoind.conf" (writeBitcoindConfig config)}"

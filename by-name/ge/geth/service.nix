@@ -24,6 +24,8 @@ let
 in
 six.mkFunnel {
 
+  inherit user;
+  inherit group;
   run = {
     pre-argvs = [
       [ "${pkgs.busybox}/bin/mkdir" "-m" "0700" "-p" (builtins.dirOf config."authrpc.jwtsecret") ]
@@ -32,8 +34,6 @@ six.mkFunnel {
       [ "${pkgs.execline}/bin/redirfd" "-w" "1" config."authrpc.jwtsecret"
         "${pkgs.util-linux}/bin/hexdump" "-n" "32" "-e" "8 \"%08x\" 1 \"\\n\"" "/dev/random" ]
     ];
-    inherit user;
-    inherit group;
     argv = [
       "${package}/bin/geth"
     ] ++ lib.pipe config [
