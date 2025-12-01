@@ -5,9 +5,10 @@
 , ...
 }:
 
-[
+let
 
- # basic minimal initrd
+  # basic minimal initrd
+  basic-initrd =
    (final: prev: infuse prev {
      boot.initrd.image.__assign =
        (six-initrd {
@@ -15,14 +16,16 @@
          inherit (final) pkgs;
        })
          .minimal;
-  })
+  });
 
+  add-initrd-contents =
    (final: prev: infuse prev {
      boot.initrd.image.__input.contents.__init =
        final.boot.initrd.contents;
-   })
+   });
 
- # abduco-enabled initrd
+  # abduco-enabled initrd
+  abduco =
   (final: prev: infuse prev ({
     boot.initrd.contents =
       lib.mapAttrs
@@ -33,9 +36,10 @@
         }).abduco {
           ttys = final.boot.initrd.ttys;
         });
-  }))
+  }));
 
- # minimum necessary contents
+  # minimum necessary contents
+  minimal-contents =
   (final: prev: let
     inherit (final) pkgs;
   in infuse prev ({
@@ -74,8 +78,9 @@
         blacklist snd_pcsp
       '';
     });
-  }))
+  }));
 
+  gross-hack =
   (final: prev: let inherit (final) pkgs; in infuse prev ( {
     boot.initrd.image.__input.contents =
       lib.optionalAttrs final.tags.is-nfsroot {
@@ -89,9 +94,10 @@
         modprobe dwmac_rk
       ''];
     };
-  }))
+  }));
 
- # cryptsetup-enabled initrd
+  # cryptsetup-enabled initrd
+  cryptsetup-initrd =
   (final: prev: let inherit (final) pkgs; in infuse prev ({
     boot.initrd.image.__input.contents = lib.optionalAttrs (!final.tags.is-nfsroot) {
       "early/run".__append = [''
@@ -122,9 +128,10 @@
           });
         in "${lib.getBin cryptsetup}/bin/cryptsetup";
     };
-  }))
+  }));
 
- # lvm-enabled initrd
+  # lvm-enabled initrd
+  lvm-initrd =
   (final: prev: let inherit (final) pkgs; in infuse prev ( {
     boot.initrd.image.__input.contents = lib.optionalAttrs (!final.tags.is-nfsroot && !final.tags.dont-mount-root) {
       "early/run".__append = [''
@@ -143,9 +150,10 @@
       mount -o ro          LABEL=boot /root || \
       exit 1
     ''];
-  }))
+  }));
 
- # switch_root into the chosen profile
+  # switch_root into the chosen profile
+  switch-root =
   (final: prev: let
     inherit (final) pkgs;
   in infuse prev ({
@@ -167,10 +175,22 @@
         && exec switch_root /root $CONFIGURATION/boot/init
       exec /bin/sh
     ''];
-  }))
+  }));
 
+  mount-root =
   (host-final: prev: infuse prev ({
     boot.initrd.image.__input.contents."early/run".__append =
       host-final.boot.initrd.mount-root;
-  }))
+  }));
+
+in [
+  basic-initrd
+  add-initrd-contents
+  abduco
+  minimal-contents
+  gross-hack
+  cryptsetup-initrd
+  lvm-initrd
+  switch-root
+  mount-root
 ]
