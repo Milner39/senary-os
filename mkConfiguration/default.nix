@@ -166,8 +166,8 @@ let
     ln -s ${source}                $out/six/s6-rc/source
     ln -s ${compiled}/six/s6-rc/db $out/six/s6-rc/db
     ln -s ${scandir}               $out/six/scandir
-  '' + lib.optionalString (host-final.users != {}) ''
     mkdir -p $out/etc
+  '' + lib.optionalString (host-final.users != {}) ''
     ln -s ${pkgs.writeText "etc-passwd" (sixos.mkHost.users.mkEtcPasswd {
       inherit (host-final) pkgs users groups;
     })} $out/etc/passwd
