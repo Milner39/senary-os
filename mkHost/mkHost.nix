@@ -6,6 +6,12 @@
   sixos,
   ...
 }:
+
+#
+# This file contains the single-host overlays that are applied *after* any of
+# the site-specific overlays.
+#
+
 let
 
   add-spath =

@@ -7,9 +7,15 @@
   sixos,
   ...
 }:
+
+#
+# This file contains the single-host overlays that are applied *before* any of
+# the site-specific overlays.
+#
+
 let
 
-  host-stages = [
+  init-stages = [
 
     # initial host attrset
     (host-final: host-prev:
@@ -309,4 +315,4 @@ let
 in [
   init
   initialize-targets
-] ++ host-stages
+] ++ init-stages

@@ -33,8 +33,7 @@ let
 
   overlays = [
 
-    # apply mkHost.host-stages to each host
-  ] ++ map sixos.lib.forall-hosts sixos.mkHost.host-stages ++ [
+  ] ++ map sixos.lib.forall-hosts sixos.mkHost.initHost ++ [
 
     # apply host overlays from the site-dir
     (sixos.lib.forall-hosts
