@@ -151,5 +151,162 @@ let
   ] ++ sixos.mkHost.initrd ++ [
 
   ];
-in
-host-stages
+
+  init = final: prev:
+    let
+      autoArgs = {
+        inherit lib six yants;
+        inherit (final) pkgs targets services;
+        host = final;
+      };
+      six = {
+        mkService       = lib.callPackageWith autoArgs (import ../mkConfiguration/mkService.nix);
+        mkBundle        = lib.callPackageWith autoArgs (import ../mkConfiguration/mkBundle.nix);
+        mkOneshot       = lib.callPackageWith autoArgs (import ../mkConfiguration/mkOneshot.nix);
+        mkFunnel        = lib.callPackageWith autoArgs (import ../mkConfiguration/mkFunnel.nix);
+        mkLogger        = lib.callPackageWith autoArgs (import ../mkConfiguration/mkLogger.nix);
+        util            = sixos.util { inherit (final) pkgs; };
+        inherit (sixos) lib;
+      };
+    in
+      prev // {
+
+        inherit lib yants;
+
+        # consider automatically allowing arguments `before` and `after` which, if
+        # present, become `overrideAttrs` applied to `passthru`
+        callService = service: lib.callPackageWith autoArgs service;
+        callPackage = lib.callPackageWith autoArgs;
+        host = final;
+
+        inherit six;
+
+        # A service is a Nix function which can be applied to various arguments,
+        # like a callPackage in nixpkgs.  Each `src/by-name/??/${name}/service.nix`
+        # defines one service.  See also `targets` below, which include service
+        # *derivations*.
+        services =
+          (lib.flip builtins.mapAttrs sixos.by-name
+            (name: service:
+              final.callService service))
+          // {
+
+            # A logger which simply uses `cat` to send its stdin to the supervisor's
+            # stdout, which is the same as the scanner's stdout.
+            #
+            # Unfortunately we need to create one of these (i.e. a separate s6-cat
+            # process, plus a s6-supervise process for it) due to s6 restrictions:
+            # every longrun either sends its stdout to some other longrun, or else
+            # sends it to the catch-all logger (i.e. the console) -- and you cannot
+            # change one type to the other without restarting the service.  In the
+            # case of mdevd this is catastrophic: restarting mdevd will freqently
+            # nuke the entire wayland/gui/x11 session.
+            uncaughtLogs =
+              spath: service:
+              final.six.mkLogger {
+                run = "${final.pkgs.s6-portable-utils}/bin/s6-cat";
+              };
+
+            defaultLogger = final.uncaughtLogs;
+          };
+
+        # A target is something that can be depended upon, started, or stopped.
+        # Targets include:
+        #
+        # - Bundles (possibly empty) of other targets.
+        # - Service derivations, which are specific instantiations of services.
+        #   Each service expression, applied to a complete set of arguments, yields
+        #   a service derivation.
+        #
+        # Each target has a `tname` which is the unique attrpath below `targets`
+        # through which it is reachable.  The `tname` is used to identify the target
+        # when issuing commands like `six start` and `six stop`.
+        #
+        #targets = prev.targets or { };
+      };
+
+  initialize-targets =
+    (final: prev: infuse prev [
+      ({
+        targets.default = _: final.six.mkBundle { };
+        targets.global.mounts = _: final.six.mkBundle { passthru.before = [ final.targets.default ]; };
+        targets.global.coldplug = _: final.six.mkBundle { };
+        targets.global.set-hostname = _: final.six.mkBundle { };
+        targets.global.hwclock = _: final.six.mkBundle { };
+        targets.net.iface.__init = lib.pipe final.interfaces [
+          (lib.mapAttrsToList
+            (ifname: interface:
+              if interface.type or null == "loopback"
+              then lib.nameValuePair ifname (final.services.netif {
+                inherit ifname;
+                inherit (interface) type;
+                address = "127.0.0.1";
+                netmask = 8;
+              }) else if interface?subnet
+                 then lib.nameValuePair ifname (
+                   let ifconn = final.ifconns.${interface.subnet};
+                   in if ifconn?wg
+                      then final.services.wireguard ((builtins.removeAttrs ifconn ["ip" "edenPort" "wg"]) // {
+                        inherit ifname;
+                        inherit (ifconn) mtu netmask;
+                        inherit (ifconn.wg) fwmark peers;
+                        private-key-filename = "/etc/wireguard/privatekey";
+                        address = final.ifconns.${interface.subnet}.ip;
+                        listen-port = 201;
+                      })
+                      else final.services.netif ((builtins.removeAttrs ifconn ["ip" "edenPort"]) // {
+                        inherit ifname;
+                      } // lib.optionalAttrs (final.ifconns.${interface.subnet}?ip) {
+                        address = final.ifconns.${interface.subnet}.ip;
+                      }))
+                 else null
+            ))
+          (lib.filter (v: v!=null))
+          (map (lib.flip infuse ({
+            value.__output.passthru.before.__append = [ final.targets.default ];
+          })))
+          lib.listToAttrs
+        ];
+      })
+      ({
+        # TODO: use --onlyonce mounting option?
+        targets.mounts = _: {
+          proc = final.services.mount { where = "/proc"; };
+          sys = final.services.mount { where = "/sys"; };
+          dev.pts = final.services.mount { where = "/dev/pts"; };
+          tmp = final.services.mount {
+            where = "/tmp";
+            fstype = "tmpfs";
+            options = [ "nodev" "nosuid" "nr_inodes=0" "mode=1777" "size=1g" ];
+          };
+          dev.shm = final.services.mount {
+            where = "/dev/shm";
+            options = [ "size=50%" "nosuid" "nodev" "mode=1777" ];
+          };
+          "" = final.services.mount {
+            where = "/";
+            options = [ "remount" "rw" ];
+          };
+        };
+      })
+      {
+        targets = {
+          mdevd.__assign     = final.services.mdevd { };
+          mdevd-coldplug     = _: final.services.mdevd-coldplug { };
+          dnscache           = _: final.services.dnscache { };
+          nix-daemon         = _: final.services.nix-daemon {};
+          # FIXME: logging sshd means it won't start if the root filesystem can't be remounted read-write
+          sshd               = _: final.services.sshd {};
+          syslog             = _: final.services.syslog {};
+          set-hostname       = _: final.services.set-hostname { hostname = final.name; };
+
+          # you need a nixpkgs patch for this
+          #openntpd           = _: final.services.openntpd { };
+        };
+      }
+    ]);
+
+in [
+  init
+  initialize-targets
+] ++ host-stages
