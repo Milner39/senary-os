@@ -5,9 +5,8 @@
 }:
 
 # local args
-{ pkgs
-, s6-fdholder-daemon-username ? null   # -h
-, verbosity                   ? null   # -v
+{ s6-fdholder-daemon-username ? null   # -h
+, verbosity                   ? 3      # -v
 , default-runlevel            ? "default"
 
 # This directory can only be changed by doing a reboot or pivot_root(), since it
@@ -20,21 +19,25 @@
 # invocations are a bug, which should fail rather than deadlock.
 , fail-on-lock-contention     ? true   # -b
 
-# FIXME(amjoseph): do the same abduco trick here that we already do in the initrd
-# FIXME(amjoseph): should be using boot.initrd.ttys instead of boot.kernel.console here
-, early-getty ? "${pkgs.busybox}/bin/getty -nl ${pkgs.busybox}/bin/sh ${toString (boot.kernel.console.baud or 115200)} ${boot.kernel.console.device or "tty0"}"
-
 , nixpkgs-version ? "unknown-nixpkgs-version"
-, boot  ? {}
-, sw    ? null
-, delete-generations
 }:
 
 host-final:
 host-prev:
 
 let
+  inherit (host-final) pkgs boot sw;
+  delete-generations = host-final.delete-generations or null;
 
+  # FIXME(amjoseph): do the same abduco trick here that we already do in the initrd
+  # FIXME(amjoseph): should be using boot.initrd.ttys instead of boot.kernel.console here
+  early-getty = lib.concatStringsSep " " [
+    "${pkgs.busybox}/bin/getty"
+    "-nl"
+    "${pkgs.busybox}/bin/sh"
+    "${toString (boot.kernel.console.baud or 115200)}"
+    "${boot.kernel.console.device or "tty0"}"
+  ];
 
   # note: add-spaths must be the last extension before
   # "convert-before-to-after", to be sure that it is able to "see" any
