@@ -63,7 +63,7 @@ let
   ];
 in
 
-lib.pipe overlays [
+sixos.lib.pipe overlays [
   # compose the extensions into a single (final: prev: ...)
   (lib.foldr lib.composeExtensions (_: _: {}))
 
