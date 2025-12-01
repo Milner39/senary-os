@@ -76,7 +76,6 @@ assert chroot!=null && dir!=null -> throw "once we enter the chroot we cannot ac
 assert envdir==null || envfile==null;
 
 # TODO: set $HOME based on host.users.${user}
-# TODO: allow to use numerical uid/gid
 # TODO: ionice
 # TODO: explain why the `-f`, `-g`, and `-d` flags for s6-setsid are not useful here
 
@@ -111,9 +110,9 @@ nicePhase =
 
 setuidPhase =
 [
-] ++ lib.optionals (user != null || group != null) [
+] ++ lib.optionals ((user != null || group != null) && (user != 0 || group != 0)) [
   "${s6-portable-utils}/bin/s6-env" "GIDLIST="
-  "${s6}/bin/s6-envuidgid" "-B" "${user}:${group}"
+  "${s6}/bin/s6-envuidgid" "-n" "-B" "${toString user}:${toString group}"
   "${s6}/bin/s6-applyuidgid" "-U" "-z"
 ] ++ lib.optionals (umask!=null) [
   "${execline}/bin/execline-umask" umask
