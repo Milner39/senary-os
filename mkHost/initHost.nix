@@ -94,20 +94,20 @@ let
 
   initialize-targets =
     final: prev: infuse prev {
-      targets.default = _: final.six.mkBundle { };
-      targets.global.mounts = _: final.six.mkBundle { passthru.before = [ final.targets.default ]; };
-      targets.global.coldplug = _: final.six.mkBundle { };
-      targets.global.set-hostname = _: final.six.mkBundle { };
-      targets.global.hwclock = _: final.six.mkBundle { };
-      targets.mdevd.__assign     = final.services.mdevd { };
-      targets.mdevd-coldplug     = _: final.services.mdevd-coldplug { };
-      targets.dnscache           = _: final.services.dnscache { };
-      targets.nix-daemon         = _: final.services.nix-daemon {};
+      targets.default.__init             = final.six.mkBundle { };
+      targets.global.mounts.__init       = final.six.mkBundle { passthru.before = [ final.targets.default ]; };
+      targets.global.coldplug.__init     = final.six.mkBundle { };
+      targets.global.set-hostname.__init = final.six.mkBundle { };
+      targets.global.hwclock.__init      = final.six.mkBundle { };
+      targets.mdevd.__assign             = final.services.mdevd { };
+      targets.mdevd-coldplug.__init      = final.services.mdevd-coldplug { };
+      targets.dnscache.__init            = final.services.dnscache { };
+      targets.nix-daemon.__init          = final.services.nix-daemon {};
       # FIXME: logging sshd means it won't start if the root filesystem can't be remounted read-write
-      targets.sshd               = _: final.services.sshd {};
-      targets.syslog             = _: final.services.syslog {};
-      targets.set-hostname       = _: final.services.set-hostname { hostname = final.name; };
-      targets.net.iface.__init = lib.pipe final.interfaces [
+      targets.sshd.__init                = final.services.sshd {};
+      targets.syslog.__init              = final.services.syslog {};
+      targets.set-hostname.__init        = final.services.set-hostname { hostname = final.name; };
+      targets.net.iface.__init           = lib.pipe final.interfaces [
         (lib.mapAttrsToList
           (ifname: interface:
             if interface.type or null == "loopback"
@@ -145,7 +145,7 @@ let
 
   initialize-mounts = final: prev: infuse prev {
     # TODO: use --onlyonce mounting option?
-    targets.mounts = _: {
+    targets.mounts.__init = {
       proc = final.services.mount { where = "/proc"; };
       sys = final.services.mount { where = "/sys"; };
       dev.pts = final.services.mount { where = "/dev/pts"; };
@@ -269,18 +269,18 @@ let
         "console=${device}"
         + lib.optionalString (baud!=null) ",${toString baud}";
     in infuse host-prev {
-      boot.kernel.params   = _: [
+      boot.kernel.params.__init = [
         "root=${host-final.boot.rootfs.parameter}"
       ] ++ lib.optionals host-final.boot.rootfs.first-mount-is-readonly [
         "ro"
       ] ++ lib.optionals (host-final.boot?kernel.console) [
         (mkKernelConsoleBootArg host-final.boot.kernel.console)
       ];
-      boot.kernel.modules  = _: "${host-final.boot.kernel.package}";
-      boot.kernel.package  = _: host-final.pkgs.callPackage sixos.mkHost.kernel { };
-      boot.rootfs.label.__assign = "root";
-      boot.rootfs.parameter.__assign = "LABEL=${host-final.boot.rootfs.label}";
-      boot.rootfs.first-mount-is-readonly.__assign = true;
+      boot.kernel.modules.__init = "${host-final.boot.kernel.package}";
+      boot.kernel.package.__init = host-final.pkgs.callPackage sixos.mkHost.kernel { };
+      boot.rootfs.label.__init = "root";
+      boot.rootfs.parameter.__init = "LABEL=${host-final.boot.rootfs.label}";
+      boot.rootfs.first-mount-is-readonly.__init = true;
 
       # If the bootloader or its configuration is stored on a mountable
       # filesystem, this should be set to that filesystem's LABEL.  Mainly
