@@ -39,13 +39,14 @@ let
     , readNArgs
     }:
     script:
-    if   lib.isString script || lib.isDerivation script || lib.isPath script
-    then script
-    else six.util.depot.writeExecline name
+    let chpst =
+          if   lib.isString script || lib.isDerivation script || lib.isPath script
+          then { argv = [ (toString script) ]; }
+          else script;
+    in
+      six.util.depot.writeExecline name
       { inherit argMode readNArgs; }
-      (if !(lib.isAttrs script)
-       then script
-       else six.util.chpst ({
+      (six.util.chpst ({
          redirect-stderr-to-stdout = true;
        } // lib.optionalAttrs (env != null) {
          envdir = "./env";
@@ -59,7 +60,7 @@ let
          #group ? null,
          #groups ? [],
          #env-clear ? false,
-       } // script));
+       } // chpst));
 
   env' =
     if env==null || lib.isPath env || lib.isDerivation env
