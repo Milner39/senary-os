@@ -197,7 +197,7 @@ let
           };
     };
 
-  host-overlays = [
+  initialize-targets =
     (final: prev: infuse prev [
       ({
         targets.default = _: final.six.mkBundle { };
@@ -276,7 +276,9 @@ let
           #openntpd           = _: final.services.openntpd { };
         };
       }
-    ])
+    ]);
+
+  add-default-logger =
     (final: prev: prev // {
       defaultLogger =
         spath: service:
@@ -293,8 +295,9 @@ let
             final.targets.mounts.""  # cannot start logging until filesystem is read/write
           ];
         };
-    })
+    });
 
+  apply-service-overlays =
     (final: prev:
       # this prevents the service overlays from adding any new attrs to the attrset
       (let applied = (lib.composeManyExtensions final.service-overlays) final prev;
@@ -304,8 +307,9 @@ let
             inherit (prev) tags;
             inherit (prev) service-overlays;
             inherit (prev) canonical;
-          }))
+          }));
 
+  add-default-target =
     (final: prev:
       infuse prev ({
         targets.default.__output.passthru.after.__append =
@@ -313,10 +317,9 @@ let
             # FIXME: hacky
             (lib.attrNames (builtins.removeAttrs prev.targets [ "net" "default" "global" "mounts" ]))
         ;
-        targets.mdevd-coldplug.__output.passthru.before.__append = [ final.targets.global.coldplug ];
-        targets.set-hostname.__output.passthru.before.__append = [ final.targets.global.set-hostname ];
-      }))
+      }));
 
+  synthesize-groups =
     (final: prev:
       infuse prev {
 
@@ -335,24 +338,24 @@ let
             }))
           lib.listToAttrs
         ];
+      });
 
-      })
+  # It is very important that this is the *last* overlay that adds to
+  # boot.kernel.params, since `console=` parameters are order-sensitive.  We
+  # need the `boot.console.device` to be the *last* `console=` parameter;
+  # this makes it the "primary" console which becomes /dev/console after the
+  # handoff to userspace.
+  add-early-console-bootparam =
+    (final: prev:
+      infuse prev ({
+/*
+        boot.kernel.params.__append = lib.optionals (final.boot?kernel.console) [
+          "console=${final.boot.kernel.console.device or "ttyS0"
+                    },${toString final.boot.kernel.console.baud}n8"
+        ];
+*/
+      }));
 
-    # It is very important that this is the *last* overlay that adds to
-    # boot.kernel.params, since `console=` parameters are order-sensitive.  We
-    # need the `boot.console.device` to be the *last* `console=` parameter;
-    # this makes it the "primary" console which becomes /dev/console after the
-    # handoff to userspace.
-    /*
-                  (final: prev:
-                    infuse prev ({
-                      boot.kernel.params.__append = lib.optionals (final.boot?kernel.console) [
-                        "console=${final.boot.kernel.console.device or "ttyS0"
-                                  },${toString final.boot.kernel.console.baud}n8"
-                      ];
-                    }))
-                    */
-  ];
 
   # FIXME: need to add after=target-mounts to almost everything
   # above... right now I'm getting away with it only because of logging
@@ -360,7 +363,12 @@ let
   mkHost = [
     apply-tags
     init
-  ] ++ host-overlays ++ [
+    initialize-targets
+    add-default-logger
+    apply-service-overlays
+    add-default-target
+    synthesize-groups
+    add-early-console-bootparam
     add-spaths
     add-loggers
     convert-before-to-after

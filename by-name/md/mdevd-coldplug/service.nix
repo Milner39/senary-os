@@ -25,6 +25,7 @@ six.mkOneshot {
   passthru.logger = false;  # loggers require mounting read-write, which requires mdevd
   passthru.essential = true;
   passthru.after = [ mdevd ];
+  passthru.before = [ targets.global.coldplug ];
   up = pkgs.writeScript "run"
 ''
 #!${pkgs.runtimeShell}

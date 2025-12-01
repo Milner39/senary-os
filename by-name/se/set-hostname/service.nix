@@ -1,6 +1,7 @@
 { lib
 , pkgs
 , six
+, targets
 , hostname ? throw "missing hostname"
 }:
 six.mkOneshot {
@@ -11,4 +12,6 @@ six.mkOneshot {
     exec 2>&1
     ${pkgs.inetutils}/bin/hostname "${hostname}"
   '';
+
+  passthru.before = [ targets.global.set-hostname ];
 }
