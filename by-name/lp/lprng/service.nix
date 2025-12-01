@@ -54,7 +54,7 @@ let
     ; sendmail_to_user = false                # allow mail to user using the sendmail program
 
     # other possibly-interesting options
-    #; "direct@"="on"                           # allow LPR to make direct socket connection to printer
+    #; "direct@"="on"                         # allow LPR to make direct socket connection to printer
     #; done_jobs= 1  (INTEGER)                # do not print zero length jobs
     #; done_jobs_max_age= 0  (INTEGER)        # keep done jobs for at most max age seconds
     #; exit_linger_timeout=600  (INTEGER)     # exit linger timeout to wait for socket to close
