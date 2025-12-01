@@ -68,14 +68,17 @@ Subsystem sftp internal-sftp
   ];
 in
 six.mkFunnel {
+
+  # nixpkgs has a patch to pass this variable through from sshd to children
+  env = {
+    LOCALE_ARCHIVE = "/run/current-system/sw/lib/locale/locale-archive";
+  };
+
   run = pkgs.writeScript "run"
 # FIXME: use a oneshot for the setup
 ''
 #!${pkgs.runtimeShell}
 exec 2>&1
-
-# nixpkgs has a patch to pass this var through from sshd to children
-export LOCALE_ARCHIVE=/run/current-system/sw/lib/locale/locale-archive
 
 ${pkgs.coreutils}/bin/mkdir -p -m 0755 /var/empty # privilege separation directory for nixpkgs
 ${pkgs.coreutils}/bin/mkdir -p -m 0755 /run/sshd  # privilege separation directory for debian
