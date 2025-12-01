@@ -12,6 +12,7 @@
 }
 , filter ? throw "you must provide a print filter (use pkgs.writeScript)"
 , package ? pkgs.p.lprng
+, extraConf ? {}
 }:
 let
   opts = [
@@ -83,7 +84,7 @@ let
     #; stalled_time=120  (INTEGER)            # stalled job timeout
     #; syslog_device=/dev/console  (STRING)   # name of syslog device
     #; user_printcap=.printcap  (STRING)      # allow users to use local ''${HOME}/.printcap
-    ;};
+    ;} // extraConf;
 
   lpd_conf =
     pkgs.writeText "lpd.conf"
