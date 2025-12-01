@@ -38,7 +38,6 @@ six.mkFunnel {
 #!${pkgs.runtimeShell}
 exec 2>&1
 
-echo 0.0 > ${stateDir}/db/ntpd.drift
 ${pkgs.busybox}/bin/busybox chown -R ${privsepUser} ${stateDir}/db
 ${pkgs.busybox}/bin/busybox chown -R ${privsepUser} ${stateDir}/run
 exec ${package}/bin/ntpd -s -d -f ${conf}
