@@ -205,7 +205,7 @@ let
         targets.global.coldplug = _: final.six.mkBundle { };
         targets.global.set-hostname = _: final.six.mkBundle { };
         targets.global.hwclock = _: final.six.mkBundle { };
-        targets.net.iface = _: lib.pipe final.interfaces [
+        targets.net.iface.__init = lib.pipe final.interfaces [
           (lib.mapAttrsToList
             (ifname: interface:
               if interface.type or null == "loopback"
