@@ -13,10 +13,11 @@
 , bind-interfaces   ? null   # all if omitted; otherwise specify IP address
 , brute-force       ? false  # warning: major performance impact
 , debug             ? false
+, passthru          ? {}
 }:
 
 six.mkFunnel {
-  passthru.after = with targets; [ global.coldplug ];
+  passthru = six.util.infuse passthru { after.__append = [ targets.global.coldplug ]; };
   run.argv =
     [ "${pkgs.unfs3}/bin/unfsd" ] ++
     [ "-u" ] ++                        # do not insist on using port 2049
