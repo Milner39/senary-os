@@ -277,7 +277,7 @@ let
         };
       }
     ])
-    (final: prev: {
+    (final: prev: prev // {
       defaultLogger =
         spath: service:
         let sname = lib.concatStringsSep "." spath; in

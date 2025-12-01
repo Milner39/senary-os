@@ -76,6 +76,7 @@ let
         services = {};
         callService = throw "missing";
         callPackage = throw "missing";
+        defaultLogger = throw "missing";
       };
     in
       builtins.intersectAttrs
