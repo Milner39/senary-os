@@ -29,17 +29,18 @@ six.mkFunnel {
     targets.global.hwclock
   ];
 
+  mkdir = {
+    "${stateDir}/db" = "0700";
+    "${stateDir}/run" = "0700";
+  };
+
   run = pkgs.writeScript "run" ''
 #!${pkgs.runtimeShell}
 exec 2>&1
 
-${pkgs.busybox}/bin/busybox mkdir -p ${stateDir}/db/
 echo 0.0 > ${stateDir}/db/ntpd.drift
 ${pkgs.busybox}/bin/busybox chown -R ${privsepUser} ${stateDir}/db
-
-${pkgs.busybox}/bin/busybox mkdir -p ${stateDir}/run
 ${pkgs.busybox}/bin/busybox chown -R ${privsepUser} ${stateDir}/run
-
 exec ${package}/bin/ntpd -s -d -f ${conf}
 '';
 }
