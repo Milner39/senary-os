@@ -74,14 +74,15 @@ six.mkFunnel {
     LOCALE_ARCHIVE = "/run/current-system/sw/lib/locale/locale-archive";
   };
 
+  mkdir = {
+    "/var/empty" = "0755";  # configuration activation should take care of this...
+    "/run/sshd" = "0755";
+  };
+
   run = pkgs.writeScript "run"
-# FIXME: use a oneshot for the setup
 ''
 #!${pkgs.runtimeShell}
 exec 2>&1
-
-${pkgs.coreutils}/bin/mkdir -p -m 0755 /var/empty # privilege separation directory for nixpkgs
-${pkgs.coreutils}/bin/mkdir -p -m 0755 /run/sshd  # privilege separation directory for debian
 
 # generate host keys if not present
 # ugly kludge due to `ssh-keygen -f` taking a prefix rather than a destination
