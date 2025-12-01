@@ -71,6 +71,11 @@ let
         boot = {};
         users = {};
         groups = {};
+        targets = {};
+        six = {};
+        services = {};
+        callService = throw "missing";
+        callPackage = throw "missing";
       };
     in
       builtins.intersectAttrs

@@ -16,24 +16,33 @@ let
       }; });
 
   init = final: prev:
+    let
+      autoArgs = {
+        inherit lib six yants;
+        inherit (final) pkgs targets services;
+        host = final;
+      };
+      six = {
+        mkService       = lib.callPackageWith autoArgs (import ../mkConfiguration/mkService.nix);
+        mkBundle        = lib.callPackageWith autoArgs (import ../mkConfiguration/mkBundle.nix);
+        mkOneshot       = lib.callPackageWith autoArgs (import ../mkConfiguration/mkOneshot.nix);
+        mkFunnel        = lib.callPackageWith autoArgs (import ../mkConfiguration/mkFunnel.nix);
+        mkLogger        = lib.callPackageWith autoArgs (import ../mkConfiguration/mkLogger.nix);
+        util            = sixos.util { inherit (final) pkgs; };
+        inherit (sixos) lib;
+      };
+    in
       prev // {
 
         inherit lib yants;
 
         # consider automatically allowing arguments `before` and `after` which, if
         # present, become `overrideAttrs` applied to `passthru`
-        callService = path: final.callPackage path;
+        callService = service: lib.callPackageWith autoArgs service;
+        callPackage = lib.callPackageWith autoArgs;
         host = final;
 
-        six = {
-          mkService       = final.callPackage ../mkConfiguration/mkService.nix;
-          mkBundle        = final.callPackage ../mkConfiguration/mkBundle.nix;
-          mkOneshot       = final.callPackage ../mkConfiguration/mkOneshot.nix;
-          mkFunnel        = final.callPackage ../mkConfiguration/mkFunnel.nix;
-          mkLogger        = final.callPackage ../mkConfiguration/mkLogger.nix;
-          util            = sixos.util { inherit (final) pkgs; };
-          inherit (sixos) lib;
-        };
+        inherit six;
 
         # A service is a Nix function which can be applied to various arguments,
         # like a callPackage in nixpkgs.  Each `src/by-name/??/${name}/service.nix`
@@ -346,28 +355,25 @@ let
   ];
 
   mkHost =
-    host-final:
-    host-prev:
-    ((lib.makeScope lib.callPackageWith (self: host-prev)).overrideScope
-      (lib.composeManyExtensions ([
-        (_: apply-tags host-final)
-        init
-      ] ++ host-overlays ++ [
-        add-spaths
-        add-loggers
-        convert-before-to-after
+    lib.composeManyExtensions ([
+      (host-final: host-prev: apply-tags host-final host-prev)
+      init
+    ] ++ host-overlays ++ [
+      add-spaths
+      add-loggers
+      convert-before-to-after
 
-        # FIXME: need to add after=target-mounts to almost everything
-        # above... right now I'm getting away with it only because of logging
-        (sixos.mkConfiguration {
-          inherit (host-final) pkgs;
-          inherit (host-final) boot sw;
-          delete-generations = host-final.delete-generations or null;
-          nixpkgs-version = "unknown-nixpkgs-version";
-          verbosity = 3;
-        })
-      ]
-      )));
+      # FIXME: need to add after=target-mounts to almost everything
+      # above... right now I'm getting away with it only because of logging
+      (host-final: host-prev: sixos.mkConfiguration {
+        inherit (host-final) pkgs;
+        inherit (host-final) boot sw;
+        delete-generations = host-final.delete-generations or null;
+        nixpkgs-version = "unknown-nixpkgs-version";
+        verbosity = 3;
+      } host-final host-prev)
+    ]);
+
 
 in
   mkHost
