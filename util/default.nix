@@ -4,6 +4,7 @@
 #
 { lib,
   sixos,
+  infuse,
   ...
 }:
 
@@ -28,6 +29,7 @@ let
       chpst
       depot
       execline
+      infuse
     ;
   };
 
