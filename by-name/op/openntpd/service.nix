@@ -34,12 +34,12 @@ six.mkFunnel {
     "${stateDir}/run" = "0700";
   };
 
-  run = pkgs.writeScript "run" ''
-#!${pkgs.runtimeShell}
-exec 2>&1
+  run.pre-argvs = [
+    [ "${pkgs.busybox}/bin/busybox" "chown" "-R" "${privsepUser}" "${stateDir}/db" ]
+    [ "${pkgs.busybox}/bin/busybox" "chown" "-R" "${privsepUser}" "${stateDir}/run" ]
+  ];
 
-${pkgs.busybox}/bin/busybox chown -R ${privsepUser} ${stateDir}/db
-${pkgs.busybox}/bin/busybox chown -R ${privsepUser} ${stateDir}/run
-exec ${package}/bin/ntpd -d -f ${conf}
-'';
+  run.argv = [
+    "${package}/bin/ntpd" "-d" "-f" "${conf}"
+  ];
 }
