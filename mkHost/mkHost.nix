@@ -360,12 +360,15 @@ let
   # FIXME: need to add after=target-mounts to almost everything
   # above... right now I'm getting away with it only because of logging
 
-  mkHost = [
-    apply-tags
+  initHost = [
     init
     initialize-targets
-    add-default-logger
+  ];
+
+  mkHost = [
     apply-service-overlays
+    apply-tags
+    add-default-logger
     add-default-target
     synthesize-groups
     add-early-console-bootparam
@@ -375,5 +378,6 @@ let
     (sixos.mkConfiguration {})
   ];
 
-in
-  mkHost
+in {
+  inherit initHost mkHost;
+}

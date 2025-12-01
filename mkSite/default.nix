@@ -44,11 +44,13 @@ let
           host-final
           host-prev))
 
+  ] ++ map sixos.lib.forall-hosts sixos.mkHost.mkHost.initHost ++ [
+
     # apply the site-dir's sitewide overlay
   ] ++ site-dir.overlay ++ [
 
     # finish up the hosts
-  ] ++ map sixos.lib.forall-hosts sixos.mkHost.mkHost ++ [
+  ] ++ map sixos.lib.forall-hosts sixos.mkHost.mkHost.mkHost ++ [
 
   ] ++ [
 
