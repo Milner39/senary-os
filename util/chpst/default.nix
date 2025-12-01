@@ -146,6 +146,5 @@ in
 
 redirectPhase ++
 envPhase ++
-(if pre-argvs != []
-then util.execline.seq (pre-argvs ++ [ execline-argv ])
-else execline-argv)
+util.execline.seq (pre-argvs ++ [ execline-argv ])
+
