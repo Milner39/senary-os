@@ -356,7 +356,7 @@ let
 
   mkHost =
     lib.composeManyExtensions ([
-      (host-final: host-prev: apply-tags host-final host-prev)
+      apply-tags
       init
     ] ++ host-overlays ++ [
       add-spaths
