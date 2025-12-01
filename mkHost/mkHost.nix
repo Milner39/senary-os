@@ -297,14 +297,14 @@ let
 
     (final: prev:
       # this prevents the service overlays from adding any new attrs to the attrset
-      (lib.mapAttrs (k: _:
-        ((lib.composeManyExtensions final.service-overlays) final prev).${k}) prev
-      ) // {
-        # avoids infinite recursion
-        inherit (prev) tags;
-        inherit (prev) service-overlays;
-        inherit (prev) canonical;
-      })
+      (let applied = (lib.composeManyExtensions final.service-overlays) final prev;
+       in (lib.mapAttrs (k: _: applied.${k}) prev)
+          // {
+            # avoids infinite recursion
+            inherit (prev) tags;
+            inherit (prev) service-overlays;
+            inherit (prev) canonical;
+          }))
 
     (final: prev:
       infuse prev ({
