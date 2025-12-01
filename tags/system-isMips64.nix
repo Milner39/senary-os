@@ -226,9 +226,7 @@ in
   delete-generations = _: "5d";
 
   # mips devices have really tiny internal mmc devices
-  service-overlays.__append = [(final: prev: infuse prev {
-    targets.mounts."".__input.options.__append = [ "compress=zstd" ];
-  })];
+  targets.mounts."".__input.options.__append = [ "compress=zstd" ];
 
 }
 ) {})
