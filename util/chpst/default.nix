@@ -58,7 +58,7 @@
   dir ? null,
 
   # an argv to execute before changing the userid/groupid
-  pre-argv ? [],
+  pre-argvs ? [],
 
   # argv to execute
   argv ? throw "you must set argv to the command you want to execute",
@@ -75,10 +75,9 @@ assert chroot!=null && dir!=null -> throw "once we enter the chroot we cannot ac
 # not ready to commit to a specific precedence between these two
 assert envdir==null || envfile==null;
 
-# TODO: set $HOME?
+# TODO: set $HOME based on host.users.${user}
 # TODO: allow to use numerical uid/gid
 # TODO: ionice
-# TODO: put more of these settings into envdirs?
 # TODO: explain why the `-f`, `-g`, and `-d` flags for s6-setsid are not useful here
 
 let execline-argv =
@@ -119,6 +118,6 @@ let execline-argv =
 
 in
 
-if pre-argv != []
-then util.execline.seq (pre-argv ++ [ execline-argv ])
+if pre-argvs != []
+then util.execline.seq (pre-argvs ++ [ execline-argv ])
 else execline-argv

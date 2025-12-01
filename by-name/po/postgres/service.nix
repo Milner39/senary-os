@@ -41,7 +41,7 @@ six.mkFunnel {
   };
 
   run = {
-    pre-argv = [
+    pre-argvs = [
       [ "${pkgs.busybox}/bin/mkdir" "-p" "/run/postgresql" ]
       [ "${pkgs.busybox}/bin/chown" "${user}:${group}" "/run/postgresql" ]
       [ "${pkgs.busybox}/bin/chmod" "g+rw" "/run/postgresql" ]

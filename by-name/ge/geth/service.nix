@@ -25,7 +25,7 @@ in
 six.mkFunnel {
 
   run = {
-    pre-argv = [
+    pre-argvs = [
       [ "${pkgs.busybox}/bin/mkdir" "-m" "0700" "-p" (builtins.dirOf config."authrpc.jwtsecret") ]
       [ "${pkgs.busybox}/bin/chown" "${user}:${group}" (builtins.dirOf config."authrpc.jwtsecret") ]
       [ "${pkgs.busybox}/bin/chmod" "0700" (builtins.dirOf config."authrpc.jwtsecret") ]

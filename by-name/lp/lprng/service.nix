@@ -92,7 +92,7 @@ six.mkFunnel {
 
   run.user = user;
   run.group = group;
-  run.pre-argv = [
+  run.pre-argvs = [
     [ "${pkgs.busybox}/bin/mkdir" "-p" sockdir ]
     [ "${pkgs.busybox}/bin/chown" "-R" "${user}:${group}" sockdir ]
     [ "${pkgs.busybox}/bin/chmod" "g+w" sockdir ]
