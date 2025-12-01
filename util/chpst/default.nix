@@ -138,14 +138,14 @@ execPhase =
 ] ++ argv;
 
 execline-argv =
-  redirectPhase ++
-  envPhase ++
   nicePhase ++
   setuidPhase ++
   dirPhase ++
   execPhase;
 in
 
-if pre-argvs != []
+redirectPhase ++
+envPhase ++
+(if pre-argvs != []
 then util.execline.seq (pre-argvs ++ [ execline-argv ])
-else execline-argv
+else execline-argv)
