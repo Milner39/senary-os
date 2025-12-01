@@ -55,7 +55,7 @@
   chroot ? null,
 
   # change to this directory; note that this is relative to `chroot` if it is set
-  dir ? null,
+  chdir ? null,
 
   # an argv to execute before changing the userid/groupid
   pre-argvs ? [],
@@ -70,7 +70,7 @@ assert (user != null) == (group != null);
 assert new-session -> new-process-group;
 
 assert chroot!=null && argv0!=null -> throw "once we enter the chroot we cannot access s6-exec";
-assert chroot!=null && dir!=null -> throw "once we enter the chroot we cannot access execline-cd";
+assert chroot!=null && chdir!=null -> throw "once we enter the chroot we cannot access execline-cd";
 
 # not ready to commit to a specific precedence between these two
 assert envdir==null || envfile==null;
@@ -126,8 +126,8 @@ dirPhase =
 [
 ] ++ lib.optionals (chroot != null) [
   "${s6}/bin/s6-chroot" chroot
-] ++ lib.optionals (dir != null) [
-  "${execline}/bin/execline-cd" dir
+] ++ lib.optionals (chdir != null) [
+  "${execline}/bin/execline-cd" chdir
 ];
 
 execPhase =
