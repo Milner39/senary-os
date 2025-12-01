@@ -15,17 +15,17 @@
 
 let
 
-  init-stages = [
-
+  initialize-attrs =
     # initial host attrset
     (host-final: host-prev:
       host-prev // {
         inherit (host-prev) name;
         inherit (host-final) canonical;
         tags = types.default-tag-values;
-      })
+      });
 
-    # set system-isFooBar tags
+  # set system-isFooBar tags
+  set-system-tags =
     (host-final: host-prev:
       host-prev // {
         tags =
@@ -46,8 +46,9 @@ let
                   lib.nameValuePair name value
               )
           );
-      })
+      });
 
+  gross-hack =
     # yuck, gross layering violation.  can't fix this until tags are allowed to
     # (monotonically) modify other tags.
     (host-final: host-prev:
@@ -68,8 +69,9 @@ let
             has-hwclock = true;
             is-bootloader-petitboot = true;
           };
-      })
+      });
 
+  build-ifconns-and-interfaces =
     # build the ifconns and interfaces attributes
     (
       (host-final: host-prev:
@@ -118,8 +120,9 @@ let
               lib.listToAttrs
             ];
         }
-      ))
+      ));
 
+  kernel-defaults =
     # default kernel setup
     (
       (host-final: host-prev:
@@ -152,11 +155,7 @@ let
           boot.initrd.contents.__default = { };
           boot.kernel.firmware.__default = [];
         }
-      ))
-
-  ] ++ sixos.mkHost.initrd ++ [
-
-  ];
+      ));
 
   init = final: prev:
     let
@@ -315,4 +314,9 @@ let
 in [
   init
   initialize-targets
-] ++ init-stages
+  initialize-attrs
+  set-system-tags
+  gross-hack
+  build-ifconns-and-interfaces
+  kernel-defaults
+] ++ sixos.mkHost.initrd
