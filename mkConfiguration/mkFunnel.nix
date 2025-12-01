@@ -26,6 +26,11 @@
 , group ? if user==0 then 0 else null
 , groups ? null
 
+  # create (`mkdir -p`) a directory for each attrname, with uid/gid set to
+  # user/group, and mode set to the attrvalue (an octal string).  This will
+  # happen before the pre-argv.
+, mkdir ? {}
+
 , passthru ? {}
 }@args:
 assert up!=null   -> lib.isPath up || lib.isDerivation up;
@@ -46,33 +51,47 @@ let
     , readNArgs
     }:
     script:
-    let chpst =
-          if   lib.isString script || lib.isDerivation script || lib.isPath script
-          then { argv = [ (toString script) ]; }
-          else script;
+    let
+      chpst = {
+        redirect-stderr-to-stdout = true;
+      } // lib.optionalAttrs (env != null) {
+        envdir = "./env";
+      } // lib.optionalAttrs (user != null) {
+        # TODO: if (lib.isString user), check that this exists in host.users
+        inherit user;
+      } // lib.optionalAttrs (group != null) {
+        # TODO: if user!=null && group==null, set group based on host.users
+        inherit group;
+      } // lib.optionalAttrs (groups != null) {
+        inherit groups;
+      } // {
+        pre-argvs = [];
+
+        # TODO: consider these
+        #dir ? null,
+        #new-session ? false,
+        #new-process-group ? new-session,
+        #env-clear = true,
+      } //
+      (if   lib.isString script || lib.isDerivation script || lib.isPath script
+       then { argv = [ (toString script) ]; }
+       else script);
+
+      mkdir-argvs = lib.pipe mkdir [
+        (lib.mapAttrsToList
+          (path: mode: [
+            [ "${pkgs.busybox}/bin/busybox" "mkdir" "-p" "-m" mode path ]
+          ] ++ lib.optionals (!(user == 0 && group == 0)) [
+            [ "${pkgs.busybox}/bin/busybox" "chown" "${toString user}:${toString group}" path ]
+          ]))
+        lib.concatLists
+      ];
+
     in
       six.util.depot.writeExecline name
       { inherit argMode readNArgs; }
-      (six.util.chpst ({
-         redirect-stderr-to-stdout = true;
-       } // lib.optionalAttrs (env != null) {
-         envdir = "./env";
-       } // lib.optionalAttrs (user != null) {
-         # TODO: if (lib.isString user), check that this exists in host.users
-         inherit user;
-       } // lib.optionalAttrs (group != null) {
-         # TODO: if user!=null && group==null, set group based on host.users
-         inherit group;
-       } // lib.optionalAttrs (groups != null) {
-         inherit groups;
-       } // {
-
-         # TODO: consider these
-         #dir ? null,
-         #new-session ? false,
-         #new-process-group ? new-session,
-         #env-clear = true,
-       } // chpst));
+      (six.util.chpst
+        (chpst // { pre-argvs = mkdir-argvs ++ chpst.pre-argvs; }));
 
   env' =
     if env==null || lib.isPath env || lib.isDerivation env
