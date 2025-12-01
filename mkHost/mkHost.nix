@@ -357,16 +357,15 @@ let
   # FIXME: need to add after=target-mounts to almost everything
   # above... right now I'm getting away with it only because of logging
 
-  mkHost =
-    lib.composeManyExtensions ([
-      apply-tags
-      init
-    ] ++ host-overlays ++ [
-      add-spaths
-      add-loggers
-      convert-before-to-after
-      (sixos.mkConfiguration {})
-    ]);
+  mkHost = [
+    apply-tags
+    init
+  ] ++ host-overlays ++ [
+    add-spaths
+    add-loggers
+    convert-before-to-after
+    (sixos.mkConfiguration {})
+  ];
 
 in
   mkHost

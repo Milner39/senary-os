@@ -48,7 +48,7 @@ let
   ] ++ site-dir.overlay ++ [
 
     # finish up the hosts
-    (sixos.lib.forall-hosts sixos.mkHost.mkHost)
+  ] ++ map sixos.lib.forall-hosts sixos.mkHost.mkHost ++ [
 
   ] ++ [
 
