@@ -40,6 +40,6 @@ exec 2>&1
 
 ${pkgs.busybox}/bin/busybox chown -R ${privsepUser} ${stateDir}/db
 ${pkgs.busybox}/bin/busybox chown -R ${privsepUser} ${stateDir}/run
-exec ${package}/bin/ntpd -s -d -f ${conf}
+exec ${package}/bin/ntpd -d -f ${conf}
 '';
 }
