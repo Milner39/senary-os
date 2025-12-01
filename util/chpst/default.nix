@@ -80,7 +80,8 @@ assert envdir==null || envfile==null;
 # TODO: ionice
 # TODO: explain why the `-f`, `-g`, and `-d` flags for s6-setsid are not useful here
 
-let execline-argv =
+let
+redirectPhase =
 [
 ] ++ lib.optionals (redirect-stdout-to != null) [
   # this goes before redirect-stderr-to-stdout so both are redirected to the
@@ -90,32 +91,59 @@ let execline-argv =
   # this goes first so that any error messages from the remaining operations end
   # up in the service's logger rather than in uncaught-logs or on the console
   "${execline}/bin/fdmove" "-c" "2" "1"
+];
+
+envPhase =
+[
 ] ++ lib.optionals env-clear [
   "${execline}/bin/emptyenv"
 ] ++ lib.optionals (envdir != null) [
   "${s6}/bin/s6-envdir" envdir
 ] ++ lib.optionals (envfile != null) [
   "${execline}/bin/envfile" envfile
+];
+
+nicePhase =
+[
+] ++ lib.optionals (nice != null) [
+  "${s6}/bin/s6-nice" "-n" (toString nice)
+];
+
+setuidPhase =
+[
 ] ++ lib.optionals (user != null || group != null) [
   "${s6-portable-utils}/bin/s6-env" "GIDLIST="
   "${s6}/bin/s6-envuidgid" "-B" "${user}:${group}"
   "${s6}/bin/s6-applyuidgid" "-U" "-z"
-] ++ lib.optionals (nice != null) [
-  "${s6}/bin/s6-nice" "-n" (toString nice)
 ] ++ lib.optionals (umask!=null) [
   "${execline}/bin/execline-umask" umask
 ] ++ lib.optionals new-session [
   "${s6}/bin/s6-setsid" "-s"
 ] ++ lib.optionals (new-process-group && !new-session) [
   "${s6}/bin/s6-setsid" "-b"
+];
+
+dirPhase =
+[
 ] ++ lib.optionals (chroot != null) [
   "${s6}/bin/s6-chroot" chroot
 ] ++ lib.optionals (dir != null) [
   "${execline}/bin/execline-cd" dir
+];
+
+execPhase =
+[
 ] ++ lib.optionals (argv0 != null) [
   "${execline}/bin/exec" "-a" argv0
 ] ++ argv;
 
+execline-argv =
+  redirectPhase ++
+  envPhase ++
+  nicePhase ++
+  setuidPhase ++
+  dirPhase ++
+  execPhase;
 in
 
 if pre-argvs != []
