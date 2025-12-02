@@ -24,8 +24,10 @@ let
   apply-tags =
     (host-final: host-prev:
       (sixos.lib.pipe host-final.tags [
-        (lib.filterAttrs (_: v: v))
-        lib.attrNames
+        (lib.filterAttrs (_: v: v))   # filter out the unset tags
+        lib.attrNames                 # gather the attrnames
+
+        # for each attname, get the corresponding overlay
         (lib.map (name:
           host-final.site.tag-overlays.${name} host-final))
         (lib.foldl'
