@@ -37,7 +37,7 @@ let
         # Prevent the tag overlays from introducing new attrnames (causes
         # infinite recursion) -- FIXME: try to find the tag overlay that is
         # doing this and fix it there so this can be removed.
-        sixos.lib.make-host-attrnames-deterministic
+        (sixos.lib.make-host-attrnames-deterministic host-final.site)
 
         # Prevent tag overlays from changing the tags themselves (FIXME: lift
         # this restriction)

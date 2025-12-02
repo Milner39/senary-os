@@ -55,34 +55,10 @@ let
   # infinite recursions.
   #
   make-host-attrnames-deterministic =
-    host:
-    let
-      defaults = {
-        name = throw "missing name";
-        canonical = "missing canonical";
-        tags = {};
-        interfaces = {};
-        ifconns = {};
-        pkgs = throw "missing pkgs";
-        sw = throw "missing sw";
-        configuration = throw "missing configuration";
-        delete-generations = null;
-        boot = {};
-        users = {};
-        groups = {};
-        targets = {};
-        six = {};
-        services = {};
-        callService = throw "missing";
-        callPackage = throw "missing";
-        defaultLogger = throw "missing";
-      };
-    in
-      builtins.intersectAttrs
-        (defaults // { hostid = throw "bogus"; })
-        (builtins.mapAttrs
-          (k: v: host.${k} or v)
-          defaults);
+    site: host:
+      builtins.mapAttrs
+        (k: v: host.${k} or (throw "missing: ${k}"))
+        site.types.host-fields;
 
   #
   # Turns an overlay-on-hosts into an overlay-on-a-site
@@ -100,16 +76,19 @@ let
   # infinite recursions.
   #
   forall-hosts = host-overlay:
+    site-final: site-prev:
     apply-to-hosts
       (hosts-final: hosts-prev:
         lib.mapAttrs
           (name: host-prev:
-            (make-host-attrnames-deterministic
+            (make-host-attrnames-deterministic site-final
               (host-prev
                // (host-overlay hosts-final.${name} host-prev))
             ))
           hosts-prev
-      );
+      )
+      site-final
+      site-prev;
 
   # The following is copy-pasted from infuse.nix, which uses this routine but
   # does not expose it (since doing so would make it part of the infuse API).

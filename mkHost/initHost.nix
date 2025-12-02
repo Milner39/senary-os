@@ -35,6 +35,9 @@ let
       prev // {
 
         users = {};
+        groups = {};
+        boot = {};
+        delete-generations = null;
         inherit (prev) name;
         inherit (final) canonical;
         tags = types.default-tag-values;
@@ -87,7 +90,7 @@ let
         # through which it is reachable.  The `tname` is used to identify the target
         # when issuing commands like `six start` and `six stop`.
         #
-        #targets = prev.targets or { };
+        targets = { };
       };
 
   initialize-targets =
