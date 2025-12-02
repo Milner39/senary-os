@@ -110,6 +110,7 @@ let
       targets.syslog.__init              = final.services.syslog {};
       targets.set-hostname.__init        = final.services.set-hostname { hostname = final.name; };
       targets.allow-unprivileged-pings.__init = final.services.allow-unprivileged-pings {};
+      targets.update-activated-profile.__init = final.services.update-activated-profile {};
       targets.net.iface.__init           = sixos.lib.pipe final.interfaces [
         (lib.mapAttrsToList
           (ifname: interface:
