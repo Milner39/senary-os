@@ -55,9 +55,9 @@ let
     # overlays so they can't accidentally use `host-prev.site`.
     (site-final: site-prev: site-prev // {
       hosts = lib.mapAttrs (name: host-prev:
-        host-prev // {
+        (host-prev // {
           site = site-final;
-        }) site-prev.hosts;
+        })) site-prev.hosts;
     })
   ];
 in
