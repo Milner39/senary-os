@@ -34,6 +34,7 @@ let
     in
       prev // {
 
+        users = {};
         inherit (prev) name;
         inherit (final) canonical;
         tags = types.default-tag-values;
