@@ -59,6 +59,18 @@ let
           site = site-final;
         })) site-prev.hosts;
     })
+
+    # Make the attrnames of host-final independent of any of the overlays
+    # anywhere in the fixpoint.  This cures a lot of hard-to-debug infinite
+    # recursions.
+    (site-final: site-prev: site-prev // {
+      hosts =
+        lib.mapAttrs
+          (name: host-prev:
+            sixos.lib.make-host-attrnames-deterministic site-final host-prev)
+          site-prev.hosts;
+    })
+
   ];
 in
 
