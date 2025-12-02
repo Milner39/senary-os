@@ -102,7 +102,9 @@ let
       members = option (list string);   # list of usernames
     };
 
-    host = struct "host" {
+    host = struct "host" host-fields;
+
+    host-fields = {
       name = string;
       canonical = string;      # gnu-config triple
 
@@ -195,6 +197,7 @@ in
     inherit ifconn;
     inherit ifname;
     inherit host;
+    inherit host-fields;
     inherit site-dir;
     inherit user;
     inherit default-tag-values;
