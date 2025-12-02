@@ -30,6 +30,7 @@ let
 
   # applies escapeExecline if the argument is a list; this is simply to avoid
   # "diff noise" in the existing westernsemico-internal test suite
+  # FIXME: remove this
   maybeEscapeExecline =
     argv:
     assert six.util.execline.assertIsExecline argv;
