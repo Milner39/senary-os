@@ -34,9 +34,14 @@ let
         # compose the overlays and apply them to host-prev
         (overlays: lib.composeManyExtensions overlays host-final host-prev)
 
+        # Prevent the tag overlays from introducing new attrnames (causes
+        # infinite recursion) -- FIXME: try to find the tag overlay that is
+        # doing this and fix it there so this can be removed.
         sixos.lib.make-host-attrnames-deterministic
 
-        (host: host-prev // host // { inherit (host-prev) tags canonical; })
+        # Prevent tag overlays from changing the tags themselves (FIXME: lift
+        # this restriction)
+        (host: host // { inherit (host-prev) tags canonical; })
       ]));
 
   # After and before references must always be made via `final.${spath}`
