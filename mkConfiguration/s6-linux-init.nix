@@ -189,7 +189,7 @@ stdenv.mkDerivation {
     #!${busybox}/bin/sh
     PATH=${busybox}/bin/:\$PATH
     mkdir -m 0000 -p /run
-    mount -t tmpfs -o nodev,nosuid,mode=0755 none /run
+    mount -t tmpfs -o nodev,mode=0755 none /run
     mkdir -p ${basedir}
     cd ${basedir}/
     cpio --extract -d < $out/s6-linux-init.cpio
