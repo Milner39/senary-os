@@ -38,13 +38,10 @@ let
         inherit (final) canonical;
         tags = types.default-tag-values;
 
-        inherit lib yants;
-
         # consider automatically allowing arguments `before` and `after` which, if
         # present, become `overrideAttrs` applied to `passthru`
         callService = service: lib.callPackageWith autoArgs service;
         callPackage = lib.callPackageWith autoArgs;
-        host = final;
 
         inherit six;
 
