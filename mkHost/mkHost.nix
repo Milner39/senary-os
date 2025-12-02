@@ -159,27 +159,6 @@ let
         ;
       }));
 
-  synthesize-groups =
-    (final: prev:
-      infuse prev {
-
-        # for each user with no `.gid` attribute, and for which there is no
-        # identically-named group, synthesize a group whose gid is the user's uid
-        # and whose group name is the user's user name.
-        groups = prevGroups: prevGroups // lib.pipe final.users [
-          # filter for the users with no `.gid` attribute and no identically-named group
-          (lib.filterAttrs (name: user: !(user?gid) && !(prevGroups?name)))
-
-          # synthesize the group
-          (lib.mapAttrsToList
-            (user-name: user: lib.nameValuePair user-name {
-              gid = user.uid;
-              members = [ user-name ];
-            }))
-          lib.listToAttrs
-        ];
-      });
-
   # It is very important that this is the *last* overlay that adds to
   # boot.kernel.params, since `console=` parameters are order-sensitive.  We
   # need the `boot.console.device` to be the *last* `console=` parameter;
@@ -204,7 +183,7 @@ let
     apply-tags
     add-default-logger
     add-default-target
-    synthesize-groups
+    sixos.mkHost.users.synthesize-groups
     add-early-console-bootparam
     add-spaths
     add-loggers
