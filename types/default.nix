@@ -126,6 +126,7 @@ let
       users = option (attrs user);
       groups = option (attrs group);
       etc-hosts = attrs (list string);
+      doas-conf = list string;
 
       boot = struct "boot" {
         loader = option (struct "loader" {

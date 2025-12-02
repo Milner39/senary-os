@@ -38,6 +38,7 @@ let
         groups = {};
         boot = {};
         etc-hosts = {};
+        doas-conf = [];
         delete-generations = null;
         inherit (prev) name;
         inherit (final) canonical;
@@ -306,6 +307,21 @@ let
       ];
     };
 
+  # The `doas` program is special and privileged in sixos: it *must* be present
+  # and is (ideally) the only setuid-root program on the system.
+  #
+  # see mkConfiguration for additional details on the symbolic links which make
+  # doas work correctly.
+  set-up-doas-conf = host-final: host-prev:
+    infuse host-prev {
+      doas-conf.__append = [
+        # allows root to run `doas -u someuser ...`
+        "permit nopass root"
+      ] ++ lib.optionals (host-final.groups?wheel) [
+        "permit nopass :wheel"
+      ];
+    };
+
 in [
   init
   initialize-targets
@@ -315,4 +331,5 @@ in [
   build-ifconns-and-interfaces
   kernel-defaults
   add-hostname-and-localhost-to-etc-hosts
+  set-up-doas-conf
 ] ++ sixos.mkHost.initrd

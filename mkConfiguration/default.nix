@@ -186,11 +186,40 @@ let
       ''))
       lib.concatStrings
     ])} $out/etc/hosts
+    ln -s ${pkgs.writeText "etc-doas-conf"
+      # Warning!  `doas` *requires* a trailing newline!
+      (lib.pipe host-final.doas-conf [
+        (map (line: line + "\n"))
+        lib.concatStrings
+      ])} $out/etc/doas.conf
 
     mkdir -p $out/bin
 
     cat > $out/bin/activate<<\EOF
     #!${pkgs.runtimeShell} -e
+  ''
+    # save the old wrapped /run/six/bin/doas; by getting to this point we know
+    # that either it works or else that the user doesn't need it to invoke
+    # activation scripts (i.e. can log in directly as root).  We use
+    # /nix/var/nix/profiles/activated instead of /run/current-system so this
+    # works both on first-bootup as well as configuration-switch.
+    #
+    # FIXME: should probably wrap these instead of copying them
+    #
+    # FIXME: this still allows a broken doas.conf to footgun everything because
+    # doas.previous will still follow the symlink from /etc/doas.conf to
+    # /run/current-system/etc/doas.conf
+    #
+    # FIXME: should run `doas -C` to validate the doas.conf as a sanity check.
+  + ''
+    ${pkgs.busybox}/bin/mkdir -p /run/six/bin
+    if [[ -e /nix/var/nix/profiles/activated/bin/doas.unwrapped ]]; then
+      ${pkgs.busybox}/bin/cp /nix/var/nix/profiles/activated/bin/doas.unwrapped /run/six/bin/doas.previous
+      ${pkgs.busybox}/bin/chmod 4755 /run/six/bin/doas.previous
+    fi
+    ${pkgs.busybox}/bin/cp ${builtins.placeholder "out"}/bin/doas.unwrapped /run/six/bin/doas
+    ${pkgs.busybox}/bin/chmod 4755 /run/six/bin/doas
+
     if [[ -d /run/s6-rc ]]; then
       # s6-svscan is already up and running; switch to the new configuration
       ${pkgs.s6-rc}/bin/s6-rc-update -v 8 $@ ${compiled}/six/s6-rc/db
@@ -409,6 +438,7 @@ let
     EOF
 
     chmod +x $out/bin/*
+    cp ${pkgs.doas}/bin/doas $out/bin/doas.unwrapped
 
     ${mkBootDir}
    '' + lib.optionalString (sw != null) ''
