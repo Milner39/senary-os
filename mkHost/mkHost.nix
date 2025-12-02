@@ -122,7 +122,7 @@ let
             else let
               logger-spath = make-logger-spath path;
               loggerfunc = if v.passthru.logger or null == null
-                           then prev.defaultLogger
+                           then final.defaultLogger
                            else v.passthru.logger;
               logger = add-spath logger-spath (loggerfunc path v);
             in logger
