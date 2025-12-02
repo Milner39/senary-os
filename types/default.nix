@@ -99,7 +99,10 @@ let
 
     group = struct "group" {
       gid = int;
-      members = option (list string);   # list of usernames
+
+      # disabled until I can synchronize this with user.${username}.groups in
+      # host-final
+      #members = option (list string);   # list of usernames
     };
 
     host = struct "host" host-fields;
