@@ -14,4 +14,10 @@ six.mkOneshot {
   '';
 
   passthru.before = [ targets.global.set-hostname ];
+
+  passthru.after = [
+    targets.mounts.sys
+    targets.mounts.proc
+  ];
+
 }
