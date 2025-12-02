@@ -167,12 +167,13 @@ let
   add-early-console-bootparam =
     (final: prev:
       infuse prev ({
-/*
+        # temporarily disabled (why?)
+        /*
         boot.kernel.params.__append = lib.optionals (final.boot?kernel.console) [
           "console=${final.boot.kernel.console.device or "ttyS0"
                     },${toString final.boot.kernel.console.baud}n8"
         ];
-*/
+        */
       }));
 
 
