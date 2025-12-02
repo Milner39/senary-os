@@ -167,6 +167,12 @@ let
         spec = option storepath;
       };
 
+      six = option any; # FIXME
+      targets = option any; # FIXME
+      services = option any; # FIXME
+      callService = option any; # FIXME
+      callPackage = option any; # FIXME
+      defaultLogger = option any; # FIXME
     };
 
     site-dir = struct "site-dir" {
