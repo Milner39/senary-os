@@ -37,6 +37,7 @@ let
         users = {};
         groups = {};
         boot = {};
+        etc-hosts = {};
         delete-generations = null;
         inherit (prev) name;
         inherit (final) canonical;
@@ -293,6 +294,16 @@ let
       boot.kernel.firmware.__default = [];
     };
 
+  # lots of software will malfunction unless both `localhost` and the host's
+  # hostname appear in /etc/hosts.
+  add-hostname-and-localhost-to-etc-hosts = host-final: host-prev:
+    infuse host-prev {
+      etc-hosts."127.0.0.1".__append = [
+        "localhost"
+        host-final.name
+      ];
+    };
+
 in [
   init
   initialize-targets
@@ -301,4 +312,5 @@ in [
   gross-hack
   build-ifconns-and-interfaces
   kernel-defaults
+  add-hostname-and-localhost-to-etc-hosts
 ] ++ sixos.mkHost.initrd

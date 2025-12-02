@@ -122,6 +122,7 @@ let
 
       users = option (attrs user);
       groups = option (attrs group);
+      etc-hosts = attrs (list string);
 
       boot = struct "boot" {
         loader = option (struct "loader" {

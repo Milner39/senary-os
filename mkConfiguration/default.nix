@@ -180,6 +180,12 @@ let
   '' + ''
     ln -s ${pkgs.iana-etc}/etc/services $out/etc/services
     ln -s ${pkgs.iana-etc}/etc/protocols $out/etc/protocols
+    ln -s ${pkgs.writeText "etc-hosts" (lib.pipe host-final.etc-hosts [
+      (lib.mapAttrsToList (key: val: ''
+        ${key} ${lib.concatStringsSep " " val}
+      ''))
+      lib.concatStrings
+    ])} $out/etc/hosts
 
     mkdir -p $out/bin
 
@@ -266,6 +272,9 @@ let
         fi
         if [[ ! -e /etc/protocols ]]; then
           ${pkgs.busybox}/bin/busybox ln -sfT /run/current-system/etc/protocols $RWMOUNT/etc/protocols
+        fi
+        if [[ ! -e /etc/hosts ]]; then
+          ln -sfT /run/current-system/etc/hosts $RWMOUNT/etc/hosts
         fi
   '' + ''
         ${pkgs.busybox}/bin/mkdir -p $RWMOUNT/tmp
