@@ -29,13 +29,13 @@ let
 
         # for each attname, get the corresponding overlay
         (lib.map (name:
-          host-final.site.tag-overlays.${name} host-final))
-        (lib.foldl'
-          (host: overlay:
-            sixos.lib.make-host-attrnames-deterministic (host // overlay host)
-            // { inherit (host-prev) tags; })
-          host-prev)
+          host-final.site.tag-overlays.${name}))
+
+        # compose the overlays and apply them to host-prev
+        (overlays: lib.composeManyExtensions overlays host-final host-prev)
+
         sixos.lib.make-host-attrnames-deterministic
+
         (host: host-prev // host // { inherit (host-prev) tags canonical; })
       ]));
 
