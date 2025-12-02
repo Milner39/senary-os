@@ -66,7 +66,7 @@ let
     let
       beforeFunc =
         after-spath:
-        lib.pipe prev.targets [
+        sixos.lib.pipe prev.targets [
           sixos.lib.extractDerivations
           builtins.attrValues
           (lib.filter (x: x!=null))

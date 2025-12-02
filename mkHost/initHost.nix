@@ -104,7 +104,7 @@ let
       targets.sshd.__init                = final.services.sshd {};
       targets.syslog.__init              = final.services.syslog {};
       targets.set-hostname.__init        = final.services.set-hostname { hostname = final.name; };
-      targets.net.iface.__init           = lib.pipe final.interfaces [
+      targets.net.iface.__init           = sixos.lib.pipe final.interfaces [
         (lib.mapAttrsToList
           (ifname: interface:
             if interface.type or null == "loopback"
@@ -213,10 +213,10 @@ let
         let
           ifconns =
             # all the subnets to which it is directly attached.
-            lib.pipe host-final.site.subnets [
+            sixos.lib.pipe host-final.site.subnets [
               (
                 lib.mapAttrs (subnetName: subnet:
-                  lib.pipe subnet [
+                  sixos.lib.pipe subnet [
                     # drop the __netmask key, which is not a host
                     (lib.filterAttrs (hostName: _:
                       !(lib.strings.hasPrefix "__" hostName)
@@ -241,7 +241,7 @@ let
           inherit ifconns;
           interfaces =
             { lo.type = "loopback"; } //
-            lib.pipe ifconns [
+            sixos.lib.pipe ifconns [
               (lib.mapAttrsToList
                 (subnetName: ifconn:
                   if ifconn?ifname
