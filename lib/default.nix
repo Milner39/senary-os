@@ -207,6 +207,14 @@ let
   # Convert an attrset into a list of command-line flags
   attrsToFlags = attrs: lib.mapAttrsToList attrToFlag attrs;
 
+  # Uses attrsets as a cheesy way of doing a deduplicating-sort operation.
+  sortAndDeduplicateStrings = list:
+    lib.pipe list [
+      (map (val: lib.nameValuePair val true))
+      lib.listToAttrs
+      (lib.mapAttrsToList (key: val: key))
+    ];
+
 in {
   inherit
     pipe
@@ -221,6 +229,7 @@ in {
     add-tag-mutation-check-to-overlay
     toString
     attrsToFlags
+    sortAndDeduplicateStrings
     ;
 }
 
