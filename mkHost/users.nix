@@ -32,8 +32,8 @@ let
       (lib.sort (u1: u2: assert u1.uid != u2.uid; u1.uid < u2.uid))
 
       # convert the attrsets into /etc/passwd lines
-      (lib.map (mkUser pkgs groups))
-      (lib.concatStringsSep "\n")
+      (lib.map (user: "${mkUser pkgs groups user}\n"))
+      lib.concatStrings
     ];
 
   mkEtcGroup = { users, groups }:
@@ -51,9 +51,9 @@ let
       # turn each entry into a line of /etc/group
       (lib.map ({ name, gid }:
         "${name}:x:${toString gid}:${
-          lib.concatStringsSep "," (groups.${name}.members or [])}"
+          lib.concatStringsSep "," (groups.${name}.members or [])}\n"
       ))
-      (lib.concatStringsSep "\n")
+      lib.concatStrings
     ];
 
   synthesize-groups =
