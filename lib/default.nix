@@ -215,6 +215,25 @@ let
       (lib.mapAttrsToList (key: val: key))
     ];
 
+  # takes an attrset-of-lists-of-strings which specifies an N-to-N relation on
+  # strings, and inverts the relation
+  invertMapping = relation:
+    lib.pipe relation [
+      # annotate each element of each attrval-list with the attrname
+      (lib.mapAttrsToList (key: list-of-values:
+        lib.map (value: { inherit key value; })
+          list-of-values))
+      lib.concatLists
+
+      # grooup the annotated elements
+      (lib.groupBy (keyval: keyval.value))
+
+      # turn the attrset-of-keyvals into an attrset of keys
+      (lib.mapAttrs (val: list-of-keyvals:
+        lib.map (keyval: keyval.key)
+          list-of-keyvals))
+    ];
+
 in {
   inherit
     pipe
