@@ -13,34 +13,6 @@
 
 }@args:
 
-# TODO
-# - `nice -n -19 ionice -c Realtime` -- but this isn't right because child processes inherit the elevated priority
-
-# useful variables
-#export WLR_LIBINPUT_NO_DEVICES=1     # start even if no input devices
-#export WLR_DIRECT_TTY=/dev/tty1
-#export WLR_RENDERER=gles2
-#export LIBGL_DEBUG=1
-#export EGL_PLATFORM=gbm
-#export EGL_LOG_LEVEL=debug
-#export WLR_BACKENDS=libinput,drm
-#export WLR_NO_HARDWARE_CURSORS=1
-#export WLR_DRM_DEVICES=/dev/dri/card0
-#export WLR_RENDERER_ALLOW_SOFTWARE=1
-#export MESA_LOADER_DRIVER_OVERRIDE=radeon
-#export MESA_DEBUG=1
-#export SWAY_ARGS="-d $SWAY_ARGS"
-#export SWAY_ARGS=-V
-#export SWAY_ARGS="-Dnoatomic"
-#export SWAY_ARGS="-Dnoscanout"
-#export WLR_RDP_TLS_CERT_PATH=/home/user/sway/tls.crt
-#export WLR_RDP_TLS_KEY_PATH=/home/user/sway/tls.key
-#export WLR_DRM_NO_ATOMIC=1
-#export WLR_DRM_NO_MODIFIERS=1
-#export EGL_PLATFORM=gbm
-#export MESA_GL_VERSION_OVERRIDE=3.3
-#export MESA_GLSL_VERSION_OVERRIDE=330
-
 let
 
 sway-script = pkgs.writeScript "sway-script" (''
@@ -126,3 +98,31 @@ six.mkFunnel {
     ${sway-script}
 '');
 }
+
+# TODO
+# - `nice -n -19 ionice -c Realtime` -- but this isn't right because child processes inherit the elevated priority
+
+# useful variables
+#export WLR_LIBINPUT_NO_DEVICES=1     # start even if no input devices
+#export WLR_DIRECT_TTY=/dev/tty1
+#export WLR_RENDERER=gles2
+#export LIBGL_DEBUG=1
+#export EGL_PLATFORM=gbm
+#export EGL_LOG_LEVEL=debug
+#export WLR_BACKENDS=libinput,drm
+#export WLR_NO_HARDWARE_CURSORS=1
+#export WLR_DRM_DEVICES=/dev/dri/card0
+#export WLR_RENDERER_ALLOW_SOFTWARE=1
+#export MESA_LOADER_DRIVER_OVERRIDE=radeon
+#export MESA_DEBUG=1
+#export SWAY_ARGS="-d $SWAY_ARGS"
+#export SWAY_ARGS=-V
+#export SWAY_ARGS="-Dnoatomic"
+#export SWAY_ARGS="-Dnoscanout"
+#export WLR_RDP_TLS_CERT_PATH=/home/user/sway/tls.crt
+#export WLR_RDP_TLS_KEY_PATH=/home/user/sway/tls.key
+#export WLR_DRM_NO_ATOMIC=1
+#export WLR_DRM_NO_MODIFIERS=1
+#export EGL_PLATFORM=gbm
+#export MESA_GL_VERSION_OVERRIDE=3.3
+#export MESA_GLSL_VERSION_OVERRIDE=330
