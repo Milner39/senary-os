@@ -229,6 +229,7 @@ let
       ${pkgs.nix}/bin/nix-env -p /nix/var/nix/profiles/activated --set ${builtins.placeholder "out"}
     else
       # first activation after a new bootup
+      ${pkgs.busybox}/bin/ln -sfT /run/current-system/sw /run/opengl-driver
   '' +
 # TODO (from nixos)
 #
@@ -303,7 +304,7 @@ let
           ${pkgs.busybox}/bin/busybox ln -sfT /run/current-system/etc/protocols $RWMOUNT/etc/protocols
         fi
         if [[ ! -e /etc/hosts ]]; then
-          ln -sfT /run/current-system/etc/hosts $RWMOUNT/etc/hosts
+          ${pkgs.busybox}/bin/busybox ln -sfT /run/current-system/etc/hosts $RWMOUNT/etc/hosts
         fi
   '' + ''
         ${pkgs.busybox}/bin/mkdir -p $RWMOUNT/tmp
