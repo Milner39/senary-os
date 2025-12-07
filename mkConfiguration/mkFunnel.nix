@@ -1,6 +1,7 @@
 { lib
 , pkgs
 , six
+, host
 , timeout-up   ? null # milliseconds
 , timeout-down ? null # milliseconds
 
@@ -23,8 +24,8 @@
 , env   ? null # copied verbatim
 
 , user ? 0
-, group ? if user==0 then 0 else null
-, groups ? null
+, group ? if user==0 then 0 else host.users.${user}.gid
+, groups ? if user == 0 then [] else host.users.${user}.groups
 
   # create (`mkdir -p`) a directory for each attrname, with uid/gid set to
   # user/group, and mode set to the attrvalue (an octal string).  This will
