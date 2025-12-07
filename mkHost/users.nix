@@ -126,25 +126,30 @@ let
         # turn the attrset-of-lists-of-attrsets into an attrset-of-lists-of-usernames
         (lib.mapAttrs (groupname: usergroup-list:
           lib.map (usergroup: usergroup.username) usergroup-list))
-      ];
-    in
-      host-prev // {
-        groups =
-          # verify that every attrname of `groupMembers` is an attrname of `groups`;
-          # this will catch spelling errors in users.${user}.groups.
-          assert lib.all lib.id (lib.mapAttrsToList (groupName: _:
-            if !(builtins.hasAttr groupName host-prev.groups)
-            then throw "group ${groupName} appears in host.users.\${user}.groups, but does not appear in host.groups"
-            else true) groupMembers);
 
-          # Append any users who gain membership as a result of host.users.${user}.{gid,groups}
-          lib.mapAttrs
-            (group-name: group: group // {
-              members = sixos.lib.sortAndDeduplicateStrings
-                (group.members or [] ++ groupMembers.${group-name} or []);
-            })
-            host-prev.groups;
-      };
+        # append groups.${group}.members to each list and normalize it
+        (lib.mapAttrs (group-name: user-list:
+          sixos.lib.sortAndDeduplicateStrings
+            (host-prev.groups.${group-name}.members or []
+             ++ user-list)))
+      ];
+
+      groups =
+        # verify that every attrname of `groupMembers` is an attrname of `groups`;
+        # this will catch spelling errors in users.${user}.groups.
+        assert lib.all lib.id (lib.mapAttrsToList (groupName: _:
+          if !(builtins.hasAttr groupName host-prev.groups)
+          then throw "group ${groupName} appears in host.users.\${user}.groups, but does not appear in host.groups"
+          else true) groupMembers);
+        # Append any users who gain membership as a result of host.users.${user}.{gid,groups}
+        lib.mapAttrs
+          (group-name: group: group // {
+            members = groupMembers.${group-name} or [];
+          })
+          host-prev.groups;
+    in host-prev // {
+      inherit groups;
+    };
 in
 
 
