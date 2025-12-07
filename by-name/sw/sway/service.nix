@@ -6,7 +6,6 @@
 , seatd        ? throw "you must pass sway a seatd target"
 , user         ? throw "username under which to run sway"
 , tty-dev      ? throw "the /dev/tty* device on which to run sway"
-, is-mali-gpu  ? throw "fixme"
 , sway-config  ? throw "path to the sway configuration file"
 , sway-args    ? [ ]  # extra command line arguments for sway
 , sway-env     ? { }  # extra environment variables to set
@@ -22,32 +21,9 @@ let
     MESA_DRIVERS_PATH = "/run/opengl-driver";
   } // sway-env;
 
-  # Mali GPU does "one pixel [fragment] per clock", so with a 600mhz GPU
-  # each shader core can paint a 4k display at 72hz, or paint at 60hz
-  # with on average 1.2 paintings per pixel.  There are four shader
-  # cores, so actually you get 4.8 paintings per pixel at 4k@60hz
-  gpu-freq =
-    #800 * 1000 * 1000
-    600 * 1000 * 1000
-    #500 * 1000 * 1000
-    #400 * 1000 * 1000
-    #297 * 1000 * 1000
-    #200 * 1000 * 1000
-    ;
-
-  gpu-governor =
-    if gpu-freq > 600000000
-    then "powersave" # 800mhz is stable only when "powersave" governor is used
-    else "performance";
-
   run-argv = pkgs.writeScript "run" (''
   #!${pkgs.runtimeShell}
   exec 2>&1
-
-'' + lib.optionalString is-mali-gpu ''
-  echo ${gpu-governor} > /sys/devices/platform/${"*"}.gpu/devfreq/${"*"}.gpu/governor
-  echo ${toString gpu-freq} > /sys/devices/platform/${"*"}.gpu/devfreq/${"*"}.gpu/max_freq
-'' + ''
 
   # FIXME use s6-setuidgid here instead
   XDG_RUNTIME_DIR=/run/user/${toString host.users.${user}.uid}/xdg
