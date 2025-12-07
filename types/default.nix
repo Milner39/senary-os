@@ -94,15 +94,17 @@ let
       comment = option string;
       home-directory = option string;   # if missing, /var/empty is used
       shell = option string;            # if missing, ${util-linux}/bin/nologin
-      groups = option (list string);    # this will be used to build group.*.members
+
+      # All groups to which the user belongs, *including* the user's "primary"
+      # group `gid`.  In host-final this list will always be deduplicated and
+      # sorted by group name, except that the primary group is always the first
+      # element of the list.
+      groups = option (list string);
     };
 
     group = struct "group" {
       gid = int;
-
-      # disabled until I can synchronize this with user.${username}.groups in
-      # host-final
-      #members = option (list string);   # list of usernames
+      members = option (list string);   # list of usernames
     };
 
     host = struct "host" host-fields;
