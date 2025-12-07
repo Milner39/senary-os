@@ -14,42 +14,35 @@
 
 let
 
+  xdg-runtime-dir = "/run/user/${toString host.users.${user}.uid}/xdg";
+
+#'' + lib.optionalString (env ? WLR_RENDER_DRM_DEVICE) ''
+#  test -e ${env.WLR_RENDER_DRM_DEVICE} || \
+#    (echo "${env.WLR_RENDER_DRM_DEVICE} does not exist yet; will retry"; exit -1)
+
+in
+six.mkFunnel {
+  inherit user;
+  mkdir = {
+    ${xdg-runtime-dir} = "0700";
+  };
   env = {
     # this directory is not freely chosen; nixpkgs hardwires the string
     # below into the RPATHs of several libraries, and configure/meson
     # flags of several packages.
     MESA_DRIVERS_PATH = "/run/opengl-driver";
+    XDG_RUNTIME_DIR = xdg-runtime-dir;
+    HOME = "${host.users.${user}.home-directory}";
+    PATH = "/run/current-system/sw/bin";
   } // sway-env;
+  run.chdir = host.users.${user}.home-directory;
+  run.redirect-stdin-from = tty-dev;
+  run.argv = [
+    "${pkgs.sway}/bin/sway"
+  ] ++ sway-args ++ [
+    "-c" "${sway-config}"
+  ];
 
-  run-argv = pkgs.writeScript "run" (''
-  #!${pkgs.runtimeShell}
-  exec 2>&1
-
-  # FIXME use s6-setuidgid here instead
-  XDG_RUNTIME_DIR=/run/user/${toString host.users.${user}.uid}/xdg
-
-  ${pkgs.coreutils}/bin/mkdir -p $XDG_RUNTIME_DIR
-  ${pkgs.coreutils}/bin/chmod 0700 $XDG_RUNTIME_DIR
-  ${pkgs.coreutils}/bin/chown -R ${user} /run/user/${toString host.users.${user}.uid}
-'' + lib.optionalString (env ? WLR_RENDER_DRM_DEVICE) ''
-  test -e ${env.WLR_RENDER_DRM_DEVICE} || \
-    (echo "${env.WLR_RENDER_DRM_DEVICE} does not exist yet; will retry"; exit -1)
-'' + ''
-  cd "$HOME"
-  exec < ${tty-dev}
-  exec \
-    ${pkgs.coreutils}/bin/env \
-    XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
-    HOME="${host.users.${user}.home-directory}" \
-    PATH=/run/current-system/sw/bin \
-    ${lib.concatStringsSep " " (lib.mapAttrsToList (k: v: lib.escapeShellArg "${k}=${v}") env)} \
-    ${pkgs.runit}/bin/chpst -u ${user}:${lib.concatStringsSep ":" host.users.${user}.groups} -U user:user \
-    ${pkgs.sway}/bin/sway ${lib.escapeShellArgs sway-args} -c "${sway-config}"
-'');
-
-in
-six.mkFunnel {
-  run.argv = [ run-argv ];
   passthru = {
     after = [ targets.global.coldplug seatd ];
     essential = true;
