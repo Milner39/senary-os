@@ -15,19 +15,12 @@
 
 let
 
-sway-script = pkgs.writeScript "sway-script" (''
-#!${pkgs.runtimeShell}
-# this directory is not freely chosen; nixpkgs hardwires the string
-# below into the RPATHs of several libraries, and configure/meson
-# flags of several packages.
-MESA_DRIVERS_PATH=/run/opengl-driver
-
-'' + lib.optionalString (sway-env ? WLR_RENDER_DRM_DEVICE) ''
-test -e ${sway-env.WLR_RENDER_DRM_DEVICE} || \
-  (echo "${sway-env.WLR_RENDER_DRM_DEVICE} does not exist yet; will retry"; exit -1)
-'' + ''
-exec ${pkgs.sway}/bin/sway ${lib.escapeShellArgs sway-args} -c "${sway-config}"
-'');
+  env = {
+    # this directory is not freely chosen; nixpkgs hardwires the string
+    # below into the RPATHs of several libraries, and configure/meson
+    # flags of several packages.
+    MESA_DRIVERS_PATH = "/run/opengl-driver";
+  } // sway-env;
 
   # Mali GPU does "one pixel [fragment] per clock", so with a 600mhz GPU
   # each shader core can paint a 4k display at 72hz, or paint at 60hz
@@ -47,15 +40,7 @@ exec ${pkgs.sway}/bin/sway ${lib.escapeShellArgs sway-args} -c "${sway-config}"
     then "powersave" # 800mhz is stable only when "powersave" governor is used
     else "performance";
 
-in
-six.mkFunnel {
-  passthru = {
-    after = [ targets.global.coldplug seatd ];
-    essential = true;
-    inherit user /*group*/;
-  };
-  run = pkgs.writeScript "run"
-(''
+  run-argv = pkgs.writeScript "run" (''
   #!${pkgs.runtimeShell}
   exec 2>&1
 
@@ -78,13 +63,14 @@ six.mkFunnel {
   USER_GROUPS=$(${pkgs.coreutils}/bin/groups ${user} | ${pkgs.gnused}/bin/sed 's_.* : __' | ${pkgs.coreutils}/bin/tr ' ' ':')${lib.concatStrings (map (g: ":${g}") extra-groups)}
   USER_HOME=$(${pkgs.getent}/bin/getent passwd ${user} | ${pkgs.gawk}/bin/awk -F: '{ print $6 }')
   XDG_RUNTIME_DIR=/run/user/$USER_UID/xdg
+
   ${pkgs.coreutils}/bin/rm -rf $XDG_RUNTIME_DIR
   ${pkgs.coreutils}/bin/mkdir -p $XDG_RUNTIME_DIR
   ${pkgs.coreutils}/bin/chmod 0700 $XDG_RUNTIME_DIR
   ${pkgs.coreutils}/bin/chown -R ${user} /run/user/$USER_UID
-'' + lib.optionalString (sway-env ? WLR_RENDER_DRM_DEVICE) ''
-  ${pkgs.busybox}/bin/busybox chmod g+rw ${sway-env.WLR_RENDER_DRM_DEVICE} || exit -1
-  ls -l ${sway-env.WLR_RENDER_DRM_DEVICE}
+'' + lib.optionalString (env ? WLR_RENDER_DRM_DEVICE) ''
+  test -e ${env.WLR_RENDER_DRM_DEVICE} || \
+    (echo "${env.WLR_RENDER_DRM_DEVICE} does not exist yet; will retry"; exit -1)
 '' + ''
   cd "$USER_HOME"
   exec < ${tty-dev}
@@ -93,10 +79,19 @@ six.mkFunnel {
     XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
     HOME="$USER_HOME" \
     PATH=/run/current-system/sw/bin \
-    ${lib.concatStringsSep " " (lib.mapAttrsToList (k: v: lib.escapeShellArg "${k}=${v}") sway-env)} \
+    ${lib.concatStringsSep " " (lib.mapAttrsToList (k: v: lib.escapeShellArg "${k}=${v}") env)} \
     ${pkgs.runit}/bin/chpst -u ${user}:"$USER_GROUPS" -U user:user \
-    ${sway-script}
+    ${pkgs.sway}/bin/sway ${lib.escapeShellArgs sway-args} -c "${sway-config}"
 '');
+
+in
+six.mkFunnel {
+  run.argv = [ run-argv ];
+  passthru = {
+    after = [ targets.global.coldplug seatd ];
+    essential = true;
+    inherit user /*group*/;
+  };
 }
 
 # TODO
