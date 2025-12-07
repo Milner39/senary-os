@@ -57,7 +57,6 @@ let
   USER_HOME=$(${pkgs.getent}/bin/getent passwd ${user} | ${pkgs.gawk}/bin/awk -F: '{ print $6 }')
   XDG_RUNTIME_DIR=/run/user/$USER_UID/xdg
 
-  ${pkgs.coreutils}/bin/rm -rf $XDG_RUNTIME_DIR
   ${pkgs.coreutils}/bin/mkdir -p $XDG_RUNTIME_DIR
   ${pkgs.coreutils}/bin/chmod 0700 $XDG_RUNTIME_DIR
   ${pkgs.coreutils}/bin/chown -R ${user} /run/user/$USER_UID
