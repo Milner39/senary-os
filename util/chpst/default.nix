@@ -42,6 +42,9 @@
   # create a new process group, and run the program within it
   new-process-group ? new-session,
 
+  # redirfd -r 0 <file>
+  redirect-stdin-from ? null,
+
   # redirfd -w 1 <file>
   redirect-stdout-to ? null,
 
@@ -84,6 +87,8 @@ assert envdir==null || envfile==null;
 let
 redirectPhase =
 [
+] ++ lib.optionals (redirect-stdin-from != null) [
+  "${execline}/bin/redirfd" "-r" "0" redirect-stdin-from
 ] ++ lib.optionals (redirect-stdout-to != null) [
   # this goes before redirect-stderr-to-stdout so both are redirected to the
   # same place when both features are enabled
