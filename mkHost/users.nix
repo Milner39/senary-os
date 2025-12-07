@@ -103,6 +103,10 @@ let
               lib.nameValuePair (toString group.gid) name)
             host-prev.groups);
 
+      # TODO: write an "invert" function for inverting a mapping represented as
+      # an attrset-of-list-of-strings, then use that primitive to unify
+      # groupMembers and userMembers.
+
       #
       # for each ${user} in users,
       #   for each ${group} in users.${user}.groups,
