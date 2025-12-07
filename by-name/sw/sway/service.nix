@@ -44,9 +44,6 @@ let
   #!${pkgs.runtimeShell}
   exec 2>&1
 
-  # swaylock wont start on non-pam systems unless it can read /etc/shadow
-  ${pkgs.busybox}/bin/busybox chmod a+r /etc/shadow
-
 '' + lib.optionalString is-mali-gpu ''
   echo ${gpu-governor} > /sys/devices/platform/${"*"}.gpu/devfreq/${"*"}.gpu/governor
   echo ${toString gpu-freq} > /sys/devices/platform/${"*"}.gpu/devfreq/${"*"}.gpu/max_freq
