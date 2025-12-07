@@ -53,8 +53,6 @@ MESA_DRIVERS_PATH=/run/opengl-driver
 '' + lib.optionalString (sway-env ? WLR_RENDER_DRM_DEVICE) ''
 test -e ${sway-env.WLR_RENDER_DRM_DEVICE} || \
   (echo "${sway-env.WLR_RENDER_DRM_DEVICE} does not exist yet; will retry"; exit -1)
-${pkgs.busybox}/bin/busybox groups
-ls -l ${sway-env.WLR_RENDER_DRM_DEVICE}
 '' + ''
 exec ${pkgs.sway}/bin/sway ${lib.escapeShellArgs sway-args} -c "${sway-config}"
 '');
