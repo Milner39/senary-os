@@ -151,8 +151,35 @@ let
             members = groupMembers.${group-name} or [];
           })
           host-prev.groups;
+
+      # attrset whose keys are usernames and whose values are lists of group names
+      userMemberships = lib.pipe groups [
+        # turn each group into a list of users which belong to it
+        (lib.mapAttrsToList (group-name: group:
+          lib.map (user-name: { inherit user-name group-name; })
+            group.members))
+        lib.concatLists
+
+        # turn the list into an attrset with an attribute for each username
+        (lib.groupBy (groupuser: groupuser.user-name))
+
+        # turn the attrset-of-lists-of-attrsets into an attrset-of-lists-of-usernames
+        (lib.mapAttrs (user-name: usergroup-list:
+          lib.map (usergroup: usergroup.group-name) usergroup-list))
+      ];
+
     in host-prev // {
       inherit groups;
+      users = lib.mapAttrs
+        (user-name: user: user // {
+          groups = let
+            memberships = userMemberships.${user-name};
+            primary-group = gids.${toString user.gid};
+            secondary-groups = lib.filter (group-name: group-name != primary-group) memberships;
+          in
+            [ primary-group ] ++ sixos.lib.sortAndDeduplicateStrings secondary-groups;
+        })
+        host-prev.users;
     };
 in
 
