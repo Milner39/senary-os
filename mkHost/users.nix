@@ -1,6 +1,7 @@
 { lib,
   types,
   infuse,
+  sixos,
   ...
 }:
 
@@ -36,42 +37,6 @@ let
     ];
 
   mkEtcGroup = { users, groups }:
-    let
-      #
-      # for each ${user} in users,
-      #   for each ${group} in users.${user}.groups,
-      #     append ${user} to groupMembers.${group}
-      #
-      # The result is an attrset whose keys are group names and whose values are
-      # lists of user names.
-      #
-      groupMembers = lib.pipe users [
-        # turn each user into a list of groups to which it belongs
-        (lib.mapAttrsToList (name: user:
-          lib.map (groupname: { username = name; inherit groupname; })
-            (user.groups or [])))
-        lib.concatLists
-
-        # turn the list into an attrset with an attribute for each groupname
-        (lib.groupBy (usergroup: usergroup.groupname))
-
-        # turn the attrset-of-lists-of-attrsets into an attrset-of-lists-of-usernames
-        (lib.mapAttrs (groupname: usergroup-list:
-          lib.map (usergroup: usergroup.username) usergroup-list))
-
-        # sort by username for normalization purposes
-        (lib.mapAttrs (groupname: username-list:
-          builtins.sort (user1: user2: user1 < user2) username-list))
-      ];
-
-    in
-      # verify that every attrname of `groupMembers` is an attrname of `groups`;
-      # this will catch spelling errors in users.${user}.groups.
-      assert lib.all lib.id (lib.mapAttrsToList (groupName: _:
-        if !(builtins.hasAttr groupName groups)
-        then throw "group ${groupName} appears in host.users.\${user}.groups, but does not appear in host.groups"
-        else true) groupMembers);
-
     lib.pipe groups [
 
       # turn the attrset into a list of attrvalues, with the attrname stored as
@@ -86,19 +51,19 @@ let
       # turn each entry into a line of /etc/group
       (lib.map ({ name, gid }:
         "${name}:x:${toString gid}:${
-          lib.concatStringsSep "," (groupMembers.${name} or [])}"
+          lib.concatStringsSep "," (groups.${name}.members or [])}"
       ))
       (lib.concatStringsSep "\n")
     ];
 
   synthesize-groups =
-    final: prev: infuse prev {
+    host-final: host-prev: host-prev // {
       # for each user with no `.gid` attribute, and for which there is no
       # identically-named group, synthesize a group whose gid is the user's uid
       # and whose group name is the user's user name.
-      groups = prevGroups: prevGroups // lib.pipe final.users [
+      groups = host-prev.groups // lib.pipe host-prev.users [
         # filter for the users with no `.gid` attribute and no identically-named group
-        (lib.filterAttrs (name: user: !(user?gid) && !(prevGroups?name)))
+        (lib.filterAttrs (name: user: !(user?gid) && !(host-prev.groups?name)))
 
         # synthesize the group
         (lib.mapAttrsToList
@@ -108,8 +73,78 @@ let
           }))
         lib.listToAttrs
       ];
+
+      users = lib.mapAttrs
+        (user-name: user:
+          user // lib.optionalAttrs (!(user?gid)) {
+            gid = user.uid;
+          })
+        host-prev.users;
     };
 
+  # A user can become a member of a group in three ways:
+  #
+  # 1. If !(host.users.${user}?gid) then a group with the same name as the user
+  #    will be synthesized and the user will become a member of it.
+  # 2. Putting a group name in host.users.${user}.groups
+  # 3. Putting a user name in hosts.groups.${group}.members
+  #
+  # The following overlay, which must run *after* any of the above modifications
+  # are performed, including all site-dir overlays and synthesize-groups.
+  #
+  recompute-group-membership = host-final: host-prev:
+    let
+
+      # reverse-lookup; maps from integer gids to group names
+      gids =
+        lib.listToAttrs
+          (lib.mapAttrsToList
+            (name: group:
+              lib.nameValuePair (toString group.gid) name)
+            host-prev.groups);
+
+      #
+      # for each ${user} in users,
+      #   for each ${group} in users.${user}.groups,
+      #     append ${user} to groupMembers.${group}
+      #
+      # The result is an attrset whose keys are group names and whose values are
+      # lists of user names.
+      #
+      groupMembers = lib.pipe host-prev.users [
+        # turn each user into a list of groups to which it belongs
+        (lib.mapAttrsToList (name: user:
+          # this overlay runs after synthesize-gids so user?gid==true
+          [ { username = name; groupname = gids.${toString user.gid}; } ] ++
+          lib.map (groupname: { username = name; inherit groupname; })
+            (user.groups or [])))
+        lib.concatLists
+
+        # turn the list into an attrset with an attribute for each groupname
+        (lib.groupBy (usergroup: usergroup.groupname))
+
+        # turn the attrset-of-lists-of-attrsets into an attrset-of-lists-of-usernames
+        (lib.mapAttrs (groupname: usergroup-list:
+          lib.map (usergroup: usergroup.username) usergroup-list))
+      ];
+    in
+      host-prev // {
+        groups =
+          # verify that every attrname of `groupMembers` is an attrname of `groups`;
+          # this will catch spelling errors in users.${user}.groups.
+          assert lib.all lib.id (lib.mapAttrsToList (groupName: _:
+            if !(builtins.hasAttr groupName host-prev.groups)
+            then throw "group ${groupName} appears in host.users.\${user}.groups, but does not appear in host.groups"
+            else true) groupMembers);
+
+          # Append any users who gain membership as a result of host.users.${user}.{gid,groups}
+          lib.mapAttrs
+            (group-name: group: group // {
+              members = sixos.lib.sortAndDeduplicateStrings
+                (group.members or [] ++ groupMembers.${group-name} or []);
+            })
+            host-prev.groups;
+      };
 in
 
 
@@ -117,4 +152,5 @@ in
   inherit mkEtcPasswd;
   inherit mkEtcGroup;
   inherit synthesize-groups;
+  inherit recompute-group-membership;
 }

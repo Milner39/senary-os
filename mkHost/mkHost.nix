@@ -192,6 +192,7 @@ let
     add-default-logger
     add-default-target
     sixos.mkHost.users.synthesize-groups
+    sixos.mkHost.users.recompute-group-membership
     add-early-console-bootparam
     add-spaths
     add-loggers
