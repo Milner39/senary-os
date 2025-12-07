@@ -44,10 +44,6 @@ let
   #!${pkgs.runtimeShell}
   exec 2>&1
 
-  # make sure the opengl driver link exists
-  # FIXME move this to the activation script?
-  ${pkgs.coreutils}/bin/ln -sfT /run/current-system/sw /run/opengl-driver || exit -1
-
   # swaylock wont start on non-pam systems unless it can read /etc/shadow
   ${pkgs.busybox}/bin/busybox chmod a+r /etc/shadow
 
