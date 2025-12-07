@@ -2,9 +2,9 @@
 , pkgs
 , six
 , targets
+, host
 , seatd        ? throw "you must pass sway a seatd target"
 , user         ? throw "username under which to run sway"
-, extra-groups ? [ ] # extra GIDs to grant to the user
 , tty-dev      ? throw "the /dev/tty* device on which to run sway"
 , is-mali-gpu  ? throw "fixme"
 , sway-config  ? throw "path to the sway configuration file"
@@ -49,30 +49,25 @@ let
   echo ${toString gpu-freq} > /sys/devices/platform/${"*"}.gpu/devfreq/${"*"}.gpu/max_freq
 '' + ''
 
-  # create /run/user/$uid just in case
-  USER_UID=$(${pkgs.coreutils}/bin/id -u ${user})
-
   # FIXME use s6-setuidgid here instead
-  USER_GROUPS=$(${pkgs.coreutils}/bin/groups ${user} | ${pkgs.gnused}/bin/sed 's_.* : __' | ${pkgs.coreutils}/bin/tr ' ' ':')${lib.concatStrings (map (g: ":${g}") extra-groups)}
-  USER_HOME=$(${pkgs.getent}/bin/getent passwd ${user} | ${pkgs.gawk}/bin/awk -F: '{ print $6 }')
-  XDG_RUNTIME_DIR=/run/user/$USER_UID/xdg
+  XDG_RUNTIME_DIR=/run/user/${toString host.users.${user}.uid}/xdg
 
   ${pkgs.coreutils}/bin/mkdir -p $XDG_RUNTIME_DIR
   ${pkgs.coreutils}/bin/chmod 0700 $XDG_RUNTIME_DIR
-  ${pkgs.coreutils}/bin/chown -R ${user} /run/user/$USER_UID
+  ${pkgs.coreutils}/bin/chown -R ${user} /run/user/${toString host.users.${user}.uid}
 '' + lib.optionalString (env ? WLR_RENDER_DRM_DEVICE) ''
   test -e ${env.WLR_RENDER_DRM_DEVICE} || \
     (echo "${env.WLR_RENDER_DRM_DEVICE} does not exist yet; will retry"; exit -1)
 '' + ''
-  cd "$USER_HOME"
+  cd "$HOME"
   exec < ${tty-dev}
   exec \
     ${pkgs.coreutils}/bin/env \
     XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
-    HOME="$USER_HOME" \
+    HOME="${host.users.${user}.home-directory}" \
     PATH=/run/current-system/sw/bin \
     ${lib.concatStringsSep " " (lib.mapAttrsToList (k: v: lib.escapeShellArg "${k}=${v}") env)} \
-    ${pkgs.runit}/bin/chpst -u ${user}:"$USER_GROUPS" -U user:user \
+    ${pkgs.runit}/bin/chpst -u ${user}:${lib.concatStringsSep ":" host.users.${user}.groups} -U user:user \
     ${pkgs.sway}/bin/sway ${lib.escapeShellArgs sway-args} -c "${sway-config}"
 '');
 
