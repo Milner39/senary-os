@@ -33,7 +33,7 @@ let
 
   overlays = [
 
-  ] ++ map sixos.lib.forall-hosts sixos.mkHost.initHost ++ [
+  ] ++ map sixos.lib.forall-hosts sixos.mkHost.before-site-overlay ++ [
 
     # apply host overlays from the site-dir
     (sixos.lib.forall-hosts
@@ -47,7 +47,7 @@ let
   ] ++ site-dir.overlay ++ [
 
     # finish up the hosts
-  ] ++ map sixos.lib.forall-hosts sixos.mkHost.mkHost ++ [
+  ] ++ map sixos.lib.forall-hosts sixos.mkHost.after-site-overlay ++ [
 
   ] ++ [
 
