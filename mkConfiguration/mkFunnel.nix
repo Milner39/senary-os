@@ -122,7 +122,7 @@ in
   inherit timeout-up timeout-down up;
   down = null;
   passthru = (args.passthru or {}) // {
-    inherit data env;
+    inherit data env user group groups;
   };
   type = "longrun";
   extraCommands = "";
