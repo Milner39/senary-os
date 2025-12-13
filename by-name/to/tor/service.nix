@@ -4,15 +4,15 @@
 , targets
 , package ? pkgs.tor
 , conf-file ? throw "conf-file is required"
-, user-name ? throw "user-name is required"
-, group-name ? throw "group-name is required"
+, user ? "_tor"
+, group ? "_tor"
 , data-directory
 }:
 
 six.mkFunnel {
 
-  user = user-name;
-  group = group-name;
+  inherit user group;
+
   run = {
     pre-argvs = [
       [ "${pkgs.busybox}/bin/mkdir" "-p" data-directory ]
