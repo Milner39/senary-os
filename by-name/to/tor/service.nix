@@ -13,11 +13,11 @@ six.mkFunnel {
 
   inherit user group;
 
+  mkdir = {
+    "${data-directory}" = "0700";
+  };
+
   run = {
-    pre-argvs = [
-      [ "${pkgs.busybox}/bin/mkdir" "-p" data-directory ]
-      [ "${pkgs.busybox}/bin/chown" "${user-name}:${group-name}" data-directory ]
-    ];
     argv = [
       "${package}/bin/tor" "-f" "${conf-file}"
     ];
