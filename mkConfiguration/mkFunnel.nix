@@ -25,7 +25,7 @@
 
 , user ? 0
 , group ? if user==0 then 0 else host.users.${user}.gid
-, groups ? if user == 0 then [] else host.users.${user}.groups
+, groups ? if user == 0 then [] else host.users.${user}.groups or []
 
   # create (`mkdir -p`) a directory for each attrname, with uid/gid set to
   # user/group, and mode set to the attrvalue (an octal string).  This will
