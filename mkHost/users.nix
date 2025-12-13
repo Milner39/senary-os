@@ -29,7 +29,9 @@ let
         (types.user user) // { inherit name; }))
 
       # sort the entries by uid while checking for duplicates
-      (lib.sort (u1: u2: assert u1.uid != u2.uid; u1.uid < u2.uid))
+      (lib.sort (u1: u2:
+        assert u1.uid == u2.uid -> throw "two users have the same uid ${toString u1.uid}";
+        u1.uid < u2.uid))
 
       # convert the attrsets into /etc/passwd lines
       (lib.map (user: "${mkUser pkgs groups user}\n"))
@@ -46,7 +48,9 @@ let
         { inherit name; inherit (group) gid; }))
 
       # sort the entries by gid while checking for duplicates
-      (lib.sort (g1: g2: assert g1.gid != g2.gid; g1.gid < g2.gid))
+      (lib.sort (g1: g2:
+        assert g1.gid == g2.gid -> throw "two groups have the same gid ${toString g1.gid}";
+        g1.gid < g2.gid))
 
       # turn each entry into a line of /etc/group
       (lib.map ({ name, gid }:
