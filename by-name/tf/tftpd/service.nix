@@ -11,8 +11,8 @@
 , lookup-peer-hostname     ? false
 , setup-environment        ? false
 , verbose                  ? false
-, user                     ? null
-, group                    ? null
+, user                     ? "_tftpd"
+, group                    ? "_tftpd"
 , local-hostname           ? null  # reverse lookup will be used if null
 }:
 

@@ -3,8 +3,8 @@
 , six
 , targets
 , package ? pkgs.go-ethereum
-, user ? "geth"
-, group ? "geth"
+, user ? "_geth"
+, group ? "_geth"
 , dataDir ? "/var/service/geth"
 , extraConfig ? {}
 }:

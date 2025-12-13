@@ -3,7 +3,8 @@
 , six
 , targets
 , package         ? pkgs.chrony
-, chrony-username ? "_chrony"
+, user ? "_chrony"
+, group ? "_chrony"
 
 , conf-file       ? null
 
@@ -43,7 +44,7 @@ let
     "-d"                 # Don't run as daemon and log to stderr
     #"-6"                # Use IPv6 addresses only
     "-f" conf            # Specify configuration file (/etc/chrony.conf)
-    "-u" chrony-username # Specify user (root)
+    "-u" user # Specify user (root)
   /*
   "-l" FILE            # Log to file
   "-L" LEVEL           # Set logging threshold (0)
@@ -67,13 +68,15 @@ let
     exec 2>&1
     #mkdir -p /var/run/gpsd/
     #mkdir -p /var/log/chrony/
-    #chown ${chrony-username} /var/log/chrony
+    #chown ${user} /var/log/chrony
     #touch /var/log/chrony/tracking.log
-    #chown ${chrony-username} /var/log/chrony/tracking.log
+    #chown ${user} /var/log/chrony/tracking.log
     exec ${package}/bin/chronyd ${lib.escapeShellArgs options}
   '';
 
 in six.mkFunnel {
   passthru.after = with targets; [ global.coldplug ];
   inherit run;
+  passthru.user = user;
+  passthru.group = group;
 }

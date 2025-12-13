@@ -3,8 +3,8 @@
 , six
 , targets
 , package ? pkgs.monero-cli
-, user ? "monerod"
-, group ? "monerod"
+, user ? "_monerod"
+, group ? "_monerod"
 , datadir ? throw "you must specify datadir"
 , extraArgs ? {}
 }:

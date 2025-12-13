@@ -3,8 +3,8 @@
 , pkgs
 , targets
 , package ? pkgs.djbdns
-, user-name ? "nobody"
-, group-name ? "nogroup"
+, user ? "_dnscache"
+, group ? "_dnscache"
 , cache-size ? 10000
 , listen-ip ? "127.0.0.1"
 , outbound-ip ? "0.0.0.0"   # 0.0.0.0 means let the kernel decide
@@ -43,8 +43,8 @@ let
 
   env = {
     FORWARDONLY = if forward-queries-to == null then "0" else "1";
-    UID = user-name;
-    GID = group-name;
+    UID = user;
+    GID = group;
     CACHESIZE = toString cache-size;
     ROOT = dnscache-root;
     IP = listen-ip;
@@ -85,7 +85,7 @@ ${# TODO: validate that these are numerical ipv4 addresses at eval-time
   '') servers)
 }
 
-${pkgs.busybox}/bin/busybox chown -R ${user-name}:${group-name} ${dnscache-root}
+${pkgs.busybox}/bin/busybox chown -R ${user}:${group} ${dnscache-root}
 
 '' +
 # FIXME: move this somewhere else

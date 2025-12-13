@@ -3,8 +3,8 @@
 , pkgs
 , targets
 , package ? pkgs.tox-node
-, user-name ? "tox"
-, group-name ? "tox"
+, user ? "_tox"
+, group ? "_tox"
 , secret-key-file ? "/etc/secrets/tox-secret-key"
 , listen-address ? throw "listen-address is required"
 , listen-port ? 33445
@@ -21,8 +21,8 @@ let
       lib.concatLists
     ];
   args = [
-    "-u" "${user-name}:${group-name}"
-    "-U" "${user-name}:${group-name}"
+    "-u" "${user}:${group}"
+    "-U" "${user}:${group}"
     "${package}/bin/tox-node"
   ] ++ lib.optionals listen-udp [
     "--udp-address" "${listen-address}:${toString listen-port}"
@@ -35,6 +35,8 @@ let
 
 in
 six.mkFunnel {
+  passthru.user = user;
+  passthru.group = group;
   passthru.after = [
     targets.global.coldplug
   ];

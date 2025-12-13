@@ -3,8 +3,8 @@
 , six
 , targets
 , package ? pkgs.bitcoind
-, user ? "bitcoind"
-, group ? "bitcoind"
+, user ? "_bitcoind"
+, group ? "_bitcoind"
 , datadir ? throw "you must specify datadir"
 , extraConfig ? {}
 }:

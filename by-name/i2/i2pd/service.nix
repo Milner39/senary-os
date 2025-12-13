@@ -3,8 +3,8 @@
 , pkgs
 , targets
 , package ? pkgs.i2pd
-, user-name ? "i2pd"
-, group-name ? "i2pd"
+, user ? "_i2pd"
+, group ? "_i2pd"
 , datadir ? throw "datadir is required"
 , bandwidth-kbytes-per-second ? throw "required"
 , listen-ip ? throw "required"
@@ -19,8 +19,8 @@
 let
   args = [
       # chpst
-      "-u" "${user-name}:${group-name}"
-      "-U" "${user-name}:${group-name}"
+      "-u" "${user}:${group}"
+      "-U" "${user}:${group}"
       # recommended by https://i2pd.readthedocs.io/en/latest/user-guide/run/
       "-o" "4096"
 
@@ -45,12 +45,14 @@ let
     ] ++ extra-args;
 in
 six.mkFunnel {
+  passthru.user = user;
+  passthru.group = group;
   run = pkgs.writeScript "run"
 ''
 #!${pkgs.runtimeShell}
 exec 2>&1
 
-export HOME=$(${pkgs.getent}/bin/getent passwd ${user-name} | cut -f6 -d:)
+export HOME=$(${pkgs.getent}/bin/getent passwd ${user} | cut -f6 -d:)
 cd $HOME
 exec ${pkgs.runit}/bin/chpst ${lib.escapeShellArgs args}
 '';

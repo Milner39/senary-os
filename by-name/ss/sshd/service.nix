@@ -3,6 +3,8 @@
 , pkgs
 , listen-port ? 22
 , package ? pkgs.openssh
+, user ? "_sshd"
+, group ? "_sshd"
 }:
 let
   package' = package.overrideAttrs (previousAttrs: {
@@ -11,6 +13,9 @@ let
       # override it from sshd_config.  the "default default" is
       # /bin:/usr/bin:... which is unusable
       "--with-default-path=/run/current-system/sw/bin"
+
+      # another compile-time-only configurable :(
+      "--with-privsep-user=${user}"
     ];
   });
 in let package = package'; in
@@ -100,4 +105,6 @@ six.mkFunnel {
     "-f" configFile
   ];
 
+  passthru.user = user;
+  passthru.group = group;
 }

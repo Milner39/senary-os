@@ -3,6 +3,9 @@
 , pkgs
 , targets
 
+, user ? "_ntpd"
+, group ? "_ntpd"
+
 # This requires 0001-libressl-make-stateDir-a-parameter-expose-all-parame.patch
 # which is not (yet) in upstream nixpkgs
 , package ? pkgs.openntpd.override {
@@ -11,13 +14,14 @@
   # about whether or not / has been remounted read-write.
 
   stateDir = "/run/openntpd";
+  privsepUser = user;
 }
 , conf ? throw "you must provide the path to an ntp.conf file"
 }:
 let
   # FIXME: verify that privsepUser is in host.users
   # FIXME: verify that privsepPath is the home directory of that user
-  inherit (package.passthru) stateDir privsepPath privsepUser;
+  inherit (package.passthru) stateDir privsepPath;
 in
 assert lib.hasPrefix "/run/" stateDir;
 six.mkFunnel {
@@ -35,11 +39,14 @@ six.mkFunnel {
   };
 
   run.pre-argvs = [
-    [ "${pkgs.busybox}/bin/busybox" "chown" "-R" "${privsepUser}" "${stateDir}/db" ]
-    [ "${pkgs.busybox}/bin/busybox" "chown" "-R" "${privsepUser}" "${stateDir}/run" ]
+    [ "${pkgs.busybox}/bin/busybox" "chown" "-R" "${user}" "${stateDir}/db" ]
+    [ "${pkgs.busybox}/bin/busybox" "chown" "-R" "${user}" "${stateDir}/run" ]
   ];
 
   run.argv = [
     "${package}/bin/ntpd" "-d" "-f" "${conf}"
   ];
+
+  passthru.user = user;
+  passthru.group = group;
 }

@@ -2,8 +2,8 @@
 , pkgs
 , six
 , targets
-, user ? "postgres"
-, group ? "postgres"
+, user ? "_postgres"
+, group ? "_postgres"
 , data_directory ? throw "you must specify data_directory"
 , extraConfig ? {}
 }:
@@ -23,13 +23,13 @@ let
   config = writePostgresConfig ({
     inherit data_directory;
     hba_file = pkgs.writeText "postgres-hba_file" ''
-      local all postgres         peer map=postgres
-      local all all              peer map=postgres
+      local all postgres         peer map=postgres-map
+      local all all              peer map=postgres-map
       host  all all 127.0.0.1/32 md5
     '';
     ident_file = pkgs.writeText "postgres-ident_file" ''
-      postgres root postgres
-      postgres bitmagnet postgres
+      postgres-map root postgres
+      postgres-map _bitmagnet postgres
     '';
   } // extraConfig);
 in
