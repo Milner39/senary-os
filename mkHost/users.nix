@@ -7,6 +7,44 @@
 
 let
 
+  # Globally allocated userids for all sixos systems; for each integer both the
+  # UID and GID are allocated simultaneously with the same name.
+  #
+  # If your service needs a uid/gid, please ask for an entry to be added to this
+  # table.  Except in unusual circumstances the {user,group}-name should be the
+  # service name (i.e. directory name beneath by-name) prefixed with an
+  # underscore.
+  #
+  # Please reference reserved uids/gids by looking them up in this table rather
+  # than by hardcoding the integer into your service.  This makes it easier to
+  # emit warnings in case .
+  #
+  globally-allocated = {
+    root = 0;
+    wheel = 99;       # GID only
+
+    _sshd            = 60001;
+    _lprng           = 60002;
+    _ntpd            = 60003;
+    _i2pd            = 60004;
+    _tor             = 60005;
+    _bitcoind        = 60006;
+    _monerod         = 60007;
+    _geth            = 60008;
+    _gpsd            = 60009;
+    _electrs         = 60010;
+    _tftpd           = 60011;
+    _chrony          = 60012;
+    _postgres        = 60013;
+    _dnscache        = 60014;
+    _dnsmasq         = 60015;
+    _dnscrypt        = 60016;
+    _bitmagnet       = 60017;
+    _tox             = 60018;
+
+    nobody = 65534;   # UID only
+    nogroup = 65534;  # GID only
+  };
 
   mkUser = pkgs: groups: user:
     let
@@ -193,4 +231,5 @@ in
   inherit mkEtcGroup;
   inherit synthesize-groups;
   inherit recompute-group-membership;
+  inherit globally-allocated;
 }
