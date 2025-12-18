@@ -7,6 +7,22 @@
 
 let
 
+  # Creates users and groups which must exist on every sixos system
+  create-sixos-users-and-groups = host-final: host-prev:
+    infuse host-prev ({
+      users.root.uid.__init = 0;
+      users.root.home-directory.__default = "/root";
+      users.root.shell.__default = "${host-final.pkgs.busybox}/bin/ash";
+      groups.root.gid.__init = 0;
+
+      users.nobody.uid.__init = globally-allocated.nobody;
+      users.nobody.gid.__init = globally-allocated.nogroup;
+      groups.nogroup.gid.__init = globally-allocated.nogroup;
+
+      # used by doas, which is a required component of sixos
+      groups.wheel.gid.__init = globally-allocated.wheel;
+    });
+
   # Globally allocated userids for all sixos systems; for each integer both the
   # UID and GID are allocated simultaneously with the same name.
   #
@@ -231,5 +247,6 @@ in
   inherit mkEtcGroup;
   inherit synthesize-groups;
   inherit recompute-group-membership;
+  inherit create-sixos-users-and-groups;
   inherit globally-allocated;
 }

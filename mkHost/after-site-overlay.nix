@@ -191,6 +191,7 @@ let
     apply-tags
     add-default-logger
     add-default-target
+    sixos.mkHost.users.create-sixos-users-and-groups
     sixos.mkHost.users.synthesize-groups
     sixos.mkHost.users.recompute-group-membership
     add-early-console-bootparam
