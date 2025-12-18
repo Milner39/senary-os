@@ -25,7 +25,9 @@
 
 , user ? 0
 , group ? if user==0 then 0 else host.users.${user}.gid
-, groups ? if user == 0 then [] else host.users.${user}.groups or []
+
+# temporarily disabled; see chpst
+#, groups ? []
 
   # create (`mkdir -p`) a directory for each attrname, with uid/gid set to
   # user/group, and mode set to the attrvalue (an octal string).  This will
@@ -63,8 +65,10 @@ let
       } // lib.optionalAttrs (group != null) {
         # TODO: if user!=null && group==null, set group based on host.users
         inherit group;
+        /*
       } // lib.optionalAttrs (groups != null) {
         inherit groups;
+        */
       } // {
         pre-argvs = [];
 
@@ -121,9 +125,10 @@ in
 (six.mkService {
   inherit timeout-up timeout-down up;
   down = null;
-  passthru = (args.passthru or {}) // {
-    inherit data env user group groups;
-  };
+  passthru = {
+    inherit data env user group;
+    #inherit groups;
+  } // (args.passthru or {});
   type = "longrun";
   extraCommands = "";
 }).overrideAttrs(finalAttrs: previousAttrs:

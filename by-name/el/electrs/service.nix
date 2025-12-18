@@ -4,8 +4,7 @@
 , targets
 , package ? pkgs.electrs
 , user ? "_electrs"
-, group ? "_electrs"
-, groups ? [ "_bitcoind" ]
+, group ? "_bitcoind"
 , datadir ? throw "you must specify datadir"
 , bitcoind ? throw "you must specify targets.bitcoind"
 , network ? "bitcoin"
@@ -37,7 +36,7 @@ in
 
 six.mkFunnel {
 
-  inherit user group groups;
+  inherit user group;
   run = {
     argv = [
       "${package}/bin/electrs"

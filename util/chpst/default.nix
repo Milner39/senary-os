@@ -19,7 +19,9 @@
   # set userid and groups to these; also set $UID and $GID environment variables
   user ? null,
   group ? null,
-  groups ? [],
+
+  # temporarily disabled because s6-envuidgid doesn't seem to grok this...
+  #groups ? [],
 
   # clear the environment
   env-clear ? false,
