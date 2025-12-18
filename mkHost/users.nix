@@ -7,6 +7,7 @@
 
 let
 
+
   # Creates users and groups which must exist on every sixos system
   create-sixos-users-and-groups = host-final: host-prev:
     infuse host-prev ({
@@ -22,6 +23,68 @@ let
       # used by doas, which is a required component of sixos
       groups.wheel.gid.__init = globally-allocated.wheel;
     });
+
+  # Sixos follows a few of the UID/GID policies of Debian/Ubuntu.  This overlay
+  # checks that the site overlay has not violated them.
+  #
+  # 0:0         must be root:root
+  # 99:99       must be wheel:wheel (for `doas`)
+  # 1000-59999  is (currently) the only range available for site-specific use
+  # 60000-64999 may only be allocated by sixos (see below)
+  # 65534:65534 must be nobody:nogroup
+  # 65535:65535 may never be used (16-bit error sentinel).
+  #
+  # UID/GID ranges not listed above are reserved for future use.  32-bit userids
+  # are not currently supported, but may be in the future.
+  #
+  # The UID and GID ranges 60000-64999 are allocated by sixos for
+  # package-specific users/groups.  Most of these are daemon-specific userids --
+  # for example, the sshd privilege-separation UID/GID.  All usernames and
+  # groupnames in this range will start with an underscore `_`.
+  #
+  # https://www.debian.org/doc/debian-policy/ch-opersys.html#uid-and-gid-classes
+  #
+  enforce-uid-gid-policies = host-final: host-prev:
+    let
+      enforce-uid-policies-on-site-user = user-name: user:
+        assert user?uid && !(user.uid >= 1000)  -> throw "userids less than 1000 are reserved; user ${user-name} has uid ${user.uid}";
+        assert user?uid && !(user.uid <= 59999) -> throw "userids greater than 59999 are reserved; user ${user-name} has uid ${user.uid}";
+        user;
+      enforce-gid-policies-on-site-group = group-name: group:
+        assert group?gid && !(group.gid >= 1000)  -> throw "groupids less than 1000 are reserved; group ${group-name} has gid ${group.gid}";
+        assert group?gid && !(group.gid <= 59999) -> throw "userids greater than 59999 are reserved; group ${group-name} has gid ${group.gid}";
+        group;
+      enforce-uid-policies-on-user = user-name: user:
+        assert !(user-name == "root"    <-> (user.uid==0))     -> throw "userid 0 must be root";
+        assert !(user-name == "nobody"  <-> (user.uid==65534)) -> throw "userid 65534 must be nobody";
+        assert user.uid==65535 -> throw "the userid 65535 may not be used; it is the 16-bit error sentinel";
+        assert !(user.uid >= 60000 && user.uid <= 64999 && !(lib.strings.hasPrefix "_" user-name))
+                -> throw "users with a UID in the range 60000-64999 must have a username starting with `_`";
+        true;
+      enforce-gid-policies-on-group = group-name: group:
+        assert !(group-name == "root"    <-> (group.gid==0))     -> throw "groupid 0 must be root";
+        assert !(group-name == "nogroup" <-> (group.gid==65534)) -> throw "groupid 65534 must be nogroup";
+        assert group.gid==65535 -> throw "the groupid 65535 may not be used; it is the 16-bit error sentinel";
+        assert !(group.gid >= 60000 && group.gid <= 64999 && !(lib.strings.hasPrefix "_" group-name))
+                -> throw "groups with a GID in the range 60000-64999 must have a group name starting with `_`";
+        true;
+    in
+      assert
+        (lib.all lib.id (
+          # Applied to host-prev to check what the site-specific overlay has done.
+          # The enforce-uid-gid-policies overlay must be applied after the
+          # site-specific overlay but before the global sixos users (like `root`)
+          # are added.
+          lib.mapAttrsToList enforce-uid-policies-on-site-user host-prev.users ++
+          lib.mapAttrsToList enforce-gid-policies-on-site-group host-prev.groups ++
+
+          # Applied to host-final to check the result of both the site-specific
+          # overlay and the sixos global users.
+          lib.mapAttrsToList enforce-uid-policies-on-user host-final.users ++
+          lib.mapAttrsToList enforce-gid-policies-on-group host-final.groups ++
+        []
+        ));
+      host-prev;
 
   # Globally allocated userids for all sixos systems; for each integer both the
   # UID and GID are allocated simultaneously with the same name.
@@ -248,5 +311,6 @@ in
   inherit synthesize-groups;
   inherit recompute-group-membership;
   inherit create-sixos-users-and-groups;
+  inherit enforce-uid-gid-policies;
   inherit globally-allocated;
 }

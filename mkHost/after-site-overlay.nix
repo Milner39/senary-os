@@ -243,6 +243,10 @@ let
     apply-tags
     add-default-logger
     add-default-target
+
+    # FIXME: causes infinite recursion
+    #sixos.mkHost.users.enforce-uid-gid-policies
+
     sixos.mkHost.users.create-sixos-users-and-groups
     create-globally-allocated-users
     create-globally-allocated-groups
