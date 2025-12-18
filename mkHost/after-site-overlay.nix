@@ -14,6 +14,58 @@
 
 let
 
+  # Examine each target's `passthru.user`; if it is present and is in
+  # users.globally-allocated, add a corresponding user
+  create-globally-allocated-users =
+    host-final: host-prev:
+    host-prev // {
+      users = infuse host-prev.users (lib.optionalAttrs (host-prev.users != {})
+        (lib.pipe (sixos.lib.extractDerivations host-final.targets) [
+          (lib.mapAttrsToList
+            (target-name: target:
+              lib.optional
+                (target?passthru.user &&
+                 lib.isString target.passthru.user &&
+                 (lib.strings.hasPrefix "_" target.passthru.user
+                  || sixos.mkHost.users.globally-allocated?${target.passthru.user})
+                )
+                target.passthru.user
+            ))
+          lib.concatLists
+          (lib.map (user-name:
+            lib.nameValuePair
+              user-name
+              { uid.__init = sixos.mkHost.users.globally-allocated.${user-name}; }))
+          lib.listToAttrs
+        ]));
+    };
+
+
+  # Examine each target's `passthru.group`; if it is present and is in
+  # users.globally-allocated, add a corresponding group
+  create-globally-allocated-groups =
+    host-final: host-prev:
+    host-prev // {
+      groups = infuse host-prev.groups (lib.optionalAttrs (host-prev.users != {})
+        (sixos.lib.pipe host-final.targets [
+          (lib.mapAttrsToList
+            (target-name: target:
+              (lib.filter (group-name: lib.isString group-name &&
+                                       sixos.mkHost.users.globally-allocated?${group-name}))
+                (lib.optional     (target?passthru.group)  target.passthru.group
+                )))
+          lib.concatLists
+          (lib.map (group-name:
+            lib.nameValuePair
+              group-name
+              { gid.__assign = sixos.mkHost.users.globally-allocated.${group-name}; }
+          ))
+          lib.listToAttrs
+
+        ]));
+    };
+
+
   add-spath =
     spath: v:
     v.overrideAttrs (previousAttrs: {
@@ -192,6 +244,8 @@ let
     add-default-logger
     add-default-target
     sixos.mkHost.users.create-sixos-users-and-groups
+    create-globally-allocated-users
+    create-globally-allocated-groups
     sixos.mkHost.users.synthesize-groups
     sixos.mkHost.users.recompute-group-membership
     add-early-console-bootparam
