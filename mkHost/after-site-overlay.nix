@@ -19,7 +19,7 @@ let
   create-globally-allocated-users =
     host-final: host-prev:
     host-prev // {
-      users = infuse host-prev.users (lib.optionalAttrs (host-prev.users != {})
+      users = infuse host-prev.users (
         (lib.pipe (sixos.lib.extractDerivations host-final.targets) [
           (lib.mapAttrsToList
             (target-name: target:
@@ -46,7 +46,7 @@ let
   create-globally-allocated-groups =
     host-final: host-prev:
     host-prev // {
-      groups = infuse host-prev.groups (lib.optionalAttrs (host-prev.users != {})
+      groups = infuse host-prev.groups (
         (sixos.lib.pipe host-final.targets [
           (lib.mapAttrsToList
             (target-name: target:

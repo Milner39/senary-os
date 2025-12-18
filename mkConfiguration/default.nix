@@ -170,14 +170,12 @@ let
     ln -s ${compiled}/six/s6-rc/db $out/six/s6-rc/db
     ln -s ${scandir}               $out/six/scandir
     mkdir -p $out/etc
-  '' + lib.optionalString (host-final.users != {}) ''
     ln -s ${pkgs.writeText "etc-passwd" (sixos.mkHost.users.mkEtcPasswd {
       inherit (host-final) pkgs users groups;
     })} $out/etc/passwd
     ln -s ${pkgs.writeText "etc-group" (sixos.mkHost.users.mkEtcGroup {
       inherit (host-final) users groups;
     })} $out/etc/group
-  '' + ''
     ln -s ${pkgs.iana-etc}/etc/services $out/etc/services
     ln -s ${pkgs.iana-etc}/etc/protocols $out/etc/protocols
     ln -s ${pkgs.writeText "etc-hosts" (lib.pipe host-final.etc-hosts [
@@ -243,10 +241,7 @@ let
 #   ${pkgs.e2fsprogs}/bin/chattr -f +i /var/empty || true
   ''
       # root filesystem is not yet initialized
-  '' + lib.optionalString (host-final.users != {}) ''
       if [[ ! -e /etc/passwd && ! -L /etc/passwd ]]; then
-  '' + lib.optionalString (host-final.users == {}) ''
-      if [[ ! -e /etc/passwd ]]; then
   '' + ''
 
         # We don't want to remount / read-write, so instead we bind-mount it and
@@ -268,26 +263,6 @@ let
           ${pkgs.busybox}/bin/mkdir -m 0555 -p $RWMOUNT/usr/bin
           ${pkgs.busybox}/bin/ln -sfT /run/current-system/sw/bin/env $RWMOUNT/usr/bin/env
         fi
-  '' + lib.optionalString (host-final.users == {}) ''
-        if [ ! -e /etc/passwd ]; then
-          ${pkgs.busybox}/bin/mkdir -m 0555 -p $RWMOUNT/etc
-          echo 'root:x:0:0:root:/root:/run/current-system/sw/bin/sh' > $RWMOUNT/etc/passwd
-          echo 'sshd:x:1:1::/run/sshd:/run/current-system/sw/bin/false' >> $RWMOUNT/etc/passwd
-        fi
-        if [ ! -e /etc/group ]; then
-          ${pkgs.busybox}/bin/mkdir -m 0555 -p $RWMOUNT/etc
-          echo 'root:x:0:'     >  $RWMOUNT/etc/group
-          echo 'tty:x:900:'    >> $RWMOUNT/etc/group
-          echo 'disk:x:901:'   >> $RWMOUNT/etc/group
-          echo 'uucp:x:902:'   >> $RWMOUNT/etc/group
-          echo 'floppy:x:903:' >> $RWMOUNT/etc/group
-          echo 'cdrom:x:904:'  >> $RWMOUNT/etc/group
-          echo 'kvm:x:905:'    >> $RWMOUNT/etc/group
-          echo 'audio:x:906:'  >> $RWMOUNT/etc/group
-          echo 'video:x:907:'  >> $RWMOUNT/etc/group
-          echo 'input:x:908:'  >> $RWMOUNT/etc/group
-        fi
-  '' + lib.optionalString (host-final.users != {}) ''
         if [[ ! -e /etc/passwd && ! -L /etc/passwd ]]; then
           ${pkgs.busybox}/bin/mkdir -m 0555 -p $RWMOUNT/etc
           ${pkgs.busybox}/bin/ln -s /run/current-system/etc/passwd $RWMOUNT/etc/passwd
@@ -296,7 +271,6 @@ let
           ${pkgs.busybox}/bin/mkdir -m 0555 -p $RWMOUNT/etc
           ${pkgs.busybox}/bin/ln -s /run/current-system/etc/group $RWMOUNT/etc/group
         fi
-  '' + ''
         if [[ ! -e /etc/services ]]; then
           ${pkgs.busybox}/bin/busybox ln -sfT /run/current-system/etc/services  $RWMOUNT/etc/services
         fi
