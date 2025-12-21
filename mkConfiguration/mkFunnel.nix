@@ -25,9 +25,7 @@
 
 , user ? 0
 , group ? if user==0 then 0 else host.users.${user}.gid
-
-# temporarily disabled; see chpst
-#, groups ? []
+, extra-groups ? []
 
   # create (`mkdir -p`) a directory for each attrname, with uid/gid set to
   # user/group, and mode set to the attrvalue (an octal string).  This will
@@ -48,6 +46,15 @@ assert (lib.isAttrs run && run?user) -> throw "please set user in mkFunnel, not 
 assert (lib.isAttrs finish && finish?user) -> throw "please set user in mkFunnel, not in finish";
 let
 
+  extra-gids =
+    if extra-groups==null
+    then null
+    else lib.map
+      (g: if lib.isString g
+          then host.groups.${g}.gid
+          else g)
+      extra-groups;
+
   scriptify =
     { name
     , argMode ? "var"
@@ -63,12 +70,9 @@ let
         # TODO: if (lib.isString user), check that this exists in host.users
         inherit user;
       } // lib.optionalAttrs (group != null) {
-        # TODO: if user!=null && group==null, set group based on host.users
         inherit group;
-        /*
-      } // lib.optionalAttrs (groups != null) {
-        inherit groups;
-        */
+      } // lib.optionalAttrs (extra-gids != null) {
+        inherit extra-gids;
       } // {
         pre-argvs = [];
 
