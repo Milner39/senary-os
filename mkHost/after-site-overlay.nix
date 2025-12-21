@@ -23,13 +23,14 @@ let
         (lib.pipe (sixos.lib.extractDerivations host-final.targets) [
           (lib.mapAttrsToList
             (target-name: target:
-              lib.optional
+              lib.optionals
                 (target?passthru.user &&
-                 lib.isString target.passthru.user &&
-                 (lib.strings.hasPrefix "_" target.passthru.user
-                  || sixos.mkHost.users.globally-allocated?${target.passthru.user})
-                )
-                target.passthru.user
+                 lib.isString target.passthru.user)
+                (if lib.strings.hasPrefix "_" target.passthru.user || sixos.mkHost.users.globally-allocated?${target.passthru.user}
+                 then [ target.passthru.user ]
+                 else assert !(host-prev.users?${target.passthru.user})
+                              -> throw ''target "${target-name}" runs as user "${target.passthru.user}" which does not appear in host.users'';
+                   [])
             ))
           lib.concatLists
           (lib.map (user-name:
