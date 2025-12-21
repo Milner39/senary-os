@@ -140,6 +140,33 @@ in
     }
     ] ++ [
 
+    # /dev/serial/by-id
+    {
+      stop-if-match = false;
+      env-regexes.SUBSYSTEM = "usb-serial";
+      add-argv = [
+        (pkgs.writeScript "mdevd-add-serial-by-id" ''
+          #!${pkgs.runtimeShell}
+          PATH=${lib.makeBinPath [ pkgs.busybox ]}
+          MDEV=$(basename $DEVPATH)
+          DP0=/sys/$DEVPATH
+          DP1=$(dirname "$DP0")
+          DP=$(dirname "$DP1")
+          if [[ -e "$DP/serial" ]]; then
+            SERIAL=$(cat "$DP/serial" | tr ' ' '_')
+            PRODUCT=$(cat "$DP/product" | tr ' ' '_')
+            MANUFACTURER=$(cat "$DP/manufacturer" | tr ' ' '_')
+            IFACE=$(cat "$DP1/bInterfaceNumber" | tr ' ' '_')
+            BUS="usb"
+            PORT=0  # FIXME
+            mkdir -p /dev/serial/by-id
+            ln -sf ../../"$MDEV" "/dev/serial/by-id/''${BUS}-''${MANUFACTURER}_''${PRODUCT}_''${SERIAL}-if''${IFACE}-port''${PORT}"
+          fi
+        '')
+        "$MDEV"
+      ];
+    }
+
     # support module loading on hotplug
     {
       devname-regex = null;
