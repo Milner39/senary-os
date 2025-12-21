@@ -83,7 +83,7 @@ assert envdir==null || envfile==null;
 # TODO: set $HOME based on host.users.${user}
 # TODO: ionice
 # TODO: explain why the `-f`, `-g`, and `-d` flags for s6-setsid are not useful here
-# TODO: doas sets these environment variables; consider them: HOME, LOGNAME, PATH, SHELL, USER
+# TODO: doas sets these environment variables; consider them: LOGNAME, PATH, SHELL, USER
 
 
 let
