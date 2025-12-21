@@ -15,7 +15,8 @@
 
 let
 
-  xdg-runtime-dir = "/run/user/${toString host.users.${user}.uid}/xdg";
+  run-user-dir = "/run/user/${toString host.users.${user}.uid}";
+  xdg-runtime-dir = "${run-user-dir}/xdg";
 
 #'' + lib.optionalString (env ? WLR_RENDER_DRM_DEVICE) ''
 #  test -e ${env.WLR_RENDER_DRM_DEVICE} || \
@@ -25,6 +26,7 @@ in
 six.mkFunnel {
   inherit user group;
   mkdir = {
+    ${run-user-dir} = "0700";
     ${xdg-runtime-dir} = "0700";
   };
   env = {
