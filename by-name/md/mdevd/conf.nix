@@ -86,6 +86,17 @@ let
         else if add-argv!=null then add-argv
         else [];
     in
+
+      # These checks are very important.  Mdevd will refuse to start up if any
+      # user or group mentioned in mdev.conf is missing from
+      # /etc/{passwd,group}; these checks are done immediately at startup rather
+      # than lazily when the device is connected.  Almost every target depends
+      # on mdevd, so the result is a bricked system.
+      assert !host.users?${user} ->
+              throw ''mdevd.conf references user "${user}" which does not appear in host.users'';
+      assert !host.groups?${group} ->
+              throw ''mdevd.conf references user "${group}" which does not appear in host.users'';
+
       # Syntax:
       # [-]devicename_regex user:group mode [=path]|[>path]|[!] [@|$|*cmd args...]
       # [-]$ENVVAR=regex    user:group mode [=path]|[>path]|[!] [@|$|*cmd args...]
