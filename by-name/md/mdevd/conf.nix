@@ -7,6 +7,9 @@
 
 # This is a list of attrsets, each of which will be passed to mkMdevConfLine
 , extraStructuredConfig
+
+# mdevd events will be logged to this file; set to `null` to disable logging
+, event-log-file ? "/run/mdevd-events.log"
 }:
 
 let
@@ -115,9 +118,10 @@ let
       ];
 in
 # Based on the example mdev.conf from mdev-like-a-boss
-  lib.pipe ([
-
-    # log each event to /run/mdevd-events.log
+  lib.pipe (
+    [
+    ] ++ lib.optionals (event-log-file != null) [
+      # log each event to /run/mdevd-events.log
     {
       stop-if-match = false;
       create-device-node = false;
@@ -126,13 +130,15 @@ in
       change-argv = [
         "(${lib.concatStringsSep "; " [
           "unset TZ"
+          "unset EXECLINE_STRICT"
           "echo -n $ACTION \" \"" "unset ACTION"
           "echo -n $SEQNUM \" \"" "unset SEQNUM"
           "${busybox} env | ${busybox} grep -v \"^\\(_\\|SHLVL\\|PATH\\|PWD\\)=\" | ${busybox} sort | ${busybox} tr \"\\n\" \" \" "
           "echo"
-        ]}) >> /run/mdevd-events.log"
+        ]}) >> ${event-log-file}"
       ];
     }
+    ] ++ [
 
     # support module loading on hotplug
     {
