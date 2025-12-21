@@ -68,6 +68,9 @@ six.mkFunnel {
     PATH = "${pkgs.execline}/bin";
   };
 
+  # FIXME: enable this, so that $TZ and other environment variables don't pollute it
+  #run.env-clear = true;
+
   run.redirect-stdout-to = "/run/mdevd-errors.log";
   run.argv = [
     "${lib.getBin pkgs.mdevd}/bin/mdevd"
