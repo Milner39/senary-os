@@ -20,8 +20,9 @@
   user ? null,
   group ? null,
 
-  # temporarily disabled because s6-envuidgid doesn't seem to grok this...
-  #groups ? [],
+  # A list of *numerical* group ids for the "secondary groups" with which the
+  # process should execute.
+  extra-gids ? [],
 
   # clear the environment
   env-clear ? false,
@@ -80,6 +81,12 @@ assert chroot!=null && chdir!=null -> throw "once we enter the chroot we cannot 
 # not ready to commit to a specific precedence between these two
 assert envdir==null || envfile==null;
 
+assert lib.all (gid:
+  if lib.isInt gid
+  then true
+  else throw "chpst `extra-gids` contains non-integer: ${lib.generators.toPretty {} gid}"
+) extra-gids;
+
 # TODO: set $HOME based on host.users.${user}
 # TODO: ionice
 # TODO: explain why the `-f`, `-g`, and `-d` flags for s6-setsid are not useful here
@@ -120,8 +127,8 @@ nicePhase =
 setuidPhase =
 [
 ] ++ lib.optionals ((user != null || group != null) && (user != 0 || group != 0)) [
-  "${s6-portable-utils}/bin/s6-env" "GIDLIST="
   "${s6}/bin/s6-envuidgid" "-n" "-B" "${toString user}:${toString group}"
+  "${s6-portable-utils}/bin/s6-env" "GIDLIST=${lib.concatStringsSep "," (map toString extra-gids)}"
   "${s6}/bin/s6-applyuidgid" "-U" "-z"
 ] ++ lib.optionals (umask!=null) [
   "${execline}/bin/execline-umask" umask
