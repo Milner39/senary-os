@@ -6,6 +6,7 @@
 , seatd        ? throw "you must pass sway a seatd target"
 , user         ? throw "username under which to run sway"
 , group
+, extra-groups ? []
 , tty-dev      ? throw "the /dev/tty* device on which to run sway"
 , sway-config  ? throw "path to the sway configuration file"
 , sway-args    ? [ ]  # extra command line arguments for sway
@@ -24,7 +25,7 @@ let
 
 in
 six.mkFunnel {
-  inherit user group;
+  inherit user group extra-groups;
   mkdir = {
     ${run-user-dir} = "0700";
     ${xdg-runtime-dir} = "0700";
