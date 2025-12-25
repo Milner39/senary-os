@@ -6,6 +6,24 @@
 , timeout-down ? null # milliseconds
 
 , run    ? throw "you must set run"
+
+# The finish script is executed with four arguments:
+#
+# 1. the exit code from the run script (resp. 256 if the run script was killed
+#    by a signal)
+#
+# 2. an undefined number (resp. the number of the signal that killed the run
+#    script)
+#
+# 3. the name of the service directory, the same that has been given to ./run
+#
+# 4. the process group id of the defunct run script. This is useful to clean up
+#    services that leave children behind: for instance, if test "$1" -gt 255 ;
+#    then kill -9 -- -"$4" ; fi in the finish script will SIGKILL all children
+#    processes if the service crashed. This is not an entirely reliable
+#    mechanism, because an annoying service could spawn children processes in a
+#    different process group, but it should catch most offenders.
+#
 , finish ? null
 
 , notification-fd ? null
@@ -78,8 +96,6 @@ let
 
         # TODO: consider these
         #dir ? null,
-        #new-session ? false,
-        #new-process-group ? new-session,
         #env-clear = true,
       } //
       (if   lib.isString script || lib.isDerivation script || lib.isPath script
