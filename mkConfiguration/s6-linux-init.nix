@@ -142,7 +142,7 @@ let
       "-f" skeldir
     ] ++ lib.optionals (default-timezone != null) [
       "-e" "TZ=${default-timezone}"
-      # FIXME -e LOCALE_ARCHIVE=/usr/local/lib/locale/locale-archive
+      # FIXME -e LOCALE_ARCHIVE=/run/current-system/sw/lib/locale/locale-archive
       # FIXME -e LANG=C.UTF-8
     ] ++ [
       "basedir"
