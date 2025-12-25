@@ -50,6 +50,7 @@ six.mkFunnel {
   passthru = {
     after = [ targets.global.coldplug seatd ];
     essential = true;
+    inherit xdg-runtime-dir;
   };
 }
 
