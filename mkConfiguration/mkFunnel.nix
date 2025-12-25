@@ -144,6 +144,8 @@ in
     echo ${timeout-kill} > $out/timeout-kill
   '' + lib.optionalString (timeout-finish != null) ''
     echo ${timeout-finish} > $out/timeout-finish
+  '' + lib.optionalString (down-signal != null) ''
+    echo ${toString down-signal} > $out/down-signal
   '' + ''
     ln -s ${scriptify { name = "target.${final-sname}.run"; readNArgs = 1; } run} $out/run
   '' + lib.optionalString (finish != null) ''
