@@ -18,7 +18,7 @@
 , buildPackages #.fakeroot
 , pkgsBuildHost
 
-, default-timezone ? "PST8PDT,M3.2.0,M11.1.0"  # US Pacific Time, with daylight savings
+, default-timezone ? "MST7"  # Arizona Time (UTC-7 year-round); see `man tzset` for syntax
 
 # if non-null, this binary will be executed on the primary kernel console
 , early-getty ? null
