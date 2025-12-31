@@ -240,7 +240,13 @@ in
       env-regexes = { SUBSYSTEM = "sound"; };
       group = "audio";
       octal-mode = "660";
-      add-argv = [ "${helpers}/bin/sound-control" ];
+
+      # Disabled because most of what this script does is mute the mixers (and
+      # leave them muted), which is very frustrating for the user who then needs
+      # to figure out why no sound is coming out of their machine... all to avoid
+      # "Dragonfly Red 1.07 blasting at full volume"
+      #
+      #add-argv = [ "${helpers}/bin/sound-control" ];
     }
 
   ] ++ (lib.map (devname-regex: {
