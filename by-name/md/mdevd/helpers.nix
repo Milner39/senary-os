@@ -7,6 +7,15 @@
 let
   pname = "mdev-like-a-boss";
   version = "20200119";
+
+  # We only need `amixer` and `alsactl`.  Since we don't need
+  # ${alsa-utils}/bin/aplay, which drags in ffmpeg and ruby and a bunch of other
+  # build/closure-bloat
+  alsa-utils' = pkgs.alsa-utils.override {
+    alsa-plugins = pkgs.runCommand "fake-alsa-plugins" {} ''
+      mkdir -p $out/lib/alsa-lib
+    '';
+  };
 in
 stdenv.mkDerivation {
   inherit pname version;
@@ -28,7 +37,7 @@ stdenv.mkDerivation {
     mkdir $out
     mv helpers $out/bin
   '' + lib.optionalString alsaSupport ''
-    wrapProgram $out/bin/sound-control  --prefix PATH : ${with pkgs; lib.makeBinPath [ coreutils alsa-utils ]}
+    wrapProgram $out/bin/sound-control  --prefix PATH : ${with pkgs; lib.makeBinPath [ coreutils alsa-utils' ]}
   '' + lib.optionalString (!alsaSupport) ''
     rm -f $out/bin/sound-control
   '' + ''
