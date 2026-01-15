@@ -176,6 +176,12 @@ let
     ln -s ${pkgs.writeText "etc-group" (sixos.mkHost.users.mkEtcGroup {
       inherit (host-final) users groups;
     })} $out/etc/group
+  '' + lib.optionalString (host-final?iproute) ''
+    mkdir -p $out/etc/iproute2
+    ln -s ${pkgs.writeText "etc-iproute2" (sixos.mkHost.mkEtcGroup {
+      inherit (host-final) users groups;
+    })} $out/etc/iproute2/rt_tables
+  '' + ''
     ln -s ${pkgs.iana-etc}/etc/services $out/etc/services
     ln -s ${pkgs.iana-etc}/etc/protocols $out/etc/protocols
     ln -s ${pkgs.writeText "etc-hosts" (lib.pipe host-final.etc-hosts [
@@ -279,6 +285,10 @@ let
         fi
         if [[ ! -e /etc/hosts ]]; then
           ${pkgs.busybox}/bin/busybox ln -sfT /run/current-system/etc/hosts $RWMOUNT/etc/hosts
+        fi
+  '' + lib.optionalString (host-final?iproute) ''
+        if [[ ! -e /etc/iproute2 ]]; then
+          ${pkgs.busybox}/bin/busybox ln -sfT /run/current-system/etc/iproute2 $RWMOUNT/etc/iproute2
         fi
   '' + ''
         ${pkgs.busybox}/bin/mkdir -p $RWMOUNT/tmp
