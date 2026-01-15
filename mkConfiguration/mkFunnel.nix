@@ -2,8 +2,6 @@
 , pkgs
 , six
 , host
-, timeout-up   ? null # milliseconds
-, timeout-down ? null # milliseconds
 
 , run    ? throw "you must set run"
 
@@ -26,10 +24,12 @@
 #
 , finish ? null
 
+, timeout-up   ? null   # milliseconds, only applies to readiness
+, timeout-kill ? null   # milliseconds, how long to wait after SIGTERM before sending SIGKILL
+, timeout-finish ? null # milliseconds, timeout for ./finish script
+
 , notification-fd ? null
 , lock-fd ? null
-, timeout-kill ? null
-, timeout-finish ? null
 , max-death-tally ? null
 , down-signal ? null
 
@@ -143,7 +143,7 @@ let
     ];
 in
 (six.mkService {
-  inherit timeout-up timeout-down up;
+  inherit timeout-up up;
   down = null;
   passthru = {
     inherit data env user group;
@@ -157,9 +157,9 @@ in
   in {
   buildCommand = (previousAttrs.buildCommand or "") + ''
   '' + lib.optionalString (timeout-kill != null) ''
-    echo ${timeout-kill} > $out/timeout-kill
+    echo ${toString timeout-kill} > $out/timeout-kill
   '' + lib.optionalString (timeout-finish != null) ''
-    echo ${timeout-finish} > $out/timeout-finish
+    echo ${toString timeout-finish} > $out/timeout-finish
   '' + lib.optionalString (down-signal != null) ''
     echo ${toString down-signal} > $out/down-signal
   '' + ''

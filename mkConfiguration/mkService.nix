@@ -6,9 +6,8 @@
 #, description
 #, documentation  # must be urls
 , up            ? null # must contain a single unix command line (no shebang)
-, timeout-up    ? null
+, timeout-up    ? null # only applies to waiting for readiness signal
 , down          ? null # must contain a single unix command line (no shebang)
-, timeout-down  ? null
 , passthru      ? {}
 , extraCommands ? ""
 
@@ -66,9 +65,7 @@ in
   '' + lib.optionalString (finalAttrs.passthru.essential or false) ''
     touch $out/flag-essential
   '' + lib.optionalString (timeout-up != null) ''
-    echo ${timeout-up} > $out/timeout-up
-  '' + lib.optionalString (timeout-down != null) ''
-    echo ${timeout-down} > $out/timeout-down
+    echo ${toString timeout-up} > $out/timeout-up
   '' + ''
     mkdir $out/${afterDirName}
   '' +
