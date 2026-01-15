@@ -24,6 +24,8 @@ let
 in
 six.mkFunnel {
 
+  timeout-kill = 15000;   # geth sometimes takes a long time to shut down
+
   inherit user;
   inherit group;
   run = {
