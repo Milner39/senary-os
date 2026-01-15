@@ -120,6 +120,8 @@ let
     _dnscrypt        = 60016;
     _bitmagnet       = 60017;
     _tox             = 60018;
+    _mariadb         = 60019;
+    _transmission    = 60020;
 
     nobody = 65534;   # UID only
     nogroup = 65534;  # GID only
