@@ -26,7 +26,9 @@ let
       DP0=/sys/$DEVPATH
       DP1=$(dirname "$DP0")
       DP=$(dirname "$DP1")
-      if [[ \! -e "$DP/serial" ]]; then
+      if [[ -e "$DP/serial" ]]; then
+        true
+      else
         DP1="$DP"
         DP=$(dirname "$DP1")
       fi
@@ -168,6 +170,11 @@ in
     {
       stop-if-match = false;
       env-regexes.SUBSYSTEM = "usb-serial";
+      add-argv = [ mdevd-add-serial-by-id "$MDEV" ];
+    }
+    {
+      stop-if-match = false;
+      devname-regex = "ttyACM.*";
       add-argv = [ mdevd-add-serial-by-id "$MDEV" ];
     }
 
