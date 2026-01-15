@@ -1,0 +1,13 @@
+diff --git a/gpsd/libgpsd_core.c b/gpsd/libgpsd_core.c
+index 47ee5d5..9d342a6 100644
+--- a/gpsd/libgpsd_core.c
++++ b/gpsd/libgpsd_core.c
+@@ -180,7 +180,7 @@ static void gpsd_vlog(const int errlevel,
+     // this was carzy expensive, just fix the bad log calls
+     // gps_visibilize(outbuf, outlen, buf, strlen(buf));
+ 
+-    if (getpid() == getsid(getpid())) {
++    if (0) {
+         // I think this calls syslog() only when daemonized
+         syslog(level, "%s",  outbuf);
+     } else if (NULL != errout->report) {

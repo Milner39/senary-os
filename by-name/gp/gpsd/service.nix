@@ -16,10 +16,16 @@ let package' = package; in
 
 let
 
-  package = package'.override {
+  package = (package'.override {
     gpsdUser = user;
     gpsdGroup = group;
-  };
+  }).overrideAttrs(previousAttrs: {
+    patches = previousAttrs.patches or [] ++ [
+      # gpsd's man page says logs to go stdout when `--foreground` is used, but
+      # it doesn't behave that way if `getpid() == getsid(getpid())`
+      ./patches/do-not-use-setsid-to-detect-daemonization.patch
+    ];
+  });
 
 in six.mkFunnel {
   passthru = passthru // {
