@@ -29,13 +29,13 @@ let
       DP0=/sys/$DEVPATH
       DP1=$(dirname "$DP0")
       DP=$(dirname "$DP1")
-      if [[ -e "$DP/serial" ]]; then
+      if [[ -e "$DP/product" && -e "$DP/manufacturer" ]]; then
         true
       else
         DP1="$DP"
         DP=$(dirname "$DP1")
       fi
-      if [[ -e "$DP/serial" ]]; then
+      if [[ -e "$DP/product" && -e "$DP/manufacturer" ]]; then
         SERIAL=$(cat "$DP/serial" | tr ' ' '_')
         PRODUCT=$(cat "$DP/product" | tr ' ' '_')
         MANUFACTURER=$(cat "$DP/manufacturer" | tr ' ' '_')
