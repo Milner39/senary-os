@@ -16,32 +16,23 @@
 }:
 
 
-let
-
-  args = lib.mapAttrsToList
-    (k: v: "--${k}=${v}")
-    ({
-      log-filters = "INFO";
-      daemon-dir = bitcoind.passthru.datadir;
-      cookie-file = bitcoind.passthru.config.rpccookiefile;
-      db-dir = datadir;
-      inherit network;
-      inherit electrum-rpc-addr;
-      inherit monitoring-addr;
-      inherit daemon-rpc-addr;
-      inherit daemon-p2p-addr;
-    } // extraArgs);
-
-in
-
 six.mkFunnel {
 
   inherit user group;
-  run = {
-    argv = [
-      "${package}/bin/electrs"
-    ] ++ args;
-  };
+
+  run.argv = [
+    "${package}/bin/electrs"
+  ] ++ six.lib.attrsToFlags ({
+    log-filters = "INFO";
+    daemon-dir = bitcoind.passthru.datadir;
+    cookie-file = bitcoind.passthru.config.rpccookiefile;
+    db-dir = datadir;
+    inherit network;
+    inherit electrum-rpc-addr;
+    inherit monitoring-addr;
+    inherit daemon-rpc-addr;
+    inherit daemon-p2p-addr;
+  } // extraArgs);
 
   passthru.after = [ bitcoind ];
 

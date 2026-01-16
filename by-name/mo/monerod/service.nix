@@ -9,25 +9,15 @@
 , extraArgs ? {}
 }:
 
-
-let
-
-  args = lib.mapAttrsToList
-    (k: v: if v==true then "--${k}" else "--${k}=${v}")
-    ({
-      data-dir = datadir;
-      non-interactive = true;
-    } // extraArgs);
-in
-
 six.mkFunnel {
 
   inherit user group;
-  run = {
-    argv = [
-      "${package}/bin/monerod"
-    ] ++ args;
-  };
+  run.argv = [
+    "${package}/bin/monerod"
+  ] ++ six.lib.attrsToFlags ({
+    data-dir = datadir;
+    non-interactive = true;
+  } // extraArgs);
 
   passthru.after = [ targets.global.coldplug ];
 

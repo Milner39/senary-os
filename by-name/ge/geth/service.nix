@@ -10,17 +10,13 @@
 }:
 
 let
-
-  defaultConfig = {
+  config = {
     datadir = dataDir;
     usb = "false";
     "authrpc.jwtsecret" = "/run/geth/secret.jwt";
     "authrpc.addr" = "127.0.0.1";
     "authrpc.port" = "8551";
-  };
-
-  config = defaultConfig // extraConfig;
-
+  } // extraConfig;
 in
 six.mkFunnel {
 
@@ -28,6 +24,7 @@ six.mkFunnel {
 
   inherit user;
   inherit group;
+
   run = {
     pre-argvs = [
       [ "${pkgs.busybox}/bin/mkdir" "-m" "0700" "-p" (builtins.dirOf config."authrpc.jwtsecret") ]
@@ -38,11 +35,7 @@ six.mkFunnel {
     ];
     argv = [
       "${package}/bin/geth"
-    ] ++ lib.pipe config [
-      (lib.mapAttrsToList
-        (key: val:
-          "--${key}=${lib.escapeShellArg (six.lib.toString val)}"))
-    ];
+    ] ++ six.lib.attrsToFlags config;
   };
 
   passthru = {

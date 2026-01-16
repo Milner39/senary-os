@@ -29,19 +29,14 @@ in six.mkFunnel {
 
   run.argv = [
     "${package}/bin/transmission-daemon"
-    "--foreground"
-    "--config-dir"     "${base-dir}/config"
-    "--watch-dir"      "${base-dir}/watch"
-    "--download-dir"   "${base-dir}/download"
-    "--incomplete-dir" "${base-dir}/incomplete"
-  ] ++ lib.pipe extra-args [
-    (lib.mapAttrsToList
-      (key: val:
-        "--${key}=${lib.escapeShellArg (six.lib.toString val)}"))
-  ];
+  ] ++ six.lib.attrsToFlags ({
+    foreground     = null;
+    config-dir     = "${base-dir}/config";
+    watch-dir      = "${base-dir}/watch";
+    download-dir   = "${base-dir}/download";
+    incomplete-dir = "${base-dir}/incomplete";
+  } // extra-args);
 
-  passthru = {
-    after = [ targets.firewall ];
-  };
+  passthru.after = [ targets.firewall ];
 }
 
