@@ -53,11 +53,8 @@ let
 
     # Add the `site` attribute to each host, but do this only after all user
     # overlays so they can't accidentally use `host-prev.site`.
-    (site-final: site-prev: site-prev // {
-      hosts = lib.mapAttrs (name: host-prev:
-        (host-prev // {
-          site = site-final;
-        })) site-prev.hosts;
+    (site-final: site-prev: infuse site-prev {
+      hosts.__values.site.__assign = site-final;
     })
 
     # Make the attrnames of host-final independent of any of the overlays
