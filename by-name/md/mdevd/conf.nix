@@ -36,10 +36,10 @@ let
         DP=$(dirname "$DP1")
       fi
       if [[ -e "$DP/product" && -e "$DP/manufacturer" ]]; then
-        SERIAL=$(cat "$DP/serial" | tr ' ' '_')
-        PRODUCT=$(cat "$DP/product" | tr ' ' '_')
-        MANUFACTURER=$(cat "$DP/manufacturer" | tr ' ' '_')
-        IFACE=$(cat "$DP1/bInterfaceNumber" | tr ' ' '_')
+        SERIAL=$(cat "$DP/serial" | tr ' ' '_' | tr '/' '_')
+        PRODUCT=$(cat "$DP/product" | tr ' ' '_' | tr '/' '_')
+        MANUFACTURER=$(cat "$DP/manufacturer" | tr ' ' '_' | tr '/' '_')
+        IFACE=$(cat "$DP1/bInterfaceNumber" | tr ' ' '_' | tr '/' '_')
         BUS="usb"
         PORT=0  # FIXME
         mkdir -p /dev/serial/by-id
