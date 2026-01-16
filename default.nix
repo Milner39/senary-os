@@ -11,7 +11,7 @@
   infuse
   ? ((import (builtins.fetchGit {
     url = "https://codeberg.org/amjoseph/infuse.nix";
-    rev = "bb99266d1e65f137a38b7428a16ced77cd587abb";
+    rev = "73c5111fdb7c0faab55bd9a19b26821639a4258e";
     shallow = true;
   })) { inherit lib; }).v1.infuse,
 
