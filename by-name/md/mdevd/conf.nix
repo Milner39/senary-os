@@ -42,8 +42,16 @@ let
         IFACE=$(cat "$DP1/bInterfaceNumber" | tr ' ' '_' | tr '/' '_')
         BUS="usb"
         PORT=0  # FIXME
-        mkdir -p /dev/serial/by-id
-        ln -sf ../../"$MDEV" "/dev/serial/by-id/''${BUS}-''${MANUFACTURER}_''${PRODUCT}_''${SERIAL}-if''${IFACE}-port''${PORT}"
+        LINKNAME="''${BUS}-''${MANUFACTURER}_''${PRODUCT}_''${SERIAL}-if''${IFACE}-port''${PORT}"
+        case "$ACTION" in
+          add)
+            mkdir -p /dev/serial/by-id
+            ln -sf ../../"$MDEV" "/dev/serial/by-id/$LINKNAME"
+            ;;
+          remove)
+            rm "/dev/serial/by-id/$LINKNAME"
+            ;;
+        esac
       fi
     '';
 
