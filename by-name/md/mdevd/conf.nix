@@ -12,6 +12,9 @@
 , event-log-file ? "/run/mdevd-events.log"
 }:
 
+# To force a cold replug:
+#   s6-svc -s HUP /run/service/mdevd && (s6-rc -D stop mdevd-coldplug; s6-rc start default)
+
 let
   helpers = import ./helpers.nix
     { inherit lib stdenv pkgs alsaSupport; };
