@@ -25,18 +25,17 @@ six.mkFunnel {
   inherit user;
   inherit group;
 
-  run = {
-    pre-argvs = [
-      [ "${pkgs.busybox}/bin/mkdir" "-m" "0700" "-p" (builtins.dirOf config."authrpc.jwtsecret") ]
-      [ "${pkgs.busybox}/bin/chown" "${user}:${group}" (builtins.dirOf config."authrpc.jwtsecret") ]
-      [ "${pkgs.busybox}/bin/chmod" "0700" (builtins.dirOf config."authrpc.jwtsecret") ]
-      [ "${pkgs.execline}/bin/redirfd" "-w" "1" config."authrpc.jwtsecret"
-        "${pkgs.util-linux}/bin/hexdump" "-n" "32" "-e" "8 \"%08x\" 1 \"\\n\"" "/dev/random" ]
-    ];
-    argv = [
-      "${package}/bin/geth"
-    ] ++ six.lib.attrsToFlags config;
-  };
+  run.pre-argvs = [
+    [ "${pkgs.busybox}/bin/mkdir" "-m" "0700" "-p" (builtins.dirOf config."authrpc.jwtsecret") ]
+    [ "${pkgs.busybox}/bin/chown" "${user}:${group}" (builtins.dirOf config."authrpc.jwtsecret") ]
+    [ "${pkgs.busybox}/bin/chmod" "0700" (builtins.dirOf config."authrpc.jwtsecret") ]
+    [ "${pkgs.execline}/bin/redirfd" "-w" "1" config."authrpc.jwtsecret"
+      "${pkgs.util-linux}/bin/hexdump" "-n" "32" "-e" "8 \"%08x\" 1 \"\\n\"" "/dev/random" ]
+  ];
+
+  run.argv = [
+    "${package}/bin/geth"
+  ] ++ six.lib.attrsToFlags config;
 
   passthru = {
     after = [ targets.global.coldplug ];
