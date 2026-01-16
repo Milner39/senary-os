@@ -6,7 +6,7 @@
 , conf-file ? throw "conf-file is required"
 , user ? "_tor"
 , group ? "_tor"
-, data-directory
+, data-directory ? "/var/service/tor"
 }:
 
 six.mkFunnel {
