@@ -17,11 +17,9 @@ six.mkFunnel {
     "${data-directory}" = "0700";
   };
 
-  run = {
-    argv = [
-      "${package}/bin/tor" "-f" "${conf-file}"
-    ];
-  };
+  run.argv = [
+    "${package}/bin/tor" "-f" "${conf-file}"
+  ];
 
   passthru.after = [ targets.global.coldplug ];
 
