@@ -12,6 +12,7 @@
 six.mkFunnel {
 
   inherit user group;
+
   run.argv = [
     "${package}/bin/monerod"
   ] ++ six.lib.attrsToFlags ({
