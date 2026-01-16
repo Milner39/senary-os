@@ -247,6 +247,7 @@ in {
     extractDerivations
     add-tag-mutation-check-to-overlay
     toString
+    attrToFlag
     attrsToFlags
     sortAndDeduplicateStrings
     ;
