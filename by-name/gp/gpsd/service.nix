@@ -34,8 +34,8 @@ in six.mkFunnel {
   };
 
   mkdir = {
-    "/var/run/gpsd/" = "0644";
-    "/run/gpsd/"     = "0644";
+    ${builtins.dirOf gpsd-socket} = "0644";
+    "/run/gpsd/"                  = "0644";
   };
 
   run.argv = [
