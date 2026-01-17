@@ -122,6 +122,7 @@ let
     _tox             = 60018;
     _mariadb         = 60019;
     _transmission    = 60020;
+    _reth            = 60021;
 
     nobody = 65534;   # UID only
     nogroup = 65534;  # GID only
