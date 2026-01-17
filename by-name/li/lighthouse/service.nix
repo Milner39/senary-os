@@ -3,7 +3,7 @@
 , six
 , targets
 , package ? pkgs.lighthouse
-, geth ? throw "you must pass targets.geth"
+, execution-layer-node ? throw "you must pass targets.execution-layer-node"
 , dataDir ? "/var/service/lighthouse"
 , extraConfig ? {}
 }:
@@ -13,8 +13,8 @@ let
   defaultConfig = {
     datadir = dataDir;
     disable-upnp = null;
-    execution-endpoint = geth.passthru.endpoint;
-    execution-jwt = geth.passthru."authrpc.jwtsecret";
+    execution-endpoint = execution-layer-node.passthru.endpoint;
+    execution-jwt = execution-layer-node.passthru."authrpc.jwtsecret";
     checkpoint-sync-url = "https://mainnet.checkpoint.sigp.io";
     #allow-insecure-genesis-sync = null;
   };
@@ -22,20 +22,22 @@ let
 in
 six.mkFunnel {
 
-  inherit (geth) user group;
+  inherit (execution-layer-node) user group;
   env = {
     NIX_SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
   };
 
-  run = {
-    argv = [
-      "${package}/bin/lighthouse"
-      "beacon_node"
-    ] ++ six.lib.attrsToFlags (defaultConfig // extraConfig) ;
+  mkdir = {
+    "${dataDir}" = "0700";
   };
 
-  passthru = {
-    after = [ geth ];
-  };
+  run.argv = [
+    "${package}/bin/lighthouse"
+    "beacon_node"
+  ] ++ six.lib.attrsToFlags (defaultConfig // extraConfig);
+
+  # lighthouse will create the jwt secrets file if it does not exist
+  passthru.before = [ execution-layer-node ];
+  passthru.after = [ targets.global.coldplug ];
 }
 
