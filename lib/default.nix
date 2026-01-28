@@ -234,6 +234,22 @@ let
           list-of-keyvals))
     ];
 
+  mkNetfilterChain = name: chain: ''
+    chain ${name} {
+    ${lib.concatStringsSep "\n" (map (lib.concatStringsSep " ") chain)}
+    }
+  '';
+
+  mkNetfilterTable =
+    table-name:
+    chains:
+    ''
+      table ip ${table-name} {
+      ${lib.concatStringsSep "\n" (lib.mapAttrsToList mkNetfilterChain chains)}
+      }
+    '';
+
+
 in {
   inherit
     pipe
@@ -250,6 +266,7 @@ in {
     attrToFlag
     attrsToFlags
     sortAndDeduplicateStrings
+    mkNetfilterTable
     ;
 }
 
