@@ -100,7 +100,15 @@ let
         (lib.toList args.no)
       ] ++ lib.toList args.cond;
 
+  discard-stdout = argv:
+    assert assertIsExecline argv; [
+      "${pkgs.execline}/bin/redirfd"
+      "-w"
+      "0"
+      "/dev/null"
+    ] ++ lib.toList argv;
+
 in {
-  inherit isExecline assertIsExecline loop seq ignore-exit-code ifthenelse;
+  inherit isExecline assertIsExecline loop seq ignore-exit-code ifthenelse discard-stdout;
 }
 
