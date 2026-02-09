@@ -65,7 +65,13 @@ let
       "${busybox}/bin/busybox" "sleep" "${toString interval-seconds}"
     ];
 
+  # takes an execline script and wraps it such that it always exits zero
+  ignore-exit-code = argv: assert assertIsExecline argv; [
+    "${execline}/bin/foreground" (lib.toList argv)
+    "${pkgs.execline}/bin/exit" "0"
+  ];
+
 in {
-  inherit isExecline assertIsExecline loop seq;
+  inherit isExecline assertIsExecline loop seq ignore-exit-code;
 }
 
