@@ -71,7 +71,36 @@ let
     "${pkgs.execline}/bin/exit" "0"
   ];
 
+  # a less footgun-shaped version of the execline conditional
+  ifthenelse = args:
+    assert assertIsExecline args.cond;
+    assert args?no || args?yes;
+    assert args?yes -> assertIsExecline args.yes;
+    assert args?no  -> assertIsExecline args.no;
+
+    if !(args?no) then
+      [
+        "${pkgs.execline}/bin/if"
+        (lib.toList args.cond)
+      ] ++ lib.toList args.yes
+
+    else if !(args?yes) then
+      [
+        "${pkgs.execline}/bin/if"
+        "-n"  # negate the condition
+        "-x0" # use exit code 0 (true) if the (negated) condition is false
+        (lib.toList args.cond)
+      ] ++ lib.toList args.no
+
+    else
+      assert assertIsExecline args.no;
+      [
+        "${pkgs.execline}/bin/ifte"
+        (lib.toList args.yes)
+        (lib.toList args.no)
+      ] ++ lib.toList args.cond;
+
 in {
-  inherit isExecline assertIsExecline loop seq ignore-exit-code;
+  inherit isExecline assertIsExecline loop seq ignore-exit-code ifthenelse;
 }
 
