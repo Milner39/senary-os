@@ -362,7 +362,7 @@ let
         //
         lib.flip lib.mapAttrs structuredExtraConfig'
           (name: value:
-            lib.mkForce (option {
+            lib.mkForce ({
               n = lib.kernel.no;
               m = lib.kernel.module;
               y = lib.kernel.yes;
