@@ -10,6 +10,10 @@ final: prev: infuse prev ({
     CRYPTO_AES_GCM_P10.__assign  = "n";
     CRYPTO_CHACHA20_P10.__assign = "n";
     CRYPTO_POLY1305_P10.__assign = "n";
+
+    DRM_AMDGPU.__assign = "m";
+    NUMA_BALANCING.__assign = "y";
+    NUMA_BALANCING_DEFAULT_ENABLED.__assign = "y";
   };
 
   boot.initrd.ttys.__assign = { hvc0 = 115200; };
