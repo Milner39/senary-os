@@ -89,10 +89,10 @@ let
           INPUT_EVDEV = module;
           ZSWAP = yes;
 
-          RD_XZ = lib.mkForce (option yes);
-          KERNEL_XZ = lib.mkForce (option yes);
-          MODULE_COMPRESS_XZ = lib.mkForce (option yes);
-          KERNEL_ZSTD = lib.mkForce (option no);
+          RD_XZ = lib.mkForce yes;
+          KERNEL_XZ = lib.mkForce yes;
+          MODULE_COMPRESS_XZ = lib.mkForce yes;
+          KERNEL_ZSTD = lib.mkForce no;
 
           KEXEC = lib.mkForce yes;
           #KEXEC_FILE = yes;
@@ -140,20 +140,20 @@ let
           # MODPROBE_PATH  <- path to /sbin/modprobe
 
           #MICROCODE_OLD_INTERFACE=yes;
-          BPF_UNPRIV_DEFAULT_OFF = lib.mkForce (option no);   # I think the nixpkgs version bounds are wrong here
+          BPF_UNPRIV_DEFAULT_OFF = lib.mkForce no;   # I think the nixpkgs version bounds are wrong here
 
           BLK_DEV_NVME = yes;           # for boot
-          NVME_CORE = lib.mkForce (option yes);
+          NVME_CORE = lib.mkForce yes;
 
           RUNTIME_TESTING_MENU = no;   # some kind of vulnerability involving serial consoles
 
-          INET_MPTCP_DIAG = lib.mkForce (option module);
+          INET_MPTCP_DIAG = lib.mkForce module;
 
-          IPV6 = lib.mkForce (option no);
+          IPV6 = lib.mkForce no;
 
         } // lib.optionalAttrs (!stdenv.hostPlatform.isMips) {
-          DEBUG_INFO_BTF = lib.mkForce (option no);           # otherwise we get crashes with too-new binutils and pahole
-          FW_LOADER_COMPRESS_XZ = lib.mkForce (option yes);
+          DEBUG_INFO_BTF = lib.mkForce no;           # otherwise we get crashes with too-new binutils and pahole
+          FW_LOADER_COMPRESS_XZ = lib.mkForce yes;
 
         } // lib.optionalAttrs (!stdenv.hostPlatform.isPower64) {
           TEE = no;                 # tee.o, trusted execution environment
@@ -176,7 +176,7 @@ let
           SENSORS_K10TEMP = module;
           SENSORS_W83795 = module;
           SENSORS_W83795_FANCTRL = yes;
-          W83627HF_WDT = option module; # the "good watchdog"
+          W83627HF_WDT = module; # the "good watchdog"
           SP5100_TCO   = no;            # does not work and messes up iommu
           X86_X32_ABI=yes;
           E1000E = module;
