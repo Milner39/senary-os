@@ -22,10 +22,7 @@
 , ignoreConfigErrors ? true
 , enableDistCC ? false
 
-# used only for gru-kevin (FIXME: remove this)
-, dotconfig ? null
-
-# used only for octeon (FIXME: remove this)
+# used only for octeon (FIXME: remove this?)
 , defconfig ? (if stdenv.hostPlatform.isMips then "cavium_octeon_defconfig" else null)
 
 # TODO: set this to `false` on more platforms
@@ -42,50 +39,29 @@ let stdenv' = stdenv; in
 let stdenv = if enableDistCC then overrideWithDistCC stdenv' else stdenv'; in
 let structuredExtraConfig' = structuredExtraConfig; in
 
-let
-  commonargs = {
-    src = source;
-    inherit version;
+buildLinux {
+  src = source;
+  inherit version;
 
-    # branchVersion needs to be x.y
-    extraMeta.branch = lib.versions.majorMinor version;
+  # branchVersion needs to be x.y
+  extraMeta.branch = lib.versions.majorMinor version;
 
-    kernelPatches = patches;
-  };
-in
+  kernelPatches = patches;
 
-    if dotconfig!=null
+  inherit defconfig;
+  inherit enableCommonStructuredConfig;
+  inherit ignoreConfigErrors;
 
-      # gru-kevin only
-    then linuxKernel.manualConfig.override { inherit stdenv; }
-      (commonargs // {
-        configfile =
-          if !enableDistCC
-          then dotconfig
-          else runCommand "config-without-plugins" {} ''
-            cat ${dotconfig} | grep -v ^CONFIG_GCC_PLUGIN > $out
-            echo 'CONFIG_HAVE_GCC_PLUGINS=n' >> $out
-            echo 'CONFIG_GCC_PLUGINS=n' >> $out
-          '';
-        config = {
-          CONFIG_MODULES = "y";
-          CONFIG_FW_LOADER = "m";
-          #CONFIG_RUST = if withRust then "y" else "n";
-        };
+  structuredExtraConfig =
+    lib.flip lib.mapAttrs
+      (import ./kernel-config.nix // structuredExtraConfig' // lib.optionalAttrs enableDistCC {
+        GCC_PLUGINS = "n";
       })
-
-    else buildLinux (commonargs // {
-      inherit defconfig;
-      inherit enableCommonStructuredConfig;
-      inherit ignoreConfigErrors;
-      structuredExtraConfig =
-        lib.flip lib.mapAttrs (import ./kernel-config.nix // structuredExtraConfig')
-          (name: value:
-            lib.mkForce ({
-              n = lib.kernel.no;
-              m = lib.kernel.module;
-              y = lib.kernel.yes;
-            }.${lib.toLower (toString value)} or (lib.kernel.freeform (toString value))))
-      ;
-
-    })
+      (name: value:
+        lib.mkForce ({
+          n = lib.kernel.no;
+          m = lib.kernel.module;
+          y = lib.kernel.yes;
+        }.${lib.toLower (toString value)} or (lib.kernel.freeform (toString value))))
+  ;
+}
