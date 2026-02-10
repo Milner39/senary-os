@@ -9,6 +9,7 @@
 , fetchpatch
 , linuxKernel
 , runCommand
+, overrideWithDistCC
 
 # kernel source tarball
 , version ? "6.6.41"
@@ -37,6 +38,8 @@
 , patches ? []
 }:
 
+let stdenv' = stdenv; in
+let stdenv = if enableDistCC then overrideWithDistCC stdenv' else stdenv'; in
 let structuredExtraConfig' = structuredExtraConfig; in
 
 let
