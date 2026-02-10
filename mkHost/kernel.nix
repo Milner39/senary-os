@@ -2,27 +2,38 @@
 , ...
 }:
 
+# from pkgs
 { stdenv
 , buildLinux
-, ignoreConfigErrors ? true
+, fetchurl
+, fetchpatch
+, linuxKernel
+, runCommand
+
+# kernel source tarball
 , version ? "6.6.41"
 , source ? fetchurl {
   url = "mirror://kernel/linux/kernel/v${lib.versions.major version}.x/linux-${version}.tar.xz";
   hash = "sha256-nsmcV4FYq4XZmzd5GnZkPS6kw/cuy+97XrbWDz3gMu8=";
 }
-, fetchurl
-, fetchpatch
-, dotconfig ? null
-, linuxKernel
-, enableDistCC ? false
-, runCommand
 
+# configurables
+, ignoreConfigErrors ? true
+, enableDistCC ? false
+
+# used only for gru-kevin (FIXME: remove this)
+, dotconfig ? null
+
+# used only for octeon (FIXME: remove this)
 , defconfig ? (if stdenv.hostPlatform.isMips then "cavium_octeon_defconfig" else null)
 
 # TODO: set this to `false` on more platforms
 , enableCommonStructuredConfig ? with stdenv.hostPlatform; isx86_64 || isPower64
+
+# unlike NixOS, the values of this attrset are single-character strings -- one of "y", "n", or "m"
 , structuredExtraConfig ? {}
 
+# ordinary patches (i.e. paths), not the fancy kernelPatches used in nixpkgs
 , patches ? []
 }:
 
@@ -41,6 +52,8 @@ let
 
   kernel =
     if dotconfig!=null
+
+      # gru-kevin only
     then linuxKernel.manualConfig.override { inherit stdenv; }
       (commonargs // {
         configfile =
