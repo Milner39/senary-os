@@ -37,7 +37,7 @@ six.mkFunnel {
     "timeout" "660" lock-command
   ];
 
-   # swayidle will deparent the swaylock process (unless you use "-w", which
+  # swayidle will deparent the swaylock process (unless you use "-w", which
   # unfortunately causes swayidle to block until swaylock exits), so in order to
   # cleanly shut down swaylock by sending it SIGUSR1 we need to signal the
   # entire process group.
