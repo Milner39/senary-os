@@ -59,6 +59,7 @@ let
     } // lib.optionalAttrs (!final.pkgs.stdenv.hostPlatform.isMips64) {
       "lib/modules"     = _: "${final.boot.kernel.modules}/lib/modules/";
     } // lib.optionalAttrs final.tags.is-gru-kevin {
+      # FIXME: move this out of here
       # FIXME: need this in the rootfs as well
       # TODO: want to hold the chip in reset too
       "etc/modprobe.conf" = _: builtins.toFile "modprobe.conf" ''
@@ -66,6 +67,7 @@ let
         blacklist mwifiex
       '';
     } // lib.optionalAttrs final.tags.is-kgpe {
+      # FIXME: move this out of here
       # FIXME: need this in the rootfs as well
       "etc/modprobe.conf" = _: builtins.toFile "modprobe.conf" ''
         blacklist ehci_hcd
