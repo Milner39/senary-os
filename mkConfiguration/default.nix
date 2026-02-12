@@ -321,7 +321,7 @@ let
     exec ${pkgs.s6-rc}/bin/s6-rc-update -n $@ -v 8 ${builtins.placeholder "out"}/six/s6-rc/db
     EOF
 
-    cat > $out/bin/kexec <<\EOF
+    cat > $out/bin/kexec-load <<\EOF
     #!${pkgs.runtimeShell} -ex
     mkdir -p /run/kexec
     chmod 0700 /run/kexec
@@ -335,7 +335,9 @@ let
   # FIXME(amjoseph): provide a more general "copy these files into the initrd
   # when kexec()ing" instead of this gross hack
   + ''
-    echo miniboot-cryptsetup-keyfile | ${pkgs.cpio}/bin/cpio --create --append -O /run/kexec/initrd -H newc -D /etc
+    if [[ -e /etc/miniboot-cryptsetup-keyfile ]]; then
+      echo miniboot-cryptsetup-keyfile | ${pkgs.cpio}/bin/cpio --create --append -O /run/kexec/initrd -H newc -D /etc
+    fi
   ''
 
   + ''
@@ -359,6 +361,11 @@ let
 
     ${pkgs.busybox}/bin/sync
     ${pkgs.busybox}/bin/sleep 1
+    EOF
+
+    cat > $out/bin/kexec <<\EOF
+    #!${pkgs.runtimeShell} -ex
+    $out/bin/kexec-load
     ${pkgs.kexec-tools}/bin/kexec -e
     EOF
 
