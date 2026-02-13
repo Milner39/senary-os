@@ -26,7 +26,23 @@ host-final:
 host-prev:
 
 let
-  inherit (host-final) pkgs boot sw;
+  inherit (host-final) pkgs boot;
+  sw =
+    if host-final.sw != null
+    then host-final.sw
+    else pkgs.buildEnv {
+      name = "sixos-sw";
+      paths = with pkgs; [
+        # these are the hard dependencies of sixos, so we might as well include
+        # them in the default $PATH
+        busybox
+        s6
+        s6-rc
+        doas
+        nix
+      ];
+    };
+
   delete-generations = host-final.delete-generations or null;
 
   # FIXME(amjoseph): do the same abduco trick here that we already do in the initrd
@@ -433,11 +449,7 @@ let
     cp ${pkgs.doas}/bin/doas $out/bin/doas.unwrapped
 
     ${mkBootDir}
-   '' + lib.optionalString (sw != null) ''
-     ln -s ${sw} $out/sw
-   '' + lib.optionalString (sw == null) ''
-     mkdir -p $out/sw
-     ln -s ${pkgs.busybox}/bin $out/sw/bin
+    ln -s ${sw} $out/sw
    '' +
    # sanity-check that bin/{sh,env} exist: without them things will fail quite badly.
    ''
