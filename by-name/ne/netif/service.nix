@@ -176,7 +176,7 @@ in if dhcp
      '' + lib.optionalString (gw == true) ''
        ${pkgs.iproute2}/bin/ip route replace default           dev ${ifname}
      '' + lib.optionalString (gw != true && gw != null) ''
-       ${pkgs.iproute2}/bin/ip route replace default via ${gw} dev ${ifname}
+       ${pkgs.iproute2}/bin/ip route replace default via ${gw} dev ${ifname} onlink
      '' + lib.optionalString (post-up != null) ''
        ${post-up}
      '');
