@@ -75,7 +75,7 @@ mkdir -p /etc/ssh
 TEMP="$(mktemp -d)"
 (cd "$TEMP"
  ln -s /etc/ssh etc
- ssh-keygen -A -f ./
+ ${package}/bin/ssh-keygen -A -f ./
  rm etc)
 rmdir "$TEMP"
 '';
