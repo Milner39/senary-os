@@ -112,6 +112,7 @@ let
     host-fields = {
       name = string;
       canonical = string;      # gnu-config triple
+      gccarch = string;        # must be "" or else appear in lib.systems.architectures.features
 
       tags = attrs2yants "tags" args.tag-overlays;
 

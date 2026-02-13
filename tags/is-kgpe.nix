@@ -4,6 +4,9 @@
 }:
 
 final: prev: infuse prev {
+
+  gccarch.__assign = "bdver1";
+
   boot.initrd.insmod.__append = [
     "ehci_hcd"
     "ehci_pci"
@@ -22,4 +25,5 @@ final: prev: infuse prev {
     SP5100_TCO.__assign = "n";            # does not work and messes up iommu
     E1000E.__assign = "m";
   };
+
 }

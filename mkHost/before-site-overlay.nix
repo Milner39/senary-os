@@ -34,6 +34,7 @@ let
     in
       prev // {
 
+        gccarch = "";
         users = {};
         groups = {};
         boot = {};
