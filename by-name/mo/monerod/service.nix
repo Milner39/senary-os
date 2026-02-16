@@ -17,7 +17,7 @@ six.mkFunnel {
     "${package}/bin/monerod"
   ] ++ six.lib.attrsToFlags ({
     data-dir = datadir;
-    non-interactive = true;
+    non-interactive = null;
   } // extraArgs);
 
   passthru.after = [ targets.global.coldplug ];
