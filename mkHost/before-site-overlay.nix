@@ -286,6 +286,12 @@ let
         "ro"
       ] ++ lib.optionals (host-final.boot?kernel.console) [
         (mkKernelConsoleBootArg host-final.boot.kernel.console)
+      ] ++ [
+        # To avoid having remotely-administered machines stranded at the kernel
+        # panic prompt, let's boot back into the bootloader on a panic after 120
+        # seconds.  FIXME: make this configurable, or omittable.  May involve
+        # making kernel boot parameters into an attrset rather than a list?
+        "panic=120"
       ];
       boot.kernel.modules.__init = "${host-final.boot.kernel.package}";
       boot.kernel.package.__init = host-final.pkgs.callPackage sixos.mkHost.kernel { };
