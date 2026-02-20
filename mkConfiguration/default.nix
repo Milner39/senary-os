@@ -302,6 +302,9 @@ let
         if [[ ! -e /etc/hosts ]]; then
           ${pkgs.busybox}/bin/busybox ln -sfT /run/current-system/etc/hosts $RWMOUNT/etc/hosts
         fi
+        if [[ ! -e /etc/doas.conf ]]; then
+          ${pkgs.busybox}/bin/busybox ln -sfT /run/current-system/etc/doas.conf $RWMOUNT/etc/doas.conf
+        fi
   '' + lib.optionalString (host-final?iproute) ''
         if [[ ! -e /etc/iproute2 ]]; then
           ${pkgs.busybox}/bin/busybox ln -sfT /run/current-system/etc/iproute2 $RWMOUNT/etc/iproute2
