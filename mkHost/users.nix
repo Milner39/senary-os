@@ -124,6 +124,7 @@ let
     _transmission    = 60020;
     _reth            = 60021;
     _redlib          = 60022;
+    _distccd         = 60023;
 
     nobody = 65534;   # UID only
     nogroup = 65534;  # GID only
