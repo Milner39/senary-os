@@ -382,7 +382,7 @@ let
     ${pkgs.busybox}/bin/sleep 1
     EOF
 
-    cat > $out/bin/kexec <<\EOF
+    cat > $out/bin/kexec <<EOF
     #!${pkgs.runtimeShell} -ex
     $out/bin/kexec-load
     ${pkgs.kexec-tools}/bin/kexec -e
