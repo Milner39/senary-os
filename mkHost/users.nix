@@ -86,6 +86,7 @@ let
         ));
       host-prev;
 
+  #
   # Globally allocated userids for all sixos systems; for each integer both the
   # UID and GID are allocated simultaneously with the same name.
   #
@@ -97,6 +98,9 @@ let
   # Please reference reserved uids/gids by looking them up in this table rather
   # than by hardcoding the integer into your service.  This makes it easier to
   # emit warnings in case .
+  #
+  # TODO: to avoid merge conflicts and ease maintenance, move these into
+  # by-name/*/*/userid.nix, containing just an integer.
   #
   globally-allocated = {
     root = 0;
