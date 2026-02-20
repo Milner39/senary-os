@@ -19,6 +19,8 @@
 #
 six.mkOneshot {
 
+  # FIXME: dereference the /run/current-system symlink; if we don't, nix will
+  # try to hit the substituters for it
   up = [
     "${pkgs.nix}/bin/nix-env"
     "-p" "/nix/var/nix/profiles/activated"
