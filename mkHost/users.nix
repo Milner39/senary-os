@@ -123,6 +123,7 @@ let
     _mariadb         = 60019;
     _transmission    = 60020;
     _reth            = 60021;
+    _redlib          = 60022;
 
     nobody = 65534;   # UID only
     nogroup = 65534;  # GID only
