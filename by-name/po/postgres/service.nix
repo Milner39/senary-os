@@ -22,15 +22,18 @@ let
 
   config = writePostgresConfig ({
     inherit data_directory;
-    hba_file = pkgs.writeText "postgres-hba_file" ''
-      local all postgres         peer map=postgres-map
-      local all all              peer map=postgres-map
-      host  all all 127.0.0.1/32 md5
-    '';
-    ident_file = pkgs.writeText "postgres-ident_file" ''
-      postgres-map root postgres
-      postgres-map _bitmagnet postgres
-    '';
+    hba_file = pkgs.writeText "postgres-hba_file"
+      #           database  user auth-method   auth-options
+      ''
+      local       all       all  peer          map=postgres-map
+      '';
+    ident_file = pkgs.writeText "postgres-ident_file"
+      # map-name   system-username   database-username
+      ''
+      postgres-map root              postgres
+      postgres-map _postgres         postgres
+      postgres-map _bitmagnet        postgres
+      '';
   } // extraConfig);
 in
 
@@ -42,14 +45,19 @@ six.mkFunnel {
     "postgresql.conf" = pkgs.writeText "postgres-postgresql.conf" config;
   };
 
+  mkdir = {
+    "/run/postgresql" = "0770";
+  };
+
   run = {
+    /*
     pre-argvs = [
-      [ "${pkgs.busybox}/bin/mkdir" "-p" "/run/postgresql" ]
-      [ "${pkgs.busybox}/bin/chown" "${user}:${group}" "/run/postgresql" ]
-      [ "${pkgs.busybox}/bin/chmod" "g+rw" "/run/postgresql" ]
+      # TODO: do this only if the directory exists and is empty?
+      #"${pkgs.doas}/bin/doas" "-u" "${user}" "${pkgs.postgresql}/bin/initdb" "-D" "${data_directory}" "-U" "postgres"
+      #"${pkgs.doas}/bin/doas" "-u" "${user}" "${pkgs.postgresql}/bin/createuser" "-s" "postgres"
     ];
+    */
     argv = [
-      # ${pkgs.postgresql}/bin/initdb -D /notbackedup/postgres
       "${pkgs.postgresql}/bin/postgres" "--config-file=data/postgresql.conf"
     ];
   };
