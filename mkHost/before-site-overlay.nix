@@ -293,7 +293,7 @@ let
         # making kernel boot parameters into an attrset rather than a list?
         "panic=120"
       ];
-      boot.kernel.modules.__init = "${host-final.boot.kernel.package}";
+      boot.kernel.modules.__init = "${lib.getOutput "modules" host-final.boot.kernel.package}";
       boot.kernel.package.__init = host-final.pkgs.callPackage sixos.mkHost.kernel { };
       boot.rootfs.label.__init = "root";
       boot.rootfs.parameter.__init = "LABEL=${host-final.boot.rootfs.label}";

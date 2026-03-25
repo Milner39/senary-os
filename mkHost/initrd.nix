@@ -57,6 +57,7 @@ let
 
       ''];
     } // lib.optionalAttrs (!final.pkgs.stdenv.hostPlatform.isMips64) {
+      # FIXME: leverage module-names and makeModulesClosure here
       "lib/modules"     = _: "${final.boot.kernel.modules}/lib/modules/";
     } // lib.optionalAttrs final.tags.is-gru-kevin {
       # FIXME: move this out of here
