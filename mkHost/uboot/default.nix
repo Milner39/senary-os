@@ -179,7 +179,7 @@ stdenv.mkDerivation {
   installPhase = ''
     runHook preInstall
     mkdir -p $out
-    ln -s ${kernel.package}/{dtbs,lib,config-*,System.map-*} $out/
+    ln -s ${kernel.package}/{dtbs,config-*,System.map-*} $out/
 
     ${buildPackages.ubootTools}/bin/mkimage \
       -D "-I dts -O dtb -p 4096" \
