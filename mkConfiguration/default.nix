@@ -26,6 +26,23 @@ host-final:
 host-prev:
 
 let
+
+  # FIXME: use s6-ln here for atomicity
+  # during initial activation, creates a symlink from `/${path}` to `/run/current-system/${path}`
+  linkify = path:
+    let path' = lib.removePrefix "/" path; in
+    linkify-to-from "/run/current-system/${path'}" path';
+
+  linkify-to-from = to-path: from-path:
+    linkify-cond-to-from "! -e /${from-path}" to-path from-path;
+
+  linkify-cond-to-from = cond: to-path: from-path:
+    let from-path' = lib.removePrefix "/" from-path; in
+  ''
+    if [[ ${cond} ]]; then
+      ${pkgs.busybox}/bin/busybox ln -sfT ${to-path}  $RWMOUNT/${from-path'}
+    fi'';
+
   inherit (host-final) pkgs boot;
   sw =
     if host-final.sw != null
@@ -274,41 +291,25 @@ let
 
         ${pkgs.busybox}/bin/mount --bind / $RWMOUNT
         ${pkgs.busybox}/bin/mount -o remount,rw / $RWMOUNT
-        if [ "$(${pkgs.busybox}/bin/readlink /bin/sh)" != "/run/current-system/sw/bin/sh" ]; then
-          ${pkgs.busybox}/bin/mkdir -m 0555 -p $RWMOUNT/bin
-          ${pkgs.busybox}/bin/ln -sfT /run/current-system/sw/bin/sh $RWMOUNT/bin/sh
-        fi
-  ''
-    # FIXME: use s6-ln here for atomicity
-  + ''
-        if [ "$(${pkgs.busybox}/bin/readlink /usr/bin/env)" != "/run/current-system/sw/bin/env" ]; then
-          ${pkgs.busybox}/bin/mkdir -m 0555 -p $RWMOUNT/usr/bin
-          ${pkgs.busybox}/bin/ln -sfT /run/current-system/sw/bin/env $RWMOUNT/usr/bin/env
-        fi
-        if [[ ! -e /etc/passwd && ! -L /etc/passwd ]]; then
-          ${pkgs.busybox}/bin/mkdir -m 0555 -p $RWMOUNT/etc
-          ${pkgs.busybox}/bin/ln -s /run/current-system/etc/passwd $RWMOUNT/etc/passwd
-        fi
-        if [[ ! -e /etc/group && ! -L /etc/group ]]; then
-          ${pkgs.busybox}/bin/mkdir -m 0555 -p $RWMOUNT/etc
-          ${pkgs.busybox}/bin/ln -s /run/current-system/etc/group $RWMOUNT/etc/group
-        fi
-        if [[ ! -e /etc/services ]]; then
-          ${pkgs.busybox}/bin/busybox ln -sfT /run/current-system/etc/services  $RWMOUNT/etc/services
-        fi
-        if [[ ! -e /etc/protocols ]]; then
-          ${pkgs.busybox}/bin/busybox ln -sfT /run/current-system/etc/protocols $RWMOUNT/etc/protocols
-        fi
-        if [[ ! -e /etc/hosts ]]; then
-          ${pkgs.busybox}/bin/busybox ln -sfT /run/current-system/etc/hosts $RWMOUNT/etc/hosts
-        fi
-        if [[ ! -e /etc/doas.conf ]]; then
-          ${pkgs.busybox}/bin/busybox ln -sfT /run/current-system/etc/doas.conf $RWMOUNT/etc/doas.conf
-        fi
+        ${pkgs.busybox}/bin/mkdir -m 0555 -p $RWMOUNT/bin
+        ${pkgs.busybox}/bin/mkdir -m 0555 -p $RWMOUNT/usr/bin
+        ${linkify "/bin/sh"}
+        ${linkify-cond-to-from
+          ''"$(${pkgs.busybox}/bin/readlink /bin/sh)" != "/run/current-system/sw/bin/sh"''
+          "/run/current-system/sw/bin/sh"
+          "/bin/sh"}
+        ${linkify-cond-to-from
+          ''"$(${pkgs.busybox}/bin/readlink /usr/bin/env)" != "/run/current-system/sw/bin/env"''
+          "/run/current-system/sw/bin/env"
+          "/usr/bin/env"}
+        ${linkify "/etc/passwd"}
+        ${linkify "/etc/group"}
+        ${linkify "/etc/services"}
+        ${linkify "/etc/protocols"}
+        ${linkify "/etc/hosts"}
+        ${linkify "/etc/doas.conf"}
   '' + lib.optionalString (host-final?iproute) ''
-        if [[ ! -e /etc/iproute2 ]]; then
-          ${pkgs.busybox}/bin/busybox ln -sfT /run/current-system/etc/iproute2 $RWMOUNT/etc/iproute2
-        fi
+        ${linkify "/etc/iproute2"}
   '' + ''
         ${pkgs.busybox}/bin/mkdir -p $RWMOUNT/tmp
         ${pkgs.busybox}/bin/mkdir -p $RWMOUNT/sys
