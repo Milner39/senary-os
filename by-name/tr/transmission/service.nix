@@ -3,7 +3,7 @@
 , six
 , host
 , targets
-, package ? pkgs.transmission
+, package ? pkgs.transmission_4
 , user ? "_transmission"
 , group ? "_transmission"
 , base-dir ? "/var/service/transmission"
