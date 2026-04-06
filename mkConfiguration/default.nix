@@ -281,7 +281,7 @@ let
   ''
     # FIXME: use s6-ln here for atomicity
   + ''
-        if [ "$(${pkgs.busybox}/bin/readlink /usr/bin/sh)" != "/run/current-system/sw/bin/env" ]; then
+        if [ "$(${pkgs.busybox}/bin/readlink /usr/bin/env)" != "/run/current-system/sw/bin/env" ]; then
           ${pkgs.busybox}/bin/mkdir -m 0555 -p $RWMOUNT/usr/bin
           ${pkgs.busybox}/bin/ln -sfT /run/current-system/sw/bin/env $RWMOUNT/usr/bin/env
         fi
