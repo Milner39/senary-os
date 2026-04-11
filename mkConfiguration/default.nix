@@ -195,42 +195,59 @@ let
      ln -sT boot/firmware $out/firmware    # to match NixOS path burned-in to nixpkgs
    '';
 
+  extra-links = {
+    "six/s6-rc/source" = source;
+    "six/s6-rc/db" = "${compiled}/six/s6-rc/db";
+    "six/scandir" = scandir;
+    "etc/passwd" =
+      pkgs.writeText "etc-passwd" (sixos.mkHost.users.mkEtcPasswd {
+        inherit (host-final) pkgs users groups;
+      });
+    "etc/group" =
+      pkgs.writeText "etc-group" (sixos.mkHost.users.mkEtcGroup {
+        inherit (host-final) users groups;
+      });
+    } // lib.optionalAttrs (host-final?iproute) {
+      "etc/iproute2/rt_tables" =
+        pkgs.writeText "etc-iproute2" (sixos.mkHost.mkEtcGroup {
+          inherit (host-final) users groups;
+        });
+    } // {
+      "etc/services" = "${pkgs.iana-etc}/etc/services";
+      "etc/protocols" = "${pkgs.iana-etc}/etc/protocols";
+      "etc/hosts" =
+        pkgs.writeText "etc-hosts" (lib.pipe host-final.etc-hosts [
+          (lib.mapAttrsToList (key: val: ''
+            ${key} ${lib.concatStringsSep " " val}
+          ''))
+          lib.concatStrings
+        ]);
+      "etc/doas.conf" =
+        pkgs.writeText "etc-doas-conf"
+          # Warning!  `doas` *requires* a trailing newline!
+          (lib.pipe host-final.doas-conf [
+            (map (line: line + "\n"))
+            lib.concatStrings
+          ]);
+    };
+
   configuration = (pkgs.runCommand "six-system-${host-final.name}-${nixpkgs-version}" { preferLocalBuild = true; } (''
     mkdir -p $out
-    ${pkgs.gnu-config}/config.sub "${pkgs.hostPlatform.config}" > $out/system-canonical-gnu-triple
     mkdir -p $out/six/s6-rc
-    ln -s ${source}                $out/six/s6-rc/source
-    ln -s ${compiled}/six/s6-rc/db $out/six/s6-rc/db
-    ln -s ${scandir}               $out/six/scandir
-    mkdir -p $out/etc
-    ln -s ${pkgs.writeText "etc-passwd" (sixos.mkHost.users.mkEtcPasswd {
-      inherit (host-final) pkgs users groups;
-    })} $out/etc/passwd
-    ln -s ${pkgs.writeText "etc-group" (sixos.mkHost.users.mkEtcGroup {
-      inherit (host-final) users groups;
-    })} $out/etc/group
-  '' + lib.optionalString (host-final?iproute) ''
-    mkdir -p $out/etc/iproute2
-    ln -s ${pkgs.writeText "etc-iproute2" (sixos.mkHost.mkEtcGroup {
-      inherit (host-final) users groups;
-    })} $out/etc/iproute2/rt_tables
-  '' + ''
-    ln -s ${pkgs.iana-etc}/etc/services $out/etc/services
-    ln -s ${pkgs.iana-etc}/etc/protocols $out/etc/protocols
-    ln -s ${pkgs.writeText "etc-hosts" (lib.pipe host-final.etc-hosts [
-      (lib.mapAttrsToList (key: val: ''
-        ${key} ${lib.concatStringsSep " " val}
-      ''))
-      lib.concatStrings
-    ])} $out/etc/hosts
-    ln -s ${pkgs.writeText "etc-doas-conf"
-      # Warning!  `doas` *requires* a trailing newline!
-      (lib.pipe host-final.doas-conf [
-        (map (line: line + "\n"))
-        lib.concatStrings
-      ])} $out/etc/doas.conf
-
     mkdir -p $out/bin
+    mkdir -p $out/etc
+
+    ${pkgs.gnu-config}/config.sub "${pkgs.hostPlatform.config}" > $out/system-canonical-gnu-triple
+
+    ${lib.pipe
+      (extra-links // host-final.extra-configuration-links) [
+        (lib.mapAttrsToList (link-name: link-path: ''
+          mkdir -p $out/${builtins.dirOf link-name}
+          ln -s ${link-path} $out/${link-name}
+        ''))
+        lib.concatStrings
+      ]
+    }
 
     cat > $out/bin/activate<<\EOF
     #!${pkgs.runtimeShell} -e

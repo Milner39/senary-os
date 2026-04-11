@@ -130,6 +130,7 @@ let
       groups = option (attrs group);
       etc-hosts = attrs (list string);
       doas-conf = list string;
+      extra-configuration-links = option (attrs storepath);
 
       boot = struct "boot" {
         loader = option (struct "loader" {

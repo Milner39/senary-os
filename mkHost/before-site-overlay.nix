@@ -40,6 +40,7 @@ let
         boot = {};
         etc-hosts = {};
         doas-conf = [];
+        extra-configuration-links = {};
         delete-generations = null;
         inherit (prev) name;
         inherit (final) canonical;
