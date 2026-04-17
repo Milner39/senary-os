@@ -170,6 +170,8 @@ let
      ln -sT boot/kernel-modules $out/kernel-modules
    '' + lib.optionalString (boot?initrd.image) ''
      ln -sT ${boot.initrd.image} $out/boot/initrd
+   '' + lib.optionalString (boot?kernel.dtb) ''
+     ln -sT ${boot.kernel.dtb} $out/boot/dtb
    '' + lib.optionalString (boot?spec) ''
      ln -sT ${boot.spec} $out/boot/boot.json
    '' +
