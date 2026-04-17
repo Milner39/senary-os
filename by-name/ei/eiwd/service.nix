@@ -24,7 +24,7 @@ ${pkgs.findutils}/bin/find $SYSFS_BASE/net/ \
      -type d \
      -execdir basename {} \; \
   2>/dev/null \
-| ${pkgs.findutils}/bin/xargs -I{} iw dev {} del \
+| ${pkgs.findutils}/bin/xargs -I{} ${pkgs.iw}/bin/iw dev {} del \
 2>/dev/null
 '';
 in
