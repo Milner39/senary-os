@@ -129,6 +129,7 @@ let
     _reth            = 60021;
     _redlib          = 60022;
     _distccd         = 60023;
+    _actkbd          = 60024;
 
     nobody = 65534;   # UID only
     nogroup = 65534;  # GID only
