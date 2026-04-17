@@ -4,12 +4,8 @@
 , targets
 , ifname ? throw "you must specify the interface name"
 , phyname ? throw "you must specify the phy name"
-
-, modules ? [ "pcie-rockchip-host" "mwifiex_pcie" ]
-#, modules ? [ "ath9k_htc" ]
-
-, sysfs-base-glob ? "/sys/bus/pci/drivers/mwifiex_pcie/????:??:??.?"
-#, sysfs-base-glob ? "/sys/bus/usb/drivers/ath9k_htc/*-*:*.*"
+, modules ? throw "you must specify the modules to insmod"
+, sysfs-base-glob ? throw "you must specify the sysfs base glob"
 
 # FIXME: make it clear that this directory contains secrets and must persist
 # across reboots
