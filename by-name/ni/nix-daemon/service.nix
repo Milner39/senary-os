@@ -8,6 +8,14 @@
 }:
 let
   inherit (pkgs) stdenv;
+
+  default-options = {
+    substitute = "true";
+
+    # FIXME: need to assert that this group has at least one member
+    build-users-group = "_nixbld";
+  };
+
   optionValueToString = val:
     if lib.isList val
     then lib.concatStringsSep " " (map optionValueToString val)
@@ -18,7 +26,7 @@ let
     else if lib.isString val
     then val
     else throw "unexpected optionValue type: ${toString val}";
-  optionsString = lib.pipe ( { substitute = "true"; } // options) [
+  optionsString = lib.pipe ( default-options // options) [
     (lib.mapAttrsToList (k: v: [
       "--option"
       k
