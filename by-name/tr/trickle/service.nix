@@ -25,7 +25,7 @@ six.mkFunnel {
     ] ++ lib.optionals remove-source-files [
       "--remove-source-files"
     ] ++ lib.optionals (bwlimit-mbits-per-second != null) [
-      "--bwlimit=${toString (builtins.floor ((bwlimit-mbits-per-second * 1000.0)/ 8.0))}"
+      "--bwlimit=${toString ((bwlimit-mbits-per-second * 1000)/ 8)}"
     ]
     ++ rsync-args
     ++ lib.toList from
