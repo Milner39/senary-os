@@ -20,6 +20,14 @@ let
       users.nobody.gid.__init = globally-allocated.nogroup;
       groups.nogroup.gid.__init = globally-allocated.nogroup;
 
+      # nix 2.3 fails with incredibly cryptic error messages when there is no
+      # build-users-group or when it has no users.  To avoid this footgun, for
+      # now, we simply create that user and group on every sixos install.
+      # FIXME: instead, create these only if services.nix-daemon is enabled.
+      users._nixbld1.uid.__init = globally-allocated._nixbld1;
+      users._nixbld1.gid.__init = globally-allocated._nixbld;
+      groups._nixbld.gid.__init = globally-allocated._nixbld;
+
       # used by doas, which is a required component of sixos
       groups.wheel.gid.__init = globally-allocated.wheel;
     });
@@ -130,6 +138,9 @@ let
     _redlib          = 60022;
     _distccd         = 60023;
     _actkbd          = 60024;
+
+    _nixbld1         = 64999;   # UID only
+    _nixbld          = 64999;   # GID only
 
     nobody = 65534;   # UID only
     nogroup = 65534;  # GID only
