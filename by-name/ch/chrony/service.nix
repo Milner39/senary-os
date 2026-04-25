@@ -42,7 +42,7 @@ let
 in six.mkFunnel {
   mkdir = {
     # chrony will get stuck if it can't write to log-dir
-    ${log-dir} = "0644";
+    ${log-dir} = "0700";
   };
 
   run.argv = [
