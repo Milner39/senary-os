@@ -42,6 +42,9 @@ six.mkFunnel {
   };
 
   run.pre-argvs = [
+    # ntpd.drift cannot be empty
+    [ "${pkgs.execline}/bin/redirfd" "-w" "1" "${stateDir}/db/ntpd.drift"
+      "${pkgs.busybox}/bin/busybox" "echo" "0" ]
   ];
 
   run.argv = [
