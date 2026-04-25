@@ -45,8 +45,8 @@ let
     ] ++ extra-args;
 in
 six.mkFunnel {
-  passthru.user = user;
-  passthru.group = group;
+  inherit user group;
+  do-not-call-setuid = true;
   run = pkgs.writeScript "run"
 ''
 #!${pkgs.runtimeShell}

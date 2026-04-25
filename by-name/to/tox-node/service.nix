@@ -35,8 +35,10 @@ let
 
 in
 six.mkFunnel {
-  passthru.user = user;
-  passthru.group = group;
+
+  inherit user group;
+  do-not-call-setuid = true;
+
   passthru.after = [
     targets.global.coldplug
   ];

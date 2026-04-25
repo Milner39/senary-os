@@ -40,6 +40,9 @@ let
   ;
 
 in six.mkFunnel {
+  inherit user group;
+  do-not-call-setuid = true;
+
   mkdir = {
     # chrony will get stuck if it can't write to log-dir
     ${log-dir} = "0700";
@@ -72,6 +75,4 @@ in six.mkFunnel {
   ];
 
   passthru.after = with targets; [ global.coldplug ];
-  passthru.user = user;
-  passthru.group = group;
 }

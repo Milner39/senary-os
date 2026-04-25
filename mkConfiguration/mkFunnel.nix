@@ -45,6 +45,9 @@
 , group ? if user==0 then 0 else host.users.${user}.gid
 , extra-groups ? []
 
+# true if the service calls setuid() itself and needs to be started as root
+, do-not-call-setuid ? false
+
   # create (`mkdir -p`) a directory for each attrname, with uid/gid set to
   # user/group, and mode set to the attrvalue (an octal string).  This will
   # happen before the pre-argv.
@@ -62,6 +65,10 @@ assert flag-newpidns ->
 
 assert (lib.isAttrs run && run?user) -> throw "please set user in mkFunnel, not in run";
 assert (lib.isAttrs finish && finish?user) -> throw "please set user in mkFunnel, not in finish";
+
+assert passthru?user -> throw "please pass `user`, not `passthru.user`, to mkFunnel";
+assert passthru?group -> throw "please pass `group`, not `passthru.group`, to mkFunnel";
+
 let
 
   extra-gids =
@@ -84,12 +91,12 @@ let
         redirect-stderr-to-stdout = true;
       } // lib.optionalAttrs (env != null) {
         envdir = "./env";
-      } // lib.optionalAttrs (user != null) {
+      } // lib.optionalAttrs (user != null && !do-not-call-setuid) {
         # TODO: if (lib.isString user), check that this exists in host.users
         inherit user;
-      } // lib.optionalAttrs (group != null) {
+      } // lib.optionalAttrs (group != null && !do-not-call-setuid) {
         inherit group;
-      } // lib.optionalAttrs (extra-gids != null) {
+      } // lib.optionalAttrs (extra-gids != null && !do-not-call-setuid) {
         inherit extra-gids;
       } // {
         pre-argvs = [];

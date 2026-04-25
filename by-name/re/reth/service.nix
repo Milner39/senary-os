@@ -46,7 +46,6 @@ six.mkFunnel {
 
   passthru = {
     after = [ targets.global.coldplug ];
-    inherit user group;
     endpoint = "http://${config."authrpc.addr"}:${config."authrpc.port"}";
     inherit (config) "authrpc.jwtsecret";
   };

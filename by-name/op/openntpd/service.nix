@@ -25,6 +25,9 @@ let
 in
 assert lib.hasPrefix "/run/" stateDir;
 six.mkFunnel {
+  inherit user group;
+  do-not-call-setuid = true;
+
   passthru.after = [
     targets.global.coldplug
 
@@ -39,14 +42,9 @@ six.mkFunnel {
   };
 
   run.pre-argvs = [
-    [ "${pkgs.busybox}/bin/busybox" "chown" "-R" "${user}" "${stateDir}/db" ]
-    [ "${pkgs.busybox}/bin/busybox" "chown" "-R" "${user}" "${stateDir}/run" ]
   ];
 
   run.argv = [
     "${package}/bin/ntpd" "-d" "-f" "${conf}"
   ];
-
-  passthru.user = user;
-  passthru.group = group;
 }

@@ -83,6 +83,9 @@ rmdir "$TEMP"
 in
 six.mkFunnel {
 
+  inherit user group;
+  do-not-call-setuid = true;
+
   env = {
     # nixpkgs has a patch to pass this variable through from sshd to children
     LOCALE_ARCHIVE = "/run/current-system/sw/lib/locale/locale-archive";
@@ -105,6 +108,4 @@ six.mkFunnel {
     "-f" configFile
   ];
 
-  passthru.user = user;
-  passthru.group = group;
 }
