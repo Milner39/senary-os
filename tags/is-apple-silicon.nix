@@ -138,4 +138,6 @@ infuse prev {
 
   # recommended by nixos-apple-silicon
   targets.cpufreq.__input.governor.__default = "schedutil";
+
+  targets.speakersafetyd.__init = final.services.speakersafetyd { };
 }

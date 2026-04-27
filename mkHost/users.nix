@@ -149,6 +149,8 @@ let
     _audio           = 60026;
     _video           = 60027;
 
+    _speakersafetyd  = 60028;
+
     _nixbld1         = 64999;   # UID only
     _nixbld          = 64999;   # GID only
 
