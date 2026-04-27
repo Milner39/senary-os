@@ -20,6 +20,11 @@ let
       users.nobody.gid.__init = globally-allocated.nogroup;
       groups.nogroup.gid.__init = globally-allocated.nogroup;
 
+      # FIXME this should be triggered by services.mdevd being enabled
+      groups._video.gid.__init = globally-allocated._video;
+      groups._audio.gid.__init = globally-allocated._audio;
+      groups._input.gid.__init = globally-allocated._input;
+
       # nix 2.3 fails with incredibly cryptic error messages when there is no
       # build-users-group or when it has no users.  To avoid this footgun, for
       # now, we simply create that user and group on every sixos install.
@@ -138,6 +143,11 @@ let
     _redlib          = 60022;
     _distccd         = 60023;
     _actkbd          = 60024;
+
+    # these are known to mdevd
+    _input           = 60025;
+    _audio           = 60026;
+    _video           = 60027;
 
     _nixbld1         = 64999;   # UID only
     _nixbld          = 64999;   # GID only

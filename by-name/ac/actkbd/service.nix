@@ -4,7 +4,7 @@
 , targets
 
 , user ? "_actkbd"
-, group ? "input"
+, group ? "_input"
 
 , bindings ? {}
 , device ? throw "you must specify a device"
@@ -112,7 +112,7 @@ six.mkFunnel {
 
   run.pre-argvs = [
     # ensure device is grouped to the input group (FIXME: this should already be true)
-    [ "${pkgs.busybox}/bin/chgrp" "input" device ]
+    [ "${pkgs.busybox}/bin/chgrp" group device ]
   ] ++ pre-argvs;
 
   run.argv = [

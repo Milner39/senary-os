@@ -260,7 +260,7 @@ in
     # alsa sound devices and audio stuff
     {
       env-regexes = { SUBSYSTEM = "sound"; };
-      group = "audio";
+      group = "_audio";
       octal-mode = "660";
 
       # Disabled because most of what this script does is mute the mixers (and
@@ -273,7 +273,7 @@ in
 
   ] ++ (lib.map (devname-regex: {
     inherit devname-regex;
-    group = "audio";
+    group = "_audio";
     octal-mode = "660";
     path = "sound/";
     symlink-device-node = true;
@@ -292,22 +292,22 @@ in
 
     { devname-regex = "fuse"; octal-mode = "666"; }
 
-    { devname-regex = "card[0-9]"; group = "video"; path = "dri/"; }
-    { devname-regex = "dri/.*"; group = "video"; }
+    { devname-regex = "card[0-9]"; group = "_video"; path = "dri/"; }
+    { devname-regex = "dri/.*"; group = "_video"; }
 
     { devname-regex = "agpgart"; path = "misc/"; symlink-device-node = true; }
     { devname-regex = "psaux"; path = "misc/"; symlink-device-node = true; }
     { devname-regex = "rtc"; octal-mode = "664"; path = "misc/"; symlink-device-node = true; }
 
     # input stuff
-    { env-regexes.SUBSYSTEM = "input"; }
+    { env-regexes.SUBSYSTEM = "_input"; }
 
     # v4l stuff
-    { devname-regex = "vbi[0-9]"; group = "video"; path = "v4l/"; symlink-device-node = true; }
-    { devname-regex = "video[0-9]"; group = "video"; path = "v4l/"; symlink-device-node = true; }
+    { devname-regex = "vbi[0-9]"; group = "_video"; path = "v4l/"; symlink-device-node = true; }
+    { devname-regex = "video[0-9]"; group = "_video"; path = "v4l/"; symlink-device-node = true; }
 
     # dvb stuff
-    { devname-regex = "dvb.*"; group = "video"; }
+    { devname-regex = "dvb.*"; group = "_video"; }
 
     # Don't create old usbdev* devices.
     { devname-regex = "usbdev[0-9].[0-9]*"; create-device-node = false; }
