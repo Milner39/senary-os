@@ -189,7 +189,7 @@ in
       (lib.concatStringsSep "\n")
     ]}
   '' + lib.optionalString (env' != null) ''
-    ln -s ${env'} $out/env
+    cp -r ${env'} $out/env
   '' + lib.optionalString flag-newpidns ''
     touch $out/flag-newpidns
   '' + lib.optionalString (notification-fd != null) ''
