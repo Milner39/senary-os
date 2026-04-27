@@ -92,7 +92,8 @@ let
       # activation time /run/service/*/data isn't a symlink to the store
       ''
       mkdir -p                  $out/${lib.concatStringsSep "." target.passthru.spath}
-      ln -s ${target.outPath}/* -t $out/${lib.concatStringsSep "." target.passthru.spath}/
+      cp -a ${target.outPath}/* $out/${lib.concatStringsSep "." target.passthru.spath}/
+      chmod u+w ${target.outPath}/* || true
       '')
       sorted-collected-targets}
     ${lib.concatMapStrings (target:
