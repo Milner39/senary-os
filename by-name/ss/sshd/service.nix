@@ -92,7 +92,6 @@ six.mkFunnel {
   };
 
   mkdir = {
-    "/var/empty" = "0755";  # configuration activation should take care of this...
     "/run/sshd" = "0755";
   };
 
