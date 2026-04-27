@@ -28,9 +28,13 @@ let
   });
 
 in six.mkFunnel {
+
+  inherit user group;
+  do-not-call-setuid = true;
+
   passthru = passthru // {
     after = (passthru.after or []) ++ [ targets.global.coldplug ];
-    inherit gpsd-socket user group;
+    inherit gpsd-socket;
   };
 
   mkdir = {
