@@ -86,7 +86,11 @@ let
 
   source = pkgs.runCommand "s6-rc-source" { preferLocalBuild = true; } (''
     mkdir -p $out
-    ${lib.concatMapStrings (target: ''
+    ${lib.concatMapStrings (target:
+      # This is tricky; we want just the right level of symlink-following here
+      # to maximize sharing within /nix/store, but also ensure that at
+      # activation time /run/service/*/data isn't a symlink to the store
+      ''
       mkdir -p                  $out/${lib.concatStringsSep "." target.passthru.spath}
       ln -s ${target.outPath}/* -t $out/${lib.concatStringsSep "." target.passthru.spath}/
       '')
