@@ -56,9 +56,25 @@ let
   #
   make-host-attrnames-deterministic =
     site: host:
-      builtins.mapAttrs
-        (k: v: host.${k} or (throw "missing: ${k}"))
-        site.types.host-fields;
+    let
+      host-checked = check-host-attrnames site host;
+    in builtins.mapAttrs
+      (k: v: host-checked.${k} or (throw "make-host-attrnames-deterministic: missing: ${k}"))
+      site.types.host-fields;
+
+  #
+  # Verify that there are no unexpected attributes in a host.  We have to do
+  # this before `make-host-attrnames-deterministic` or else we will silently
+  # drop mis-spelled host attributes.
+  #
+  check-host-attrnames =
+    site: host:
+    let
+      host-with-valid-attrs-removed = lib.removeAttrs host (lib.attrNames site.types.host-fields);
+      throw-error = throw "host contains unknown top-level attrNames: ${lib.concatStringsSep " " (lib.attrNames host-with-valid-attrs-removed)}";
+    in
+      assert host-with-valid-attrs-removed != {} -> throw-error;
+      host;
 
   #
   # Turns an overlay-on-hosts into an overlay-on-a-site
