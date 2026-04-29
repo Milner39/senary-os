@@ -214,15 +214,6 @@ let
       pkgs.writeText "etc-group" (sixos.mkHost.users.mkEtcGroup {
         inherit (host-final) users groups;
       });
-  } // lib.optionalAttrs (host-final?iproute) {
-    "etc/iproute2/rt_tables" =
-      pkgs.writeText "etc-iproute2" (lib.pipe host-final.etc.iproute2.rt_tables [
-        (lib.mapAttrsToList
-          (table-name: table-number:
-            "${toString table-number} ${table-name}"))
-        (lib.concatStringSep "\n")
-      ]);
-  } // {
     "etc/services" = "${pkgs.iana-etc}/etc/services";
     "etc/protocols" = "${pkgs.iana-etc}/etc/protocols";
     "etc/hosts" =
@@ -239,6 +230,14 @@ let
           (map (line: line + "\n"))
           lib.concatStrings
         ]);
+  } // lib.optionalAttrs (host-final?iproute) {
+    "etc/iproute2/rt_tables" =
+      pkgs.writeText "etc-iproute2" (lib.pipe host-final.etc.iproute2.rt_tables [
+        (lib.mapAttrsToList
+          (table-name: table-number:
+            "${toString table-number} ${table-name}"))
+        (lib.concatStringSep "\n")
+      ]);
   };
 
   configuration = (pkgs.runCommand "six-system-${host-final.name}-${nixpkgs-version}" { preferLocalBuild = true; } (''
