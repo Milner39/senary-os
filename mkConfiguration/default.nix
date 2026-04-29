@@ -230,7 +230,7 @@ let
           (map (line: line + "\n"))
           lib.concatStrings
         ]);
-  } // lib.optionalAttrs (host-final?iproute) {
+  } // lib.optionalAttrs (host-final?etc.iproute2) {
     "etc/iproute2/rt_tables" =
       pkgs.writeText "etc-iproute2" (lib.pipe host-final.etc.iproute2.rt_tables [
         (lib.mapAttrsToList
