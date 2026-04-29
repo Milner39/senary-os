@@ -5,13 +5,17 @@
 , package ? pkgs.monero-cli
 , user ? "_monerod"
 , group ? "_monerod"
-, datadir ? throw "you must specify datadir"
+, datadir ? "/var/service/monerod"
 , extraArgs ? {}
 }:
 
 six.mkFunnel {
 
   inherit user group;
+
+  mkdir = {
+    "${datadir}" = "0700";
+  };
 
   run.argv = [
     "${package}/bin/monerod"
