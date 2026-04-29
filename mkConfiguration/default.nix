@@ -214,32 +214,32 @@ let
       pkgs.writeText "etc-group" (sixos.mkHost.users.mkEtcGroup {
         inherit (host-final) users groups;
       });
-    } // lib.optionalAttrs (host-final?iproute) {
-      "etc/iproute2/rt_tables" =
-        pkgs.writeText "etc-iproute2" (lib.pipe host-final.etc.iproute2.rt_tables [
-          (lib.mapAttrsToList
-            (table-name: table-number:
-              "${toString table-number} ${table-name}"))
-          (lib.concatStringSep "\n")
-        ]);
-    } // {
-      "etc/services" = "${pkgs.iana-etc}/etc/services";
-      "etc/protocols" = "${pkgs.iana-etc}/etc/protocols";
-      "etc/hosts" =
-        pkgs.writeText "etc-hosts" (lib.pipe host-final.etc.hosts [
-          (lib.mapAttrsToList (key: val: ''
+  } // lib.optionalAttrs (host-final?iproute) {
+    "etc/iproute2/rt_tables" =
+      pkgs.writeText "etc-iproute2" (lib.pipe host-final.etc.iproute2.rt_tables [
+        (lib.mapAttrsToList
+          (table-name: table-number:
+            "${toString table-number} ${table-name}"))
+        (lib.concatStringSep "\n")
+      ]);
+  } // {
+    "etc/services" = "${pkgs.iana-etc}/etc/services";
+    "etc/protocols" = "${pkgs.iana-etc}/etc/protocols";
+    "etc/hosts" =
+      pkgs.writeText "etc-hosts" (lib.pipe host-final.etc.hosts [
+        (lib.mapAttrsToList (key: val: ''
             ${key} ${lib.concatStringsSep " " val}
           ''))
+        lib.concatStrings
+      ]);
+    "etc/doas.conf" =
+      pkgs.writeText "etc-doas-conf"
+        # Warning!  `doas` *requires* a trailing newline!
+        (lib.pipe host-final.doas-conf [
+          (map (line: line + "\n"))
           lib.concatStrings
         ]);
-      "etc/doas.conf" =
-        pkgs.writeText "etc-doas-conf"
-          # Warning!  `doas` *requires* a trailing newline!
-          (lib.pipe host-final.doas-conf [
-            (map (line: line + "\n"))
-            lib.concatStrings
-          ]);
-    };
+  };
 
   configuration = (pkgs.runCommand "six-system-${host-final.name}-${nixpkgs-version}" { preferLocalBuild = true; } (''
     mkdir -p $out
