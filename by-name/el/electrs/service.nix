@@ -5,7 +5,7 @@
 , package ? pkgs.electrs
 , user ? "_electrs"
 , group ? "_bitcoind"
-, datadir ? throw "you must specify datadir"
+, datadir ? "/var/service/electrs"
 , bitcoind ? throw "you must specify targets.bitcoind"
 , network ? "bitcoin"
 , electrum-rpc-addr ? throw "you must specify electrum-rpc-addr"
@@ -19,6 +19,10 @@
 six.mkFunnel {
 
   inherit user group;
+
+  mkdir = {
+    "${datadir}" = "0700";
+  };
 
   run.argv = [
     "${package}/bin/electrs"
