@@ -334,6 +334,7 @@ let
         ${linkify "/etc/protocols"}
         ${linkify "/etc/hosts"}
         ${linkify "/etc/doas.conf"}
+        ${linkify "/etc/profile"}
   '' + lib.optionalString (host-final?iproute) ''
         ${linkify "/etc/iproute2"}
   '' + ''
