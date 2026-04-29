@@ -5,7 +5,7 @@
 , package ? pkgs.bitcoind
 , user ? "_bitcoind"
 , group ? "_bitcoind"
-, datadir ? throw "you must specify datadir"
+, datadir ? "/var/service/bitcoind"
 , extraConfig ? {}
 }:
 
@@ -34,6 +34,13 @@ assert config?rpcbind && !(config?rpcallowip)
 six.mkFunnel {
 
   inherit user group;
+
+  mkdir = {
+    # other services like electrs need to be able to read the rpc-cookie inside
+    # this directory by being in the _bitcoind group
+    "${datadir}" = "0750";
+  };
+
   run = {
     argv = [
       "${package}/bin/bitcoind"
