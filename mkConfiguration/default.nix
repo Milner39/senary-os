@@ -316,6 +316,7 @@ let
         ${pkgs.busybox}/bin/mount --bind / $RWMOUNT
         ${pkgs.busybox}/bin/mount -o remount,rw / $RWMOUNT
         ${pkgs.busybox}/bin/mkdir -m 0555 -p $RWMOUNT/etc
+        ${pkgs.busybox}/bin/mkdir -m 0700 -p $RWMOUNT/etc/secrets
         ${pkgs.busybox}/bin/mkdir -m 0555 -p $RWMOUNT/bin
         ${pkgs.busybox}/bin/mkdir -m 0555 -p $RWMOUNT/usr/bin
         ${linkify "/bin/sh"}
