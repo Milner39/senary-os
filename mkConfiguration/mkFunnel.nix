@@ -109,6 +109,8 @@ let
        then { argv = [ (toString script) ]; }
        else script);
 
+      # TODO: check that we don't change the ownership of globally-known
+      # directories like /etc/secrets, /run, etc
       mkdir-argvs = lib.pipe mkdir [
         (lib.mapAttrsToList
           (path: mode: [
