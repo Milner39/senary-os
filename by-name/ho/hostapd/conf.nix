@@ -1939,7 +1939,7 @@ wpa_passphrase=${wpa-passphrase}
 #
 # (dot11RSNAConfigPairwiseCiphersTable)
 # Pairwise cipher for WPA (v1) (default: TKIP)
-wpa_pairwise=TKIP CCMP
+wpa_pairwise=CCMP
 # Pairwise cipher for RSN/WPA2 (default: use wpa_pairwise value)
 rsn_pairwise=CCMP
 
