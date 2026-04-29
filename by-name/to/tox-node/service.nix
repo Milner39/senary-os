@@ -5,7 +5,7 @@
 , package ? pkgs.tox-node
 , user ? "_tox"
 , group ? "_tox"
-, secret-key-file ? "/etc/secrets/tox-secret-key"
+, secret-key-file ? "/etc/secrets/tox/tox-secret-key"
 , listen-address ? throw "listen-address is required"
 , listen-port ? 33445
 , listen-udp ? true
