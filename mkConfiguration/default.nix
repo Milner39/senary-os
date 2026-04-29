@@ -216,9 +216,12 @@ let
       });
     } // lib.optionalAttrs (host-final?iproute) {
       "etc/iproute2/rt_tables" =
-        pkgs.writeText "etc-iproute2" (sixos.mkHost.mkEtcGroup {
-          inherit (host-final) users groups;
-        });
+        pkgs.writeText "etc-iproute2" (lib.pipe host-final.etc.iproute2.rt_tables [
+          (lib.mapAttrsToList
+            (table-name: table-number:
+              "${toString table-number} ${table-name}"))
+          (lib.concatStringSep "\n")
+        ]);
     } // {
       "etc/services" = "${pkgs.iana-etc}/etc/services";
       "etc/protocols" = "${pkgs.iana-etc}/etc/protocols";
