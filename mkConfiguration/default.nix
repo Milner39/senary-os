@@ -236,7 +236,7 @@ let
         (lib.mapAttrsToList
           (table-name: table-number:
             "${toString table-number} ${table-name}"))
-        (lib.concatStringSep "\n")
+        (lib.concatStringsSep "\n")
       ]);
   };
 
