@@ -34,6 +34,7 @@ let
     in
       prev // {
 
+        # manually maintained, yuck
         gccarch = "";
         users = {};
         groups = {};
