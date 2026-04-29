@@ -39,6 +39,7 @@ let
         groups = {};
         boot = {};
         etc-hosts = {};
+        etc = {};
         doas-conf = [];
         extra-configuration-links = {};
         delete-generations = null;

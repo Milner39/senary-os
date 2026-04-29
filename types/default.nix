@@ -132,6 +132,12 @@ let
       doas-conf = list string;
       extra-configuration-links = option (attrs storepath);
 
+      etc = option (struct "etc" {
+        iproute2 = option (struct "iproute" {
+          rt_tables = option (attrs int);
+        });
+      });
+
       boot = struct "boot" {
         loader = option (struct "loader" {
           update = either drv string;        # command which is run with one or two arguments
