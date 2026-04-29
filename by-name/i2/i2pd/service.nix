@@ -5,7 +5,7 @@
 , package ? pkgs.i2pd
 , user ? "_i2pd"
 , group ? "_i2pd"
-, datadir ? throw "datadir is required"
+, datadir ? "/var/service/i2pd"
 , bandwidth-kbytes-per-second ? throw "required"
 , listen-ip ? throw "required"
 , http-proxy-listen ? null
@@ -47,6 +47,11 @@ in
 six.mkFunnel {
   inherit user group;
   do-not-call-setuid = true;
+
+  mkdir = {
+    "${datadir}" = "0700";
+  };
+
   run = pkgs.writeScript "run"
 ''
 #!${pkgs.runtimeShell}
