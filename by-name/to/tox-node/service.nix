@@ -43,6 +43,10 @@ six.mkFunnel {
     targets.global.coldplug
   ];
 
+  mkdir = {
+    "${builtins.dirOf secret-key-file}" = "0700";
+  };
+
   run = pkgs.writeScript "run"
 ''
 #!${pkgs.runtimeShell}
