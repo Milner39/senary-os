@@ -128,11 +128,11 @@ let
 
       users = option (attrs user);
       groups = option (attrs group);
-      etc-hosts = attrs (list string);
       doas-conf = list string;
       extra-configuration-links = option (attrs storepath);
 
       etc = option (struct "etc" {
+        hosts = attrs (list string);
         iproute2 = option (struct "iproute" {
           rt_tables = option (attrs int);
         });

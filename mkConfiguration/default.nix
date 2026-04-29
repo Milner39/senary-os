@@ -223,7 +223,7 @@ let
       "etc/services" = "${pkgs.iana-etc}/etc/services";
       "etc/protocols" = "${pkgs.iana-etc}/etc/protocols";
       "etc/hosts" =
-        pkgs.writeText "etc-hosts" (lib.pipe host-final.etc-hosts [
+        pkgs.writeText "etc-hosts" (lib.pipe host-final.etc.hosts [
           (lib.mapAttrsToList (key: val: ''
             ${key} ${lib.concatStringsSep " " val}
           ''))

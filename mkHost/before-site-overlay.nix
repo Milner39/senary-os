@@ -39,8 +39,9 @@ let
         users = {};
         groups = {};
         boot = {};
-        etc-hosts = {};
-        etc = {};
+        etc = {
+          hosts = {};
+        };
         doas-conf = [];
         extra-configuration-links = {};
         delete-generations = null;
@@ -316,7 +317,7 @@ let
   # hostname appear in /etc/hosts.
   add-hostname-and-localhost-to-etc-hosts = host-final: host-prev:
     infuse host-prev {
-      etc-hosts."127.0.0.1".__append = [
+      etc.hosts."127.0.0.1".__append = [
         "localhost"
         host-final.name
       ];
