@@ -2,15 +2,22 @@
 , pkgs
 , six
 , targets
+, host
 , flush-old-ruleset ? true
 , ruleset ? throw "you must provide a string as argument `ruleset` to the firewall service"
+, forwards ? []
 }:
 
 let
   ruleset-file = builtins.toFile "nftables-ruleset"
     (lib.optionalString flush-old-ruleset ''
       flush ruleset
-     '' + ruleset);
+      ${ruleset}
+      ${lib.pipe forwards [
+         (lib.map (host.site.globals.forward-port-nftables host))
+         (lib.concatStringsSep "\n")
+       ]}
+    '');
 in
 six.mkOneshot {
   up = pkgs.writeScript "firewall-up" ''
