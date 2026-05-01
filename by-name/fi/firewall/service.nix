@@ -6,6 +6,7 @@
 , flush-old-ruleset ? true
 , ruleset ? throw "you must provide a string as argument `ruleset` to the firewall service"
 , forwards ? []
+, tables ? []
 }:
 
 let
@@ -15,6 +16,8 @@ let
       ${ruleset}
       ${lib.pipe forwards [
          (lib.map (host.site.globals.forward-port-nftables host))
+         (t: t ++ tables)
+         (lib.map six.lib.mkNetfilterTable)
          (lib.concatStringsSep "\n")
        ]}
     '');
