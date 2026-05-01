@@ -21,6 +21,31 @@ let
 
   busybox = "${pkgs.busybox}/bin/busybox ";
 
+  # This is intended to match the device's evdev identifier, as reported by
+  # `swaymsg -t get_inputs`
+  mdevd-add-input-by-id =
+    pkgs.writeScript "mdevd-add-input-by-id" ''
+      #!${pkgs.runtimeShell}
+      PATH=${lib.makeBinPath [ pkgs.busybox ]}
+      MDEV=$(basename $DEVPATH)
+      DP="$(dirname "/sys/$DEVPATH")"
+      if [[ -e $DP/id/vendor && -e $DP/id/product ]]; then
+        VENDOR="$((0x$(cat "$DP/id/vendor") ))"
+        PRODUCT="$((0x$(cat "$DP/id/product") ))"
+        SAFENAME="$(cat "$DP/name" | tr -d '"' | tr ' ' '_' | tr '/' '_')"
+        LINKNAME=$VENDOR:$PRODUCT:$SAFENAME
+        case "$ACTION" in
+          add)
+            mkdir -p /dev/input/by-id
+            ln -sf ../"$MDEV" "/dev/input/by-id/$LINKNAME"
+            ;;
+          remove)
+            rm "/dev/input/by-id/$LINKNAME"
+            ;;
+        esac
+      fi
+    '';
+
   mdevd-add-serial-by-id =
     pkgs.writeScript "mdevd-add-serial-by-id" ''
       #!${pkgs.runtimeShell}
@@ -187,6 +212,13 @@ in
       stop-if-match = false;
       devname-regex = "ttyACM.*";
       add-argv = [ mdevd-add-serial-by-id "$MDEV" ];
+    }
+
+    # /dev/input/by-id
+    {
+      stop-if-match = false;
+      env-regexes.SUBSYSTEM = "input";
+      add-argv = [ mdevd-add-input-by-id "$MDEV" ];
     }
 
     # support module loading on hotplug
