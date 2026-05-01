@@ -7,6 +7,9 @@
 , ruleset ? throw "you must provide a string as argument `ruleset` to the firewall service"
 , forwards ? []
 , tables ? []
+
+# names of modules (usually netfilter) to insert before bringing the firewall up
+, modules ? []
 }:
 
 let
@@ -23,17 +26,18 @@ let
     '');
 in
 six.mkOneshot {
-  up = pkgs.writeScript "firewall-up" ''
+  up = pkgs.writeScript "firewall-up" (''
     #!${pkgs.runtimeShell} -e
 
-    # incredibly gross hack FIXME FIXME FIXME
-    ${pkgs.kmod}/bin/modprobe --all $(${pkgs.busybox}/bin/find /run/booted-system/kernel-modules/lib/modules/*/kernel/net/ -name nf\*.ko) || true
+  '' + lib.optionalString (modules != []) ''
+    ${pkgs.kmod}/bin/modprobe --all ${lib.escapeShellArgs modules}
+  '' + ''
 
     ${pkgs.nftables}/bin/nft -f ${ruleset-file} || exit -1
     # it is extremely important that the following line is not executed unless
     # the previous line succeeds!
     ${pkgs.busybox}/bin/echo -n 1 > /proc/sys/net/ipv4/ip_forward
-  '';
+  '');
 
   down = pkgs.writeScript "firewall-down" ''
     #!${pkgs.runtimeShell}
