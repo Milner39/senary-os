@@ -259,13 +259,24 @@ let
   mkNetfilterTable =
     { table-name,
       chains,
+      helpers ? {},
       extraConfig ? "" }:
-    ''
+    (''
       table ip ${table-name} {
       ${lib.concatStringsSep "\n" (lib.mapAttrsToList mkNetfilterChain chains)}
+    '' +
+    lib.pipe helpers [
+      (lib.mapAttrsToList (name: value: ''
+        ct helper ${name} {
+          ${value}
+        }
+      ''))
+      lib.concatStrings
+    ]
+    + ''
     '' + extraConfig + ''
       }
-    '';
+    '');
 
 
 in {
