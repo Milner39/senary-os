@@ -332,7 +332,7 @@ in
     { devname-regex = "rtc"; octal-mode = "664"; path = "misc/"; symlink-device-node = true; }
 
     # input stuff
-    { env-regexes.SUBSYSTEM = "_input"; }
+    { env-regexes.SUBSYSTEM = "input"; group = "_input"; octal-mode = "660"; }
 
     # v4l stuff
     { devname-regex = "vbi[0-9]"; group = "_video"; path = "v4l/"; symlink-device-node = true; }
