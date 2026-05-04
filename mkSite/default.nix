@@ -19,10 +19,7 @@ let
   site-initial = {
     inherit types;
     inherit (site-dir) subnets globals;
-    tag-overlays =
-      lib.mapAttrs
-        sixos.lib.add-tag-mutation-check-to-overlay
-        tag-overlays;
+    tag-overlays = tag-overlays;
 
     # initial host set: populate attrnames from site-dir.hosts
     hosts =

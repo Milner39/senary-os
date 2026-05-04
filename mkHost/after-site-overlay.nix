@@ -82,7 +82,9 @@ let
 
         # for each attrname, get the corresponding overlay
         (lib.map (name:
-          host-final.site.tag-overlays.${name}))
+          sixos.lib.add-tag-mutation-check-to-overlay
+            name
+            host-final.site.tag-overlays.${name}))
 
         # compose the overlays and apply them to host-prev
         (overlays: lib.composeManyExtensions overlays host-final host-prev)
