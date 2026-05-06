@@ -118,7 +118,10 @@ let
         lib.flip lib.mapAttrs site-dir.tags
           (tag-name: site-overlay:
             if sixos.tags?${tag-name}
-            then lib.composeExtensions sixos.tags.${tag-name} site-overlay
+            then
+              assert (sixos.tags.${tag-name}?__functor || site-overlay?__functor) ->
+                     throw "this case isn't handled yet (tag ${tag-name})";
+              lib.composeExtensions sixos.tags.${tag-name} site-overlay
             else site-overlay);
     };
 
