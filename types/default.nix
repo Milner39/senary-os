@@ -19,7 +19,9 @@ let
 
     # the default tag attrset (i.e. all leaves false) for a host in this site
     default-tag-values =
-      lib.mapAttrsRecursive (path: val: false) tag-overlays;
+      #lib.mapAttrsRecursive
+      lib.mapAttrs
+        (path: val: false) tag-overlays;
 
     # because `final.host.${hostname}.tags` is a frequent source of infinite
     # recursion, all functions which modify `host.${hostname}.tags` use this
