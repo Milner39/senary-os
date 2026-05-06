@@ -3,6 +3,15 @@
 , ...
 }:
 
+{
+
+implies = {
+  has-hwclock = true;
+  system-isAarch64 = true;
+};
+
+__functor = _:
+
 # TODO: need /dev/input/by-path in order to find the keyboard for actkbd
 
 # verify: lidswitch -> s2ram
@@ -140,4 +149,5 @@ infuse prev {
   targets.cpufreq.__input.governor.__default = "schedutil";
 
   targets.speakersafetyd.__init = final.services.speakersafetyd { };
+};
 }

@@ -4,6 +4,14 @@
 , ...
 }:
 
+{
+
+implies = {
+  has-hwclock = true;
+};
+
+__functor = _:
+
 final: prev: infuse prev ({
 
   boot.kernel.package.__input.structuredExtraConfig = {
@@ -22,4 +30,6 @@ final: prev: infuse prev ({
   boot.kernel.payload = _: "${final.boot.kernel.package}/vmlinux";
   boot.kernel.image.__assign = "${final.boot.kernel.package}/vmlinux";
 
-})
+});
+
+}

@@ -4,7 +4,19 @@
 , ...
 }:
 
+
+{
+
+implies = {
+  has-hwclock = true;
+};
+
+__functor = _:
+
 final: prev: infuse prev ({
+
+  # FIXME
+  boot.rootfs.parameter.__assign = "LABEL=boot";
 
   boot.kernel.payload.__assign = "${final.boot.kernel.package}/bzImage";
   boot.kernel.image.__assign   = "${final.boot.kernel.package}/vmlinux";
@@ -32,4 +44,6 @@ final: prev: infuse prev ({
     USB_STORAGE = "y";
     SCSI = "y";
   };
-})
+});
+
+}

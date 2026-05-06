@@ -39,3 +39,4 @@ final: prev: infuse prev ({
       inherit (final.boot.loader) uboot-commands;
     });
 })
+

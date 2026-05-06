@@ -207,17 +207,11 @@ let
     # (monotonically) modify other tags.
     host-prev // {
       tags =
-        host-prev.tags //
-        lib.optionalAttrs host-prev.tags.system-isAarch64 {
-          has-hwclock = false;
-        } // lib.optionalAttrs host-prev.tags.system-isx86_64 {
-          # x86 machines are required to have a battery-backed RTC
-          has-hwclock = true;
+        host-prev.tags // {
         } // lib.optionalAttrs host-prev.tags.system-isMips64 {
           is-bootloader-uboot = true;
         } // lib.optionalAttrs host-prev.tags.system-isPower64 {
           # powerpc workstations generally have battery-backed hardware clocks
-          has-hwclock = true;
           is-bootloader-petitboot = true;
         };
     };
