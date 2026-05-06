@@ -99,6 +99,16 @@ let
         (host: host // { inherit (host-prev) tags canonical; })
       ]));
 
+  # Since this depends on a tag *not* being set it has to get special handling.
+  add-fake-hwclock =
+    host-final: host-prev: host-prev // {
+      # FIXME: why does using infuse here cause infinite recursion?
+      targets = host-prev.targets // lib.optionalAttrs (!host-final.tags.has-clock) {
+        hwclock-fake         = host-final.services.hwclock-fake { };
+        hwclock-fake-updater = host-final.services.hwclock-fake-updater { };
+      };
+    };
+
   # After and before references must always be made via `final.${spath}`
   # references to services which are part of the top-level service set.  Because
   # there can be cyclic references (a.after = b, b.before = a) we can't test
@@ -243,6 +253,8 @@ let
 
   mkHost = [
     apply-tags
+    add-fake-hwclock
+
     add-default-logger
     add-default-target
 

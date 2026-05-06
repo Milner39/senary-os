@@ -209,11 +209,9 @@ let
       tags =
         host-prev.tags //
         lib.optionalAttrs host-prev.tags.system-isAarch64 {
-          has-hwclock-fake = true;
           has-hwclock = false;
         } // lib.optionalAttrs host-prev.tags.system-isx86_64 {
           # x86 machines are required to have a battery-backed RTC
-          has-hwclock-fake = false;
           has-hwclock = true;
         } // lib.optionalAttrs host-prev.tags.system-isMips64 {
           is-bootloader-uboot = true;
