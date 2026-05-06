@@ -74,6 +74,40 @@ let
         inherit spath;
       }; });
 
+  #
+  # Compute the closure of tags.*.implies and set them to true.  This must
+  # happen after the host overlay and anything else that is allowed to set tags,
+  # but before the tags are applied.
+  #
+  set-implied-tags =
+    (host-final: host-prev:
+      let
+        implied-by =
+          lib.pipe host-final.site.tag-overlays [
+            (lib.mapAttrs
+              (_: overlay: host-final.site.types.default-tag-values // overlay.implies or {}))
+            sixos.lib.relation.closure
+            sixos.lib.relation.make-non-symmetric
+            sixos.lib.relation.inverse
+          ];
+        implied-tags =
+          lib.flip lib.mapAttrs host-prev.tags
+            (target: value:
+              if value
+              then true
+              else lib.pipe implied-by.${target} [
+                (lib.filterAttrs (_: v: v))
+                (lib.mapAttrs (affector: _: final-tags.${affector}))
+                (lib.filterAttrs (_: v: v))
+                (v: v != {})
+              ]);
+        final-tags = host-prev.tags // implied-tags;
+      in
+        host-prev // { tags = host-final.site.types.set-tag-values final-tags; });
+
+  #
+  # FIXME: apply tags in the order determined by `implies`
+  #
   apply-tags =
     (host-final: host-prev:
       (sixos.lib.pipe host-final.tags [
@@ -102,7 +136,7 @@ let
   add-fake-hwclock =
     host-final: host-prev: host-prev // {
       # FIXME: why does using infuse here cause infinite recursion?
-      targets = host-prev.targets // lib.optionalAttrs (!host-final.tags.has-clock) {
+      targets = host-prev.targets // lib.optionalAttrs (!host-final.tags.has-hwclock) {
         hwclock-fake         = host-final.services.hwclock-fake { };
         hwclock-fake-updater = host-final.services.hwclock-fake-updater { };
       };
@@ -252,6 +286,7 @@ let
 
   mkHost = [
     apply-tags
+    set-implied-tags
     add-fake-hwclock
 
     add-default-logger
