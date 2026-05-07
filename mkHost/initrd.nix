@@ -75,6 +75,7 @@ let
   cryptsetup-initrd =
   (final: prev: let inherit (final) pkgs; in infuse prev ({
     boot.initrd.image.__input.contents = lib.optionalAttrs (!final.tags.is-nfsroot) {
+      # FIXME: at nextboot-time, verify that there is a luks volume with the label `boot`
       "early/run".__append = [''
         for DEV in $(blkid | grep 'TYPE="crypto_LUKS"' | sed 's_^\([^\:]*\):.*$_\1_;t;d'); do
             # we're relying here on the fact that the keyfile passed by the
@@ -109,6 +110,7 @@ let
   lvm-initrd =
   (final: prev: let inherit (final) pkgs; in infuse prev ( {
     boot.initrd.image.__input.contents = lib.optionalAttrs (!final.tags.is-nfsroot && !final.tags.dont-mount-root) {
+      # FIXME: at nextboot-time, verify that there is an lvm volume with the @boot tag
       "early/run".__append = [''
         # lvm lvchange --addtag @boot vg/lv
         /sbin/lvm lvchange -a ay @boot
