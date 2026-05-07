@@ -13,6 +13,8 @@
 }:
 
 let
+  performance-troubleshooting = false;
+
   types = sixos.types { inherit tag-overlays; };
 
   # initial site
@@ -45,6 +47,16 @@ let
 
     # finish up the hosts
   ] ++ map sixos.lib.forall-hosts sixos.mkHost.after-site-overlay ++ [
+
+  ] ++ lib.optionals performance-troubleshooting [
+
+    # For performance troubleshooting
+    (sixos.lib.forall-hosts
+      (host-final: host-prev:
+        lib.flip lib.mapAttrs host-prev
+          (name: val:
+            if name == "name" || name == "site" then val else
+            lib.trace "forced thunk: site.hosts.${host-final.name}.${name}" val)))
 
   ] ++ [
 
