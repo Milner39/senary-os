@@ -278,6 +278,66 @@ let
       }
     '');
 
+  #
+  # A relation is `Attrs<Attrs<Bool>>` where xRy if `relation.${x}.${y} or false
+  # == true`.
+  #
+  relation-closure = relation:
+    let
+      closure = affector:
+        let
+          startSet = [{ key = affector; }];
+          operator = item:
+            lib.pipe item ([
+              (item: relation.${item.key} or {})
+              (lib.filterAttrs (k: v: v))
+              lib.attrNames
+              (lib.map (key: { inherit key; }))
+            ]);
+
+          in
+            lib.map (v: v.key)
+              (builtins.genericClosure {
+                inherit startSet;
+                inherit operator;
+              });
+    in
+      lib.mapAttrs
+        (affector: related:
+          lib.pipe affector [
+            closure
+            (lib.filter (v: v!=affector))
+            (lib.map (name: lib.nameValuePair name true))
+            lib.listToAttrs
+            (x: related // x)
+          ])
+        relation;
+
+  #
+  # This function computes the inverse of a relation; `x(invert-relation R)y`
+  # iff `yRx`.
+  #
+  relation-inverse = relation:
+    lib.flip lib.mapAttrs relation
+      (b: _:
+        lib.flip lib.mapAttrs relation.${b}
+          (a: _:
+            relation.${a}.${b} or false
+          )
+      );
+
+  #
+  # Returns the subrelation in which `forall x, !(xRx)`
+  #
+  relation-make-non-symmetric = relation:
+    lib.flip lib.mapAttrs relation
+      (a: _:
+        let relation-a = relation.${a}; in
+        lib.flip lib.mapAttrs relation-a
+          (b: val:
+            a!=b && val
+          )
+      );
 
 in {
   inherit
@@ -297,5 +357,10 @@ in {
     sortAndDeduplicateStrings
     mkNetfilterTable
     ;
+    relation = {
+      inverse = relation-inverse;
+      make-non-symmetric = relation-make-non-symmetric;
+      closure = relation-closure;
+    };
 }
 
