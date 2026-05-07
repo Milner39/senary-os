@@ -127,6 +127,12 @@ let
     ''];
   }));
 
+  mount-root =
+  (host-final: prev: infuse prev ({
+    boot.initrd.image.__input.contents."early/run".__append =
+      host-final.boot.initrd.mount-root;
+  }));
+
   #
   # Mountpoints for /dev /sys /run and /proc must exist before we switch_root to
   # an s6-linux-init-based root filesystem.  If they don't exist (typically on
@@ -177,19 +183,13 @@ let
     ''];
   }));
 
-  mount-root =
-  (host-final: prev: infuse prev ({
-    boot.initrd.image.__input.contents."early/run".__append =
-      host-final.boot.initrd.mount-root;
-  }));
-
 in [
   basic-initrd
   abduco
   minimal-contents
   cryptsetup-initrd
   lvm-initrd
+  mount-root
   ensure-mountpoints
   switch-root
-  mount-root
 ]
