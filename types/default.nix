@@ -158,6 +158,7 @@ let
           payload = storepath;  # the thing that the bootloader wants (i.e. `uImage` for uboot)
           params = list string;
           modules = storepath;  # store path containing the built kernel modules
+          modules-blacklist = optional (list string);
           firmware = either storepath (list storepath);
           package = drv;
           dtb = option storepath;
