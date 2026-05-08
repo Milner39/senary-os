@@ -41,7 +41,6 @@ let
         etc = {
           hosts = {};
         };
-        doas-conf = [];
         extra-configuration-links = {};
         delete-generations = null;
         inherit (prev) name;
@@ -103,6 +102,18 @@ let
           rootfs.parameter = "LABEL=${final.boot.rootfs.label}";
           rootfs.first-mount-is-readonly = true;
         };
+
+        # The `doas` program is special and privileged in sixos: it *must* be present
+        # and is (ideally) the only setuid-root program on the system.
+        #
+        # see mkConfiguration for additional details on the symbolic links which make
+        # doas work correctly.
+        doas-conf = [
+          # allows root to run `doas -u someuser ...`
+          "permit nopass root"
+        ] ++ lib.optionals (final.groups?wheel) [
+          "permit nopass :wheel"
+        ];
 
         # lots of software will malfunction unless both `localhost` and the host's
         # hostname appear in /etc/hosts.
@@ -278,23 +289,7 @@ let
         }
       ));
 
-  # The `doas` program is special and privileged in sixos: it *must* be present
-  # and is (ideally) the only setuid-root program on the system.
-  #
-  # see mkConfiguration for additional details on the symbolic links which make
-  # doas work correctly.
-  set-up-doas-conf = host-final: host-prev:
-    infuse host-prev {
-      doas-conf.__append = [
-        # allows root to run `doas -u someuser ...`
-        "permit nopass root"
-      ] ++ lib.optionals (host-final.groups?wheel) [
-        "permit nopass :wheel"
-      ];
-    };
-
 in [
   init
   build-ifconns-and-interfaces
-  set-up-doas-conf
 ] ++ sixos.mkHost.initrd
