@@ -5,6 +5,10 @@
 
 [(final: prev: infuse prev {
 
+  # If the bootloader or its configuration is stored on a mountable
+  # filesystem, this should be set to that filesystem's LABEL.
+  boot.loader.filesystem.label.__default = "boot";
+
   # TODO(amjoseph): get rid of `*.ubootenv` (it has serious shell-quoting
   # issues) and instead run `mkimage` from inside the `update-bootloader`
   # script.  We can't hardwire the configuration outpath into the `uImage`
