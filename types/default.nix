@@ -22,7 +22,7 @@ let
     default-tag-values =
       #lib.mapAttrsRecursive
       lib.mapAttrs
-        (path: val: false) tag-definitions;
+        (path: val: false) args.tag-definitions;
 
     # because `final.host.${hostname}.tags` is a frequent source of infinite
     # recursion, all functions which modify `host.${hostname}.tags` use this
@@ -194,27 +194,31 @@ let
       defaultLogger = option any; # FIXME
     };
 
+    tag-definition = struct "tag-definition" {
+      overlays = list function;
+      implies = option (attrs bool);
+    };
+
+    tag-definitions = attrs tag-definition;
+
     site-dir = struct "site-dir" {
       hosts = attrs function;
       globals = any;  # "junk drawer" for passing things down the hierarchy
 
-      # tag-name -> (list function)
-      #
-      # if `site.hosts.${name}.tags.${tag-name}==true` then
-      # `lib.composeExtensions site.tags.${tag-name}` will be applied to
-      # `site.hosts.${name}`
-      #
-      tags = attrs function;
+      # see above
+      # FIXME: rename this `tag-definitions`
+      tags = tag-definitions;
 
       # subnet-name -> host-name -> ifconn
       subnets = attrs (attrs ifconn);
 
       # sitewide hosts-overlay FinalHosts->PrevHosts->NewHosts
+      # FIXME: rename this `overlays`
       overlay = list function;
     };
 
     tag-implication-relation =
-      lib.pipe tag-definitions [
+      lib.pipe args.tag-definitions [
         (lib.mapAttrs
           (_: overlay: default-tag-values // overlay.implies or {}))
         sixos.lib.relation.closure
@@ -237,4 +241,6 @@ in
     inherit default-tag-values;
     inherit set-tag-values;
     inherit tag-implication-relation;
+    inherit tag-definition;
+    inherit tag-definitions;
   }

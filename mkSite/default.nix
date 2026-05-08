@@ -21,7 +21,7 @@ let
   site-initial = {
     inherit types;
     inherit (site-dir) subnets globals;
-    tag-definitions = tag-definitions;
+    tag-definitions = types.tag-definitions tag-definitions;
 
     # initial host set: populate attrnames from site-dir.hosts
     hosts =
