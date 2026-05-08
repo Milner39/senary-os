@@ -47,7 +47,26 @@ let
         delete-generations = null;
         inherit (prev) name;
         inherit (final) canonical;
-        tags = types.default-tag-values;
+
+        # set system-isFooBar tags
+        tags =
+          types.set-tag-values
+            # This turns each of nixpkgs.lib's predicates "p" into an
+            # attribute "system-${p}" whose value is a boolean
+            # indicating whether or not the predicate matched this
+            # host's `hostPlatform`.  These attribute names will be
+            # intersected with those of site.tags, so if the site
+            # doesn't declare a "system-${p}" tag that's okay.
+            (lib.flip lib.mapAttrs' lib.systems.inspect.predicates
+              (predicate-name: predicate-function:
+                let
+                  system = lib.systems.parse.mkSystemFromString final.canonical;
+                  name = "system-${predicate-name}";
+                  value = predicate-function system;
+                in
+                  lib.nameValuePair name value
+              )
+            );
 
         # consider automatically allowing arguments `before` and `after` which, if
         # present, become `overrideAttrs` applied to `passthru`
@@ -172,28 +191,6 @@ let
         };
       };
 
-  # set system-isFooBar tags
-  set-system-tags = host-final: host-prev: host-prev // {
-    tags =
-      types.set-tag-values (host-prev.tags //
-                            # This turns each of nixpkgs.lib's predicates "p" into an
-                            # attribute "system-${p}" whose value is a boolean
-                            # indicating whether or not the predicate matched this
-                            # host's `hostPlatform`.  These attribute names will be
-                            # intersected with those of site.tags, so if the site
-                            # doesn't declare a "system-${p}" tag that's okay.
-                            lib.flip lib.mapAttrs' lib.systems.inspect.predicates
-                              (predicate-name: predicate-function:
-                                let
-                                  system = lib.systems.parse.mkSystemFromString host-prev.canonical;
-                                  name = "system-${predicate-name}";
-                                  value = predicate-function system;
-                                in
-                                  lib.nameValuePair name value
-                              )
-      );
-  };
-
   build-ifconns-and-interfaces =
     # build the ifconns and interfaces attributes
     (
@@ -310,7 +307,6 @@ let
 
 in [
   init
-  set-system-tags
   build-ifconns-and-interfaces
   kernel-defaults
   add-hostname-and-localhost-to-etc-hosts
