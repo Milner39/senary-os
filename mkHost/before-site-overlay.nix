@@ -114,6 +114,26 @@ let
           allow-unprivileged-pings = final.services.allow-unprivileged-pings {};
           update-activated-profile = final.services.update-activated-profile {};
 
+          # TODO: use --onlyonce mounting option?
+          mounts = {
+            proc = final.services.mount { where = "/proc"; };
+            sys = final.services.mount { where = "/sys"; };
+            dev.pts = final.services.mount { where = "/dev/pts"; };
+            tmp = final.services.mount {
+              where = "/tmp";
+              fstype = "tmpfs";
+              options = [ "nodev" "nosuid" "nr_inodes=0" "mode=1777" "size=1g" ];
+            };
+            dev.shm = final.services.mount {
+              where = "/dev/shm";
+              options = [ "size=50%" "nosuid" "nodev" "mode=1777" ];
+            };
+            "" = final.services.mount {
+              where = "/";
+              options = [ "remount" "rw" ];
+            };
+          };
+
           # FIXME: this is a mess, requires major cleanup
           net.iface = sixos.lib.pipe final.interfaces [
             (lib.mapAttrsToList
@@ -151,28 +171,6 @@ let
           ];
         };
       };
-
-  initialize-mounts = final: prev: infuse prev {
-    # TODO: use --onlyonce mounting option?
-    targets.mounts.__init = {
-      proc = final.services.mount { where = "/proc"; };
-      sys = final.services.mount { where = "/sys"; };
-      dev.pts = final.services.mount { where = "/dev/pts"; };
-      tmp = final.services.mount {
-        where = "/tmp";
-        fstype = "tmpfs";
-        options = [ "nodev" "nosuid" "nr_inodes=0" "mode=1777" "size=1g" ];
-      };
-      dev.shm = final.services.mount {
-        where = "/dev/shm";
-        options = [ "size=50%" "nosuid" "nodev" "mode=1777" ];
-      };
-      "" = final.services.mount {
-        where = "/";
-        options = [ "remount" "rw" ];
-      };
-    };
-  };
 
   # set system-isFooBar tags
   set-system-tags = host-final: host-prev: host-prev // {
@@ -312,7 +310,6 @@ let
 
 in [
   init
-  initialize-mounts
   set-system-tags
   build-ifconns-and-interfaces
   kernel-defaults
