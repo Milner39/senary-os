@@ -82,20 +82,12 @@ let
   set-implied-tags =
     (host-final: host-prev:
       let
-        implied-by =
-          lib.pipe host-final.site.tag-overlays [
-            (lib.mapAttrs
-              (_: overlay: host-final.site.types.default-tag-values // overlay.implies or {}))
-            sixos.lib.relation.closure
-            sixos.lib.relation.make-non-symmetric
-            sixos.lib.relation.inverse
-          ];
         implied-tags =
           lib.flip lib.mapAttrs host-prev.tags
             (target: value:
               if value
               then true
-              else lib.pipe implied-by.${target} [
+              else lib.pipe host-final.site.types.tag-implication-relation.${target} [
                 (lib.filterAttrs (_: v: v))
                 (lib.mapAttrs (affector: _: final-tags.${affector}))
                 (lib.filterAttrs (_: v: v))
@@ -113,6 +105,15 @@ let
       (sixos.lib.pipe host-final.tags [
         (lib.filterAttrs (_: v: v))   # filter out the unset tags
         lib.attrNames                 # gather the attrnames
+
+        # sort tags-to-be-applied according to the closure of the implication
+        # relation; this means that if `isAarch64` implies `isAarch`, the
+        # overlay for `isAarch` will be applied first.
+        (lib.sort
+          (a: b: host-final.site.types.tag-implication-relation.${a}.${b} or false))
+
+        # for debugging
+        #(tags: lib.warn (toString tags) tags)
 
         # for each attrname, get the corresponding overlay
         (lib.map (name:

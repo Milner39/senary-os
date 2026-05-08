@@ -1,5 +1,6 @@
 { lib
 , yants
+, sixos
 , ...
 }:
 
@@ -212,6 +213,15 @@ let
       overlay = list function;
     };
 
+    tag-implication-relation =
+      lib.pipe tag-overlays [
+        (lib.mapAttrs
+          (_: overlay: default-tag-values // overlay.implies or {}))
+        sixos.lib.relation.closure
+        sixos.lib.relation.make-non-symmetric
+        sixos.lib.relation.inverse
+      ];
+
 in
   {
     inherit interface;
@@ -226,4 +236,5 @@ in
     inherit user;
     inherit default-tag-values;
     inherit set-tag-values;
+    inherit tag-implication-relation;
   }
