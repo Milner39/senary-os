@@ -197,6 +197,7 @@ let
     tag-definition = struct "tag-definition" {
       overlays = list function;
       implies = option (attrs bool);
+      after = option (attrs bool);
     };
 
     tag-definitions = attrs tag-definition;
@@ -220,7 +221,23 @@ let
     tag-implication-relation =
       lib.pipe args.tag-definitions [
         (lib.mapAttrs
-          (_: overlay: default-tag-values // overlay.implies or {}))
+          (_: overlay:
+            default-tag-values //
+            lib.filterAttrs (_: v: v) (overlay.implies or {})
+          ))
+        sixos.lib.relation.closure
+        sixos.lib.relation.make-non-symmetric
+        sixos.lib.relation.inverse
+      ];
+
+    tag-application-order-relation =
+      lib.pipe args.tag-definitions [
+        (lib.mapAttrs
+          (_: overlay:
+            default-tag-values //
+            lib.filterAttrs (_: v: v) (overlay.implies or {}) //
+            lib.filterAttrs (_: v: v) (overlay.after or {})
+          ))
         sixos.lib.relation.closure
         sixos.lib.relation.make-non-symmetric
         sixos.lib.relation.inverse

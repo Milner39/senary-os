@@ -97,27 +97,24 @@ let
         # through which it is reachable.  The `tname` is used to identify the target
         # when issuing commands like `six start` and `six stop`.
         #
-        targets = { };
+        targets = {
+          default                  = final.six.mkBundle { };
+          global.mounts            = final.six.mkBundle { passthru.before = [ final.targets.default ]; };
+          global.coldplug          = final.six.mkBundle { };
+          global.set-hostname      = final.six.mkBundle { };
+          global.hwclock           = final.six.mkBundle { };
+          mdevd                    = final.services.mdevd { };
+          mdevd-coldplug           = final.services.mdevd-coldplug { };
+          dnscache                 = final.services.dnscache { };
+          nix-daemon               = final.services.nix-daemon {};
+          # FIXME: logging sshd means it won't start if the root filesystem can't be remounted read-write
+          sshd                     = final.services.sshd {};
+          syslog                   = final.services.syslog {};
+          set-hostname             = final.services.set-hostname { hostname = final.name; };
+          allow-unprivileged-pings = final.services.allow-unprivileged-pings {};
+          update-activated-profile = final.services.update-activated-profile {};
+        };
       };
-
-  initialize-targets =
-    final: prev: infuse prev {
-      targets.default.__init             = final.six.mkBundle { };
-      targets.global.mounts.__init       = final.six.mkBundle { passthru.before = [ final.targets.default ]; };
-      targets.global.coldplug.__init     = final.six.mkBundle { };
-      targets.global.set-hostname.__init = final.six.mkBundle { };
-      targets.global.hwclock.__init      = final.six.mkBundle { };
-      targets.mdevd.__assign             = final.services.mdevd { };
-      targets.mdevd-coldplug.__init      = final.services.mdevd-coldplug { };
-      targets.dnscache.__init            = final.services.dnscache { };
-      targets.nix-daemon.__init          = final.services.nix-daemon {};
-      # FIXME: logging sshd means it won't start if the root filesystem can't be remounted read-write
-      targets.sshd.__init                = final.services.sshd {};
-      targets.syslog.__init              = final.services.syslog {};
-      targets.set-hostname.__init        = final.services.set-hostname { hostname = final.name; };
-      targets.allow-unprivileged-pings.__init = final.services.allow-unprivileged-pings {};
-      targets.update-activated-profile.__init = final.services.update-activated-profile {};
-    };
 
   # FIXME: this is a mess, requires major cleanup
   initialize-interfaces =
@@ -318,7 +315,6 @@ let
 
 in [
   init
-  initialize-targets
   initialize-interfaces
   initialize-mounts
   set-system-tags

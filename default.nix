@@ -119,8 +119,9 @@ let
           (tag-name: site-tag-definition:
             if sixos.tags?${tag-name}
             then {
-              implies = (sixos.tags.${tag-name}.implies or {}) // (site-tag-definition.implies or {});
               overlays = sixos.tags.${tag-name}.overlays ++ site-tag-definition.overlays;
+              implies = (sixos.tags.${tag-name}.implies or {}) // (site-tag-definition.implies or {});
+              after = (sixos.tags.${tag-name}.after or {}) // (site-tag-definition.after or {});
             } else site-tag-definition);
     };
 
