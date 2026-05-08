@@ -113,47 +113,44 @@ let
           set-hostname             = final.services.set-hostname { hostname = final.name; };
           allow-unprivileged-pings = final.services.allow-unprivileged-pings {};
           update-activated-profile = final.services.update-activated-profile {};
+
+          # FIXME: this is a mess, requires major cleanup
+          net.iface = sixos.lib.pipe final.interfaces [
+            (lib.mapAttrsToList
+              (ifname: interface:
+                if interface.type or null == "loopback"
+                then lib.nameValuePair ifname (final.services.netif {
+                  inherit ifname;
+                  inherit (interface) type;
+                  address = "127.0.0.1";
+                  netmask = 8;
+                }) else if interface?subnet
+                   then lib.nameValuePair ifname (
+                     let ifconn = final.ifconns.${interface.subnet};
+                     in if ifconn?wg
+                        then final.services.wireguard ((builtins.removeAttrs ifconn ["ip" "edenPort" "wg"]) // {
+                          inherit ifname;
+                          inherit (ifconn) mtu netmask;
+                          inherit (ifconn.wg) fwmark peers;
+                          private-key-filename = "/etc/wireguard/privatekey";
+                          address = final.ifconns.${interface.subnet}.ip;
+                          listen-port = 201;
+                        })
+                        else final.services.netif ((builtins.removeAttrs ifconn ["ip" "edenPort"]) // {
+                          inherit ifname;
+                        } // lib.optionalAttrs (final.ifconns.${interface.subnet}?ip) {
+                          address = final.ifconns.${interface.subnet}.ip;
+                        }))
+                   else null
+              ))
+            (lib.filter (v: v!=null))
+            (map (lib.flip infuse ({
+              value.__output.passthru.before.__append = [ final.targets.default ];
+            })))
+            lib.listToAttrs
+          ];
         };
       };
-
-  # FIXME: this is a mess, requires major cleanup
-  initialize-interfaces =
-    final: prev: infuse prev {
-      targets.net.iface.__init           = sixos.lib.pipe final.interfaces [
-        (lib.mapAttrsToList
-          (ifname: interface:
-            if interface.type or null == "loopback"
-            then lib.nameValuePair ifname (final.services.netif {
-              inherit ifname;
-              inherit (interface) type;
-              address = "127.0.0.1";
-              netmask = 8;
-            }) else if interface?subnet
-               then lib.nameValuePair ifname (
-                 let ifconn = final.ifconns.${interface.subnet};
-                 in if ifconn?wg
-                    then final.services.wireguard ((builtins.removeAttrs ifconn ["ip" "edenPort" "wg"]) // {
-                      inherit ifname;
-                      inherit (ifconn) mtu netmask;
-                      inherit (ifconn.wg) fwmark peers;
-                      private-key-filename = "/etc/wireguard/privatekey";
-                      address = final.ifconns.${interface.subnet}.ip;
-                      listen-port = 201;
-                    })
-                    else final.services.netif ((builtins.removeAttrs ifconn ["ip" "edenPort"]) // {
-                      inherit ifname;
-                    } // lib.optionalAttrs (final.ifconns.${interface.subnet}?ip) {
-                      address = final.ifconns.${interface.subnet}.ip;
-                    }))
-               else null
-          ))
-        (lib.filter (v: v!=null))
-        (map (lib.flip infuse ({
-          value.__output.passthru.before.__append = [ final.targets.default ];
-        })))
-        lib.listToAttrs
-      ];
-    };
 
   initialize-mounts = final: prev: infuse prev {
     # TODO: use --onlyonce mounting option?
@@ -315,7 +312,6 @@ let
 
 in [
   init
-  initialize-interfaces
   initialize-mounts
   set-system-tags
   build-ifconns-and-interfaces
