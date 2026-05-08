@@ -31,7 +31,9 @@ let
           inherit lib;
           inherit (final) pkgs;
         }).abduco {
-          ttys = final.boot.initrd.ttys;
+          ttys =
+            assert final.boot.initrd.ttys == {} -> throw "you must set boot.initrd.ttys";
+            final.boot.initrd.ttys;
         });
   }));
 

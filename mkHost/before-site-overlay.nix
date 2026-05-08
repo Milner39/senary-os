@@ -38,7 +38,6 @@ let
         gccarch = "";
         users = {};
         groups = {};
-        boot = {};
         etc = {
           hosts = {};
         };
@@ -74,6 +73,43 @@ let
         callPackage = lib.callPackageWith autoArgs;
 
         inherit six;
+
+        boot = {
+          kernel.params = [
+            "root=${final.boot.rootfs.parameter}"
+          ] ++ lib.optionals final.boot.rootfs.first-mount-is-readonly [
+            "ro"
+          ] ++ lib.optionals (final.boot?kernel.console) [
+            (let
+              mkKernelConsoleBootArg =
+                { device
+                , baud ? null }:
+                "console=${device}"
+                + lib.optionalString (baud!=null) ",${toString baud}";
+            in mkKernelConsoleBootArg final.boot.kernel.console)
+          ] ++ [
+            # To avoid having remotely-administered machines stranded at the kernel
+            # panic prompt, let's boot back into the bootloader on a panic after 120
+            # seconds.  FIXME: make this configurable, or omittable.  May involve
+            # making kernel boot parameters into an attrset rather than a list?
+            "panic=120"
+          ];
+          kernel.modules = "${lib.getOutput "modules" final.boot.kernel.package}";
+          kernel.package = final.pkgs.callPackage sixos.mkHost.kernel { };
+          kernel.firmware = [];
+          initrd.contents = { };
+          initrd.ttys = {};
+          rootfs.label = "root";
+          rootfs.parameter = "LABEL=${final.boot.rootfs.label}";
+          rootfs.first-mount-is-readonly = true;
+        };
+
+        # lots of software will malfunction unless both `localhost` and the host's
+        # hostname appear in /etc/hosts.
+        etc.hosts."127.0.0.1" = [
+          "localhost"
+          final.name
+        ];
 
         # A service is a Nix function which can be applied to various arguments,
         # like a callPackage in nixpkgs.  Each `src/by-name/??/${name}/service.nix`
@@ -242,54 +278,6 @@ let
         }
       ));
 
-  kernel-defaults = host-final: host-prev:
-    # default kernel setup
-    infuse host-prev {
-      boot.kernel.params.__init = [
-        "root=${host-final.boot.rootfs.parameter}"
-      ] ++ lib.optionals host-final.boot.rootfs.first-mount-is-readonly [
-        "ro"
-      ] ++ lib.optionals (host-final.boot?kernel.console) [
-        (let
-          mkKernelConsoleBootArg =
-            { device
-            , baud ? null }:
-            "console=${device}"
-            + lib.optionalString (baud!=null) ",${toString baud}";
-        in mkKernelConsoleBootArg host-final.boot.kernel.console)
-      ] ++ [
-        # To avoid having remotely-administered machines stranded at the kernel
-        # panic prompt, let's boot back into the bootloader on a panic after 120
-        # seconds.  FIXME: make this configurable, or omittable.  May involve
-        # making kernel boot parameters into an attrset rather than a list?
-        "panic=120"
-      ];
-      boot.kernel.modules.__init = "${lib.getOutput "modules" host-final.boot.kernel.package}";
-      boot.kernel.package.__init = host-final.pkgs.callPackage sixos.mkHost.kernel { };
-      boot.rootfs.label.__init = "root";
-      boot.rootfs.parameter.__init = "LABEL=${host-final.boot.rootfs.label}";
-      boot.rootfs.first-mount-is-readonly.__init = true;
-
-      # If the bootloader or its configuration is stored on a mountable
-      # filesystem, this should be set to that filesystem's LABEL.  Mainly
-      # used for uboot.
-      boot.loader.filesystem.label.__assign = "boot";
-
-      boot.initrd.ttys.__default = { tty0 = null; };
-      boot.initrd.contents.__default = { };
-      boot.kernel.firmware.__default = [];
-    };
-
-  # lots of software will malfunction unless both `localhost` and the host's
-  # hostname appear in /etc/hosts.
-  add-hostname-and-localhost-to-etc-hosts = host-final: host-prev:
-    infuse host-prev {
-      etc.hosts."127.0.0.1".__append = [
-        "localhost"
-        host-final.name
-      ];
-    };
-
   # The `doas` program is special and privileged in sixos: it *must* be present
   # and is (ideally) the only setuid-root program on the system.
   #
@@ -308,7 +296,5 @@ let
 in [
   init
   build-ifconns-and-interfaces
-  kernel-defaults
-  add-hostname-and-localhost-to-etc-hosts
   set-up-doas-conf
 ] ++ sixos.mkHost.initrd
