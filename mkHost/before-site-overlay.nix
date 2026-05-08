@@ -202,20 +202,6 @@ let
       );
   };
 
-  gross-hack = host-final: host-prev:
-    # yuck, gross layering violation.  can't fix this until tags are allowed to
-    # (monotonically) modify other tags.
-    host-prev // {
-      tags =
-        host-prev.tags // {
-        } // lib.optionalAttrs host-prev.tags.system-isMips64 {
-          is-bootloader-uboot = true;
-        } // lib.optionalAttrs host-prev.tags.system-isPower64 {
-          # powerpc workstations generally have battery-backed hardware clocks
-          is-bootloader-petitboot = true;
-        };
-    };
-
   build-ifconns-and-interfaces =
     # build the ifconns and interfaces attributes
     (
@@ -336,7 +322,6 @@ in [
   initialize-interfaces
   initialize-mounts
   set-system-tags
-  gross-hack
   build-ifconns-and-interfaces
   kernel-defaults
   add-hostname-and-localhost-to-etc-hosts
