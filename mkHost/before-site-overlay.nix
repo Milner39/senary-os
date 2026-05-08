@@ -244,19 +244,19 @@ let
 
   kernel-defaults = host-final: host-prev:
     # default kernel setup
-    let
-      mkKernelConsoleBootArg =
-        { device
-        , baud ? null }:
-        "console=${device}"
-        + lib.optionalString (baud!=null) ",${toString baud}";
-    in infuse host-prev {
+    infuse host-prev {
       boot.kernel.params.__init = [
         "root=${host-final.boot.rootfs.parameter}"
       ] ++ lib.optionals host-final.boot.rootfs.first-mount-is-readonly [
         "ro"
       ] ++ lib.optionals (host-final.boot?kernel.console) [
-        (mkKernelConsoleBootArg host-final.boot.kernel.console)
+        (let
+          mkKernelConsoleBootArg =
+            { device
+            , baud ? null }:
+            "console=${device}"
+            + lib.optionalString (baud!=null) ",${toString baud}";
+        in mkKernelConsoleBootArg host-final.boot.kernel.console)
       ] ++ [
         # To avoid having remotely-administered machines stranded at the kernel
         # panic prompt, let's boot back into the bootloader on a panic after 120
