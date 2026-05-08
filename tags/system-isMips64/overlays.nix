@@ -4,6 +4,7 @@
 , ...
 }:
 
+[
 #
 # TODO(amjoseph): a bunch of this is only applicable to Octeons, not to all
 # MIPSen.
@@ -138,7 +139,7 @@ eject ${DEV}
 # placed within the 16mbyte window between 0.5gb and 0.5gb+16mbyte.
 # Need to figure out why.
 #
-final: prev: infuse prev ((
+(final: prev: infuse prev ((
 { preloadaddr-hex      ?   "22000000"  # where the uImage is placed when first loaded from network or disk
 , fdtaddr-hex          ?      "80000"  # where the devicetree is located when we jump to the kernel
 , loadaddr-hex         ?   "20000000"  # where the kernel is located when we jump to it
@@ -177,7 +178,7 @@ final: prev: infuse prev ((
 let
   pkgs = final.pkgs;
 
-  payload = pkgs.callPackage ../mkHost/uboot ({
+  payload = pkgs.callPackage ../../mkHost/uboot ({
     inherit (final.boot) kernel;
     initrd = final.boot.initrd.image;
     params = final.boot.kernel.params;
@@ -229,4 +230,6 @@ in
   targets.mounts."".__input.options.__append = [ "compress=zstd" ];
 
 }
-) {})
+) {}))
+
+]

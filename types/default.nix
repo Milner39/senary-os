@@ -5,7 +5,7 @@
 }:
 
 # you have to pass the site.tags in, since we derive types from it
-{ tag-overlays }@args:
+{ tag-definitions }@args:
 
 with yants;
 let
@@ -22,7 +22,7 @@ let
     default-tag-values =
       #lib.mapAttrsRecursive
       lib.mapAttrs
-        (path: val: false) tag-overlays;
+        (path: val: false) tag-definitions;
 
     # because `final.host.${hostname}.tags` is a frequent source of infinite
     # recursion, all functions which modify `host.${hostname}.tags` use this
@@ -117,7 +117,7 @@ let
       canonical = string;      # gnu-config triple
       gccarch = string;        # must be "" or else appear in lib.systems.architectures.features
 
-      tags = attrs2yants "tags" args.tag-overlays;
+      tags = attrs2yants "tags" args.tag-definitions;
 
       # in the `final` parameter, site.host.${name}.site == site
       site = option any;
@@ -214,7 +214,7 @@ let
     };
 
     tag-implication-relation =
-      lib.pipe tag-overlays [
+      lib.pipe tag-definitions [
         (lib.mapAttrs
           (_: overlay: default-tag-values // overlay.implies or {}))
         sixos.lib.relation.closure

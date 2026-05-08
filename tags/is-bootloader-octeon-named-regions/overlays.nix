@@ -4,7 +4,7 @@
 , ...
 }:
 
-final: prev: assert true -> throw "this does not work, don't use it"; infuse prev ({
+[(final: prev: assert true -> throw "this does not work, don't use it"; infuse prev ({
 
   # The vendor-supplied bootloader (a u-boot fork) shipped with all Octeon
   # devices communicates the initrd's memory location only via a nonstandard
@@ -46,4 +46,4 @@ final: prev: assert true -> throw "this does not work, don't use it"; infuse pre
     }
   ];
 
-})
+}))]

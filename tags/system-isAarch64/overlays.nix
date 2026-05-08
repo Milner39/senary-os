@@ -4,7 +4,7 @@
 , ...
 }:
 
-final: prev: infuse prev ({
+[(final: prev: infuse prev ({
 
   boot.kernel.image.__assign = "${final.boot.kernel.package}/Image";
   boot.kernel.payload.__assign =
@@ -22,7 +22,7 @@ final: prev: infuse prev ({
         "run bootscript"
       ];
     in
-      final.pkgs.callPackage ../mkHost/uboot ({
+      final.pkgs.callPackage ../../mkHost/uboot ({
         inherit (final.boot) kernel;
         inherit preload-hex    ;
         inherit loadaddr-hex   ;
@@ -38,5 +38,5 @@ final: prev: infuse prev ({
     } // lib.optionalAttrs (final?boot.loader.uboot-commands) {
       inherit (final.boot.loader) uboot-commands;
     });
-})
+}))]
 

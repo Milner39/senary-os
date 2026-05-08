@@ -3,7 +3,7 @@
 , ...
 }:
 
-final: prev: infuse prev {
+[(final: prev: infuse prev {
   boot.loader.update.__assign = let
     inherit (final) pkgs;
   in pkgs.writeShellScript "update-syslinux" ''
@@ -38,4 +38,4 @@ final: prev: infuse prev {
     EOF
     ${pkgs.busybox}/bin/umount /run/six/update-bootloader-mountpoint
   '';
-}
+})]

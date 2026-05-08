@@ -3,7 +3,7 @@
 , ...
 }:
 
-final: prev: infuse prev {
+[(final: prev: infuse prev {
 
   # TODO(amjoseph): get rid of `*.ubootenv` (it has serious shell-quoting
   # issues) and instead run `mkimage` from inside the `update-bootloader`
@@ -28,4 +28,4 @@ final: prev: infuse prev {
       ${final.pkgs.busybox}/bin/echo                      >> /run/six/update-bootloader-mountpoint/normal.ubootenv
       ${final.pkgs.busybox}/bin/umount /run/six/update-bootloader-mountpoint
     '';
-}
+})]

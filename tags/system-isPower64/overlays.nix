@@ -4,15 +4,9 @@
 , ...
 }:
 
-{
+[
 
-implies = {
-  has-hwclock = true;
-};
-
-__functor = _:
-
-final: prev: infuse prev ({
+(final: prev: infuse prev ({
 
   boot.kernel.package.__input.structuredExtraConfig = {
     CRYPTO_AES_GCM_P10.__assign  = "n";
@@ -30,6 +24,6 @@ final: prev: infuse prev ({
   boot.kernel.payload = _: "${final.boot.kernel.package}/vmlinux";
   boot.kernel.image.__assign = "${final.boot.kernel.package}/vmlinux";
 
-});
+}))
 
-}
+]

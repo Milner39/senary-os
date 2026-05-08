@@ -1,0 +1,5 @@
+{ ... }:
+
+{
+  has-hwclock = true;
+}

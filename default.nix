@@ -113,16 +113,15 @@ let
   site =
     sixos.mkSite {
       inherit site-dir;
-      tag-overlays =
+      tag-definitions =
         sixos.tags //
         lib.flip lib.mapAttrs site-dir.tags
-          (tag-name: site-overlay:
+          (tag-name: site-tag-definition:
             if sixos.tags?${tag-name}
-            then
-              assert (sixos.tags.${tag-name}?__functor || site-overlay?__functor) ->
-                     throw "this case isn't handled yet (tag ${tag-name})";
-              lib.composeExtensions sixos.tags.${tag-name} site-overlay
-            else site-overlay);
+            then {
+              implies = (sixos.tags.${tag-name}.implies or {}) // (site-tag-definition.implies or {});
+              overlays = sixos.tags.${tag-name}.overlays ++ site-tag-definition.overlays;
+            } else site-tag-definition);
     };
 
 in

@@ -3,15 +3,6 @@
 , ...
 }:
 
-{
-
-implies = {
-  has-hwclock = true;
-  system-isAarch64 = true;
-};
-
-__functor = _:
-
 # TODO: need /dev/input/by-path in order to find the keyboard for actkbd
 
 # verify: lidswitch -> s2ram
@@ -43,7 +34,8 @@ __functor = _:
 #  - 2e365dec65d18bf1e0aec823788a9604b2a26326 possible gpu driver crashes
 #  - fbe970a2b9b65425d9fb98882c0ad12d1b466390 proxyclient
 
-final: prev:
+[
+(final: prev:
 
 let
   nixos-apple-silicon-support = builtins.fetchGit {
@@ -141,7 +133,7 @@ infuse prev {
     (final.pkgs.runCommand "asahi-peripheral-firmware" {} ''
       mkdir $out
       cd $out
-      tar xvzf ${../../site/misc/asahi/asahi-peripheral-firmware.tar.gz}
+      tar xvzf ${../../../site/misc/asahi/asahi-peripheral-firmware.tar.gz}
     '')
   ];
 
@@ -149,5 +141,7 @@ infuse prev {
   targets.cpufreq.__input.governor.__default = "schedutil";
 
   targets.speakersafetyd.__init = final.services.speakersafetyd { };
-};
-}
+})
+
+]
+

@@ -9,19 +9,19 @@
 
 {
   site-dir,
-  tag-overlays,
+  tag-definitions,
 }:
 
 let
   performance-troubleshooting = false;
 
-  types = sixos.types { inherit tag-overlays; };
+  types = sixos.types { inherit tag-definitions; };
 
   # initial site
   site-initial = {
     inherit types;
     inherit (site-dir) subnets globals;
-    tag-overlays = tag-overlays;
+    tag-definitions = tag-definitions;
 
     # initial host set: populate attrnames from site-dir.hosts
     hosts =

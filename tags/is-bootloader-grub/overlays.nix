@@ -3,7 +3,7 @@
 , ...
 }:
 
-final: prev: infuse prev {
+[(final: prev: infuse prev {
 
 /*
   # TODO(amjoseph): get rid of `*.ubootenv` (it has serious shell-quoting
@@ -31,4 +31,4 @@ final: prev: infuse prev {
     ''
 "";
 */
-}
+})]

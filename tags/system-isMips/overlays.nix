@@ -4,9 +4,11 @@
 , ...
 }:
 
+[
+
 # FIXME: move all of this edgerouter-specific stuff into `plat-er{4,6,8,12}.nix`
 # since it doesn't apply to any other MIPSen
-final: prev: infuse prev ({
+(final: prev: infuse prev ({
   boot.kernel.package.__input.patches.__append = [
     rec {
       name = "110-er200-ethernet_probe_order.patch";
@@ -191,4 +193,6 @@ final: prev: infuse prev ({
     PPP_SYNC_TTY = "m";
     #HDLC_PPP = "m";
   };
-})
+}))
+
+]
