@@ -211,6 +211,9 @@ in
   boot.kernel.console.device.__assign = "ttyS0";
   boot.kernel.console.baud.__assign   = 115200;
 
+  # no modules needed for mips devices (custom kernel), and it takes too much space
+  boot.initrd.image.__input.contents."lib/modules".__assign = null;
+
   # The Linux octeon MMC drivers seem to take a very long time to notice that
   # the device exists... like one or two full seconds after the
   # kernel-to-userspace handoff.  So we have to wait for the root device to

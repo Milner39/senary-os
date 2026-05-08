@@ -1,0 +1,5 @@
+{ ... }:
+
+{
+  has-initrd-cryptsetup = true;
+}

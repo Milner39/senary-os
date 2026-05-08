@@ -49,6 +49,13 @@ let
         # set system-isFooBar tags
         tags =
           types.set-tag-values
+            ( {
+              has-initrd = true;
+              has-initrd-abduco = true;
+              has-initrd-lvm = true;
+              has-initrd-mount-root = true;
+              has-initrd-switch-root = true;
+            } //
             # This turns each of nixpkgs.lib's predicates "p" into an
             # attribute "system-${p}" whose value is a boolean
             # indicating whether or not the predicate matched this
@@ -64,7 +71,7 @@ let
                 in
                   lib.nameValuePair name value
               )
-            );
+            ));
 
         # consider automatically allowing arguments `before` and `after` which, if
         # present, become `overrideAttrs` applied to `passthru`
@@ -94,10 +101,9 @@ let
             "panic=120"
           ];
           kernel.modules = "${lib.getOutput "modules" final.boot.kernel.package}";
+          kernel.modules-blacklist = [];
           kernel.package = final.pkgs.callPackage sixos.mkHost.kernel { };
           kernel.firmware = [];
-          initrd.contents = { };
-          initrd.ttys = {};
           rootfs.label = "root";
           rootfs.parameter = "LABEL=${final.boot.rootfs.label}";
           rootfs.first-mount-is-readonly = true;
@@ -238,6 +244,7 @@ let
         };
       };
 
+  # FIXME: inline this
   build-ifconns-and-interfaces =
     # build the ifconns and interfaces attributes
     (
@@ -292,4 +299,4 @@ let
 in [
   init
   build-ifconns-and-interfaces
-] ++ sixos.mkHost.initrd
+]
