@@ -28,20 +28,21 @@
       # FIXME this tag should conflict with is-nfsroot...
       lib.optionalAttrs (!final.tags.is-nfsroot) {
       # FIXME: at nextboot-time, verify that there is a luks volume with the label `boot`
-      "early/run".__append = [''
+      "early/run".__append = [(''
         for DEV in $(blkid | grep 'TYPE="crypto_LUKS"' | sed 's_^\([^\:]*\):.*$_\1_;t;d'); do
             # we're relying here on the fact that the keyfile passed by the
             # pre-kexec initrd will only work on one of the volumes...
             if cryptsetup luksDump $DEV | grep -q '^Label:\W*\(${
               lib.concatStringsSep "\\|" final.boot.initrd.encrypted-root.labels
             }\)$'; then
+                DMSETUPNAME=$(echo $DEV | sed s_.*/__)
                 cryptsetup luksOpen ${
                   lib.optionalString (final.boot.initrd.encrypted-root.keyfile or null != null)
                     "--key-file ${final.boot.initrd.encrypted-root.keyfile}"
-                } $DEV ${final.boot.initrd.encrypted-root.dmsetup-name}
+                } $DEV ${final.boot.initrd.encrypted-root.dmsetup-name}-$DMSETUPNAME
             fi
         done
-      ''];
+      '')];
       "sbin/cryptsetup" = _: let
         cryptsetup =
           infuse final.pkgs.pkgsStatic.cryptsetup ({
