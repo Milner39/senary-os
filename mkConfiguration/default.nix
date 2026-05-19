@@ -458,7 +458,7 @@ let
       ${pkgs.nix}/bin/nix-env -p /nix/var/nix/profiles/fallbackboot --delete-generations ${lib.escapeShellArg delete-generations} || true
   '' + ''
     fi
-  '' + lib.optionalString (boot?loader.update) ''
+  '' + lib.optionalString (boot.loader.update or null != null) ''
     if [ -e /nix/var/nix/profiles/fallbackboot ]; then
       ${boot.loader.update} /nix/var/nix/profiles/nextboot /nix/var/nix/profiles/fallbackboot
     else
