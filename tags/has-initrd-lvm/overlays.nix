@@ -12,11 +12,13 @@
       ''];
       "sbin/dmsetup"    = _: "${lib.getBin pkgs.pkgsStatic.lvm2}/bin/dmsetup.static";
       "sbin/lvm"        = _: "${lib.getBin pkgs.pkgsStatic.lvm2}/bin/lvm";
+      "sbin/btrfs"      = _: "${lib.getBin pkgs.pkgsStatic.btrfs-progs}/bin/btrfs";
     };
 
     # We try first with `-o degraded` to acommodate booting from btrfs raid1
     # where only one of the volumes was decrypted
     boot.initrd.mount-root.__default = [''
+      /sbin/btrfs dev scan || true
       mount -o ro,degraded LABEL=boot /root || \
       mount -o ro          LABEL=boot /root || \
       exit 1
