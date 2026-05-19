@@ -3,19 +3,12 @@
 , ...
 }:
 
-# TODO: need /dev/input/by-path in order to find the keyboard for actkbd
-
-# verify: lidswitch -> s2ram
-# verify: sleep key (f5) -> s2ram
-
 # FIXME: I don't think grub-boot is respecting boot.kernel.params
 
 # TODO: make sure I am getting hardware accelerated video
 # TODO: pkgs.mesa-asahi-edge is the experimental GPU driver
 
-# TODO: pkgs.speakersafetyd
-#  - "the speakers are disabled to prevent damaging the hardware"
-#  - requires a user which belongs to the audio group
+# TODO: pkgs.speakersafetyd isn't working
 # TODO: headphone jack is set to zero volume at boot; need to `amixer -c 0 set "Jack DAC" 100%`
 
 # TODO: Figure out some kind of video-out for traveling
