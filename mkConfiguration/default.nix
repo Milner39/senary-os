@@ -294,16 +294,7 @@ let
       # first activation after a new bootup
       ${pkgs.busybox}/bin/ln -sfT /run/current-system/sw /run/opengl-driver
   '' +
-# TODO (from nixos)
-#
-#   mkdir -m 1777 /var/tmp
-#
-#   ${pkgs.busybox}/bin/mkdir -p /var/empty
-#   ${pkgs.e2fsprogs}/bin/chattr -f -i /var/empty || true
-#   ${pkgs.findutils}/bin/find /var/empty -mindepth 1 -delete
-#   ${pkgs.busybox}/bin/chmod 0555 /var/empty
-#   ${pkgs.busybox}/bin/chown root:root /var/empty
-#   ${pkgs.e2fsprogs}/bin/chattr -f +i /var/empty || true
+# TODO (from nixos): mkdir -m 1777 /var/tmp
   ''
       # root filesystem is not yet initialized
       if [[ ! -e /etc/passwd && ! -L /etc/passwd ]]; then
@@ -345,6 +336,11 @@ let
         ${pkgs.busybox}/bin/mkdir -p $RWMOUNT/dev
         ${pkgs.busybox}/bin/mkdir -p $RWMOUNT/proc
         ${pkgs.busybox}/bin/mkdir -p $RWMOUNT/run
+
+        ${pkgs.busybox}/bin/mkdir -p $RWMOUNT/var/empty
+        ${pkgs.busybox}/bin/chmod 0555 $RWMOUNT/var/empty
+        ${pkgs.busybox}/bin/chown 0:0 $RWMOUNT/var/empty
+        ${pkgs.e2fsprogs}/bin/chattr -f +i $RWMOUNT/var/empty
 
         ${pkgs.busybox}/bin/umount $RWMOUNT
       fi
