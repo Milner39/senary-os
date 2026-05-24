@@ -202,6 +202,7 @@ let
      ln -sT boot/firmware $out/firmware    # to match NixOS path burned-in to nixpkgs
    '';
 
+  # We will symlink from `$out/${name}` to `${value}` for each of these.
   extra-links = {
     "six/s6-rc/source" = source;
     "six/s6-rc/db" = "${compiled}/six/s6-rc/db";
