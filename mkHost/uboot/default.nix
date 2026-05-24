@@ -35,6 +35,7 @@
 assert append-dtb-to-kernel -> dtb!=null;
 assert linux-command-line != null -> dtb != null;
 assert (initrd-ceiling-hex!=null) == (initrd-alignment-hex!=null);
+assert (initrd-compression == "none" || initrd-compression == "gzip");
 
 stdenv.mkDerivation {
   pname = "kernel${lib.optionalString (initrd!=null) "+initrd"}${lib.optionalString (dtb!=null) "+dtb"}";
