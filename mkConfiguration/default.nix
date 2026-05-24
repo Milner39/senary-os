@@ -167,7 +167,7 @@ let
         else boot.kernel.firmware;
     in
    ''
-     mkdir $out/boot
+     mkdir -p $out/boot
      ln -sT ${boot.kernel.payload} $out/boot/kernel
    '' + lib.optionalString (boot.kernel.modules != null) ''
      ln -sT ${boot.kernel.modules} $out/boot/kernel-modules
@@ -195,7 +195,7 @@ let
    ''
      cp -a ${modprobe-wrapped}/bin/modprobe-wrapped $out/boot/modprobe-wrapped
    '' + lib.optionalString (firmware == null) ''
-     mkdir $out/boot/firmware
+     mkdir -p $out/boot/firmware
    '' + lib.optionalString (firmware != null) ''
      ln -sT ${firmware} $out/boot/firmware
    '' + ''
@@ -370,11 +370,7 @@ let
     #!${pkgs.runtimeShell} -ex
     mkdir -p /run/kexec
     chmod 0700 /run/kexec
-  ''
-  # FIXME(amjoseph): start requiring that boot.initrd.image is *uncompressed*;
-  # compress on-the-fly when writing it to /run
-  + ''
-    ${pkgs.busybox}/bin/zcat ${boot.initrd.image} > /run/kexec/initrd
+    cp ${boot.initrd.image} > /run/kexec/initrd
   ''
 
   # FIXME(amjoseph): provide a more general "copy these files into the initrd
@@ -386,11 +382,10 @@ let
   ''
 
   + ''
-    ${pkgs.busybox}/bin/gzip /run/kexec/initrd
     ${pkgs.kexec-tools}/bin/kexec ${lib.escapeShellArgs ([
       "--load"
     ] ++ lib.optionals (boot?initrd.image) [
-      "--initrd=/run/kexec/initrd.gz"
+      "--initrd=/run/kexec/initrd"
     ] ++ lib.optionals (boot?kernel.dtb) [
       "--dtb=${boot.kernel.dtb}"
     ])} --command-line=${

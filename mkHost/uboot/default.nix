@@ -79,8 +79,10 @@ stdenv.mkDerivation {
   #
   # initrd
   #
-  + ''
+  + lib.optionalString (initrd-compression == "none") ''
     cp ${initrd} initrd
+  '' + lib.optionalString (initrd-compression == "gzip") ''
+    ${buildPackages.busybox}/bin/busybox gzip -c < ${initrd} > initrd
   '' + lib.optionalString (initrd-alignment-hex != null) ''
     chmod u+w initrd
     KERNEL_ADDR=$((0x${loadaddr-hex}))

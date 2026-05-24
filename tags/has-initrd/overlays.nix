@@ -14,10 +14,6 @@
       inherit (final) pkgs;
     })
       .minimal.override {
-
-        # FIXME: eliminate this
-        compress = "gzip";
-
         contents = final.boot.initrd.contents // {
           # ensure that early/fail cannot "fall through" -- exec a shell instead
           "early/fail" = (final.boot.initrd.contents."early/fail" or []) ++ [''
