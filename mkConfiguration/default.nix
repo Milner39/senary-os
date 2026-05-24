@@ -369,9 +369,9 @@ let
 
     cat > $out/bin/kexec-load <<\EOF
     #!${pkgs.runtimeShell} -ex
-    mkdir -p /run/kexec
-    chmod 0700 /run/kexec
-    cp ${boot.initrd.image} > /run/kexec/initrd
+    ${pkgs.busybox}/bin/busybox mkdir -p /run/kexec
+    ${pkgs.busybox}/bin/busybox chmod 0700 /run/kexec
+    ${pkgs.busybox}/bin/busybox cp ${boot.initrd.image} /run/kexec/initrd
   ''
 
   # FIXME(amjoseph): provide a more general "copy these files into the initrd
