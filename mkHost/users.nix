@@ -162,7 +162,7 @@ let
   mkUser = pkgs: groups: user:
     let
       inherit (user) name;
-      hashed-password = user.hashed-password or "!";
+      hashed-password = user.hashed-password or "*";
       uid = toString (user.uid or (throw "impossible"));
       gid = toString (user.gid or (if groups?name then groups.name else uid));
       comment = user.comment or "";
