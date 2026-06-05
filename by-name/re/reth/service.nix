@@ -3,10 +3,12 @@
 , six
 , targets
 , package ? pkgs.reth
+, binary-name ? "reth"
 , user ? "_reth"
 , group ? "_reth"
 , dataDir ? "/var/service/reth"
 , extraConfig ? {}
+, early-args ? [ "node" ]
 }:
 
 let
@@ -41,8 +43,10 @@ six.mkFunnel {
   */
 
   run.argv = [
-    "${package}/bin/reth" "node"
-  ] ++ six.lib.attrsToFlags config;
+    "${package}/bin/${binary-name}"
+  ]
+  ++ early-args
+  ++ six.lib.attrsToFlags config;
 
   passthru = {
     after = [ targets.global.coldplug ];
