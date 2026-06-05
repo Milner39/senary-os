@@ -4,7 +4,7 @@
 , targets
 , host
 , flush-old-ruleset ? true
-, ruleset ? throw "you must provide a string as argument `ruleset` to the firewall service"
+, ruleset ? ""
 , forwards ? []
 , tables ? []
 
