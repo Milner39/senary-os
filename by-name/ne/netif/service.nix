@@ -1,4 +1,5 @@
 { lib
+, host
 , pkgs
 , six
 , targets
@@ -180,8 +181,10 @@ in if dhcp
        ${pkgs.iproute2}/bin/ip addr change ${address}/${builtins.toString netmask} dev ${ifname}
      '' + lib.optionalString (gw == true) ''
        ${pkgs.iproute2}/bin/ip route replace default           dev ${ifname}
-     '' + lib.optionalString (gw != true && gw != null) ''
+     '' + lib.optionalString (gw != true && gw != false && gw != null) ''
        ${pkgs.iproute2}/bin/ip route replace default via ${gw} dev ${ifname} onlink
+     '' + lib.optionalString (host?etc.iproute2.rt_tables."defaultroute-${ifname}") ''
+       ${pkgs.iproute2}/bin/ip route replace default table defaultroute-${ifname} ${lib.optionalString (lib.isString gw) "via ${gw}"} dev ${ifname} ${lib.optionalString (lib.isString gw) "onlink"}
      '' + lib.optionalString (post-up != null) ''
        ${post-up}
      '');
