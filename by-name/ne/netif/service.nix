@@ -8,7 +8,12 @@
 , ifname  ? throw "missing ifname"
 , address ? null
 , netmask ? if address==null then null else throw "missing netmask"
-, gw ? if dhcp then true else null    # set to `true` to use the device itself (with no gateway) as the default route
+
+# `true`  = use the device itself (with no gateway) as the default route
+# `false` = no default route
+# string  = IP address to use as default route
+, gw ? if dhcp then true else null
+
 , mtu ? null
 , mac ? null       # a hardware MAC address to use
 , attempts ? 3     # number of DHCP requests to send before giving up
