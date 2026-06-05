@@ -41,60 +41,51 @@ let
     then forward-queries-to
     else throw "you cannot leave both forward-queries-to and root-servers unspecified";
 
+  servers-file =
+    pkgs.writeText "dnscache-servers"
+      (lib.concatStringsSep "\n" servers);
+in
+
+six.mkFunnel {
+  inherit user group;
+  do-not-call-setuid = true;
+
+  data = {
+  };
+
   env = {
     FORWARDONLY = if forward-queries-to == null then "0" else "1";
     UID = user;
     GID = group;
     CACHESIZE = toString cache-size;
-    ROOT = dnscache-root;
     IP = listen-ip;
     IPSEND = outbound-ip;
+    ROOT = "./data";
   };
 
-  command = lib.escapeShellArgs ([
-    "${pkgs.busybox}/bin/busybox"
-    "env"
-  ] ++ (lib.mapAttrsToList (k: v: "${k}=${v}") env) ++ [
-    "${package}/bin/dnscache"
-  ]);
+  run.pre-argvs = [
+    ( six.util.execline.ignore-exit-code [
+      "${pkgs.busybox}/bin/busybox" "chattr" "-f" "-i" "/etc/resolv.conf"
+    ])
+    [ "${pkgs.execline}/bin/redirfd" "-w" "1" "/etc/resolv.conf"
+      "${pkgs.busybox}/bin/busybox" "echo" "nameserver 127.0.0.1" ]
+    [ "${pkgs.busybox}/bin/busybox" "chattr" "+i" "/etc/resolv.conf" ]
 
-  dnscache-root = "/run/dnscache/root";
-in
+    # dnscache seems to get upset if these are symlinks rather than files...
 
-six.mkFunnel {
+    # FIXME apparently this is a non-disableable filtering mechanism for client IPs,
+    # but it can only be configured at 8-bit-netmask-chunk granularity?
+    [ "${pkgs.busybox}/bin/mkdir" "-p" "data/ip/" ]
+    [ "${pkgs.busybox}/bin/touch" "data/ip/127.0.0.1" ]
+
+    # TODO: validate that these are numerical ipv4 addresses at eval-time
+    [ "${pkgs.busybox}/bin/mkdir" "-p" "data/servers/" ]
+    [ "${pkgs.busybox}/bin/cp" servers-file "data/servers/@" ]
+  ];
+
+  run.redirect-stdin-from = "/dev/urandom";
+
+  run.argv = [ "${package}/bin/dnscache" ];
+
   passthru.after = [ targets.global.coldplug ]; # for /dev/urandom
-  run = pkgs.writeScript "run"
-(''
-#!${pkgs.runtimeShell}
-exec 2>&1
-${pkgs.busybox}/bin/busybox rm -rf ${dnscache-root}
-${pkgs.busybox}/bin/busybox mkdir -p ${dnscache-root}
-'' +
-# FIXME apparently this is a non-disableable filtering mechanism for client IPs,
-# but it can only be configured at 8-bit-netmask-chunk granularity?
-''
-${pkgs.busybox}/bin/busybox mkdir -p ${dnscache-root}/ip
-${pkgs.busybox}/bin/busybox touch ${dnscache-root}/ip/127.0.0.1
-'' +
-''
-${pkgs.busybox}/bin/busybox rm -rf ${dnscache-root}/servers
-${pkgs.busybox}/bin/busybox mkdir -p ${dnscache-root}/servers
-${# TODO: validate that these are numerical ipv4 addresses at eval-time
-  lib.concatStrings (map (ip: ''
-    echo ${lib.escapeShellArg ip} >> ${dnscache-root}/servers/@
-  '') servers)
-}
-
-${pkgs.busybox}/bin/busybox chown -R ${user}:${group} ${dnscache-root}
-
-'' +
-# FIXME: move this somewhere else
-''
-${pkgs.busybox}/bin/busybox chattr -i /etc/resolv.conf || true &>/dev/null
-echo 'nameserver 127.0.0.1' > /etc/resolv.conf
-${pkgs.busybox}/bin/busybox chattr +i /etc/resolv.conf
-'' +
-''
-exec ${command} < /dev/urandom
-'');
 }
