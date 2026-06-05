@@ -182,11 +182,12 @@ in
     ${lib.pipe data [
       (lib.mapAttrs (k: v: if lib.isInt v then toString v else v))
       (lib.mapAttrsToList (k: v:
-        if lib.isString v
-        then "echo ${lib.escapeShellArg v} > $out/data/${lib.escapeShellArg k}"
-        else if (lib.isDerivation v || lib.isPath v)
-        then "ln -s ${v} $out/data/${lib.escapeShellArg k}"
-        else throw "when data is an attrset, attrvalues must be strings, ints, paths, or derivations; encountered ${lib.typeOf v} at ${k}"
+        "mkdir -p $out/data/${lib.escapeShellArg (builtins.dirOf k)}; " +
+        (if lib.isString v
+         then "echo ${lib.escapeShellArg v} > $out/data/${lib.escapeShellArg k}"
+         else if (lib.isDerivation v || lib.isPath v)
+         then "ln -s ${v} $out/data/${lib.escapeShellArg k}"
+         else throw "when data is an attrset, attrvalues must be strings, ints, paths, or derivations; encountered ${lib.typeOf v} at ${k}")
       ))
       (lib.concatStringsSep "\n")
     ]}
