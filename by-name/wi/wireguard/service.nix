@@ -49,6 +49,8 @@ services.netif {
     # since we need to do a `modprobe wireguard`, we have to wait for the
     # coldplug to finish first
     after = (passthru.after or []) ++ [ targets.global.coldplug ];
+  } // lib.optionalAttrs (fwmark != null) {
+    fwmark-applied-to-wrapped-packets = fwmark;
   };
   pre-add = pre-add + ''
     ${modprobe-command} wireguard
