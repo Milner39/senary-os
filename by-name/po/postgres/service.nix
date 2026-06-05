@@ -6,6 +6,10 @@
 , group ? "_postgres"
 , data_directory ? throw "you must specify data_directory"
 , extraConfig ? {}
+
+# Attrset whose keys are usernames (from /etc/passwd) and whose values are
+# postgres usernames.
+, ident-file-for-local-unix-socket ? { root = "postgres"; }
 }:
 
 let
@@ -28,12 +32,12 @@ let
       local       all       all  peer          map=postgres-map
       '';
     ident_file = pkgs.writeText "postgres-ident_file"
-      # map-name   system-username   database-username
-      ''
-      postgres-map root              postgres
-      postgres-map _postgres         postgres
-      postgres-map _bitmagnet        postgres
-      '';
+      (lib.pipe ident-file-for-local-unix-socket [
+        (lib.mapAttrsToList
+          (system-username: database-username:
+            "postgres-map ${system-username} ${database-username}"))
+        (lib.concatStringsSep "\n")
+      ]);
   } // extraConfig);
 in
 
