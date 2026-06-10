@@ -57,8 +57,9 @@ six.mkFunnel {
     /*
     pre-argvs = [
       # TODO: do this only if the directory exists and is empty?
-      #"${pkgs.doas}/bin/doas" "-u" "${user}" "${pkgs.postgresql}/bin/initdb" "-D" "${data_directory}" "-U" "postgres"
+      #"${pkgs.doas}/bin/doas" "-u" "${user}" "${pkgs.postgresql}/bin/initdb" "-D" "${data_directory}" "-U" "_postgres"
       #"${pkgs.doas}/bin/doas" "-u" "${user}" "${pkgs.postgresql}/bin/createuser" "-s" "postgres"
+      #"${pkgs.doas}/bin/doas" "-u" "${user}" "${pkgs.postgresql}/bin/createdb" "-U" "postgres" <db-name>
     ];
     */
     argv = [
