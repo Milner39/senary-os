@@ -24,7 +24,7 @@ six.mkFunnel {
 
   inherit (execution-layer-node) user group;
   env = {
-    NIX_SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
+    SSL_CERT_FILE = "/run/current-system/etc/pki/tls/certs/ca-bundle.crt";
   };
 
   mkdir = {
