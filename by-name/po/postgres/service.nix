@@ -50,7 +50,7 @@ six.mkFunnel {
   };
 
   mkdir = {
-    "/run/postgresql" = "0770";
+    "/run/postgresql" = "0775";
   };
 
   run = {
