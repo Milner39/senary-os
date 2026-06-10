@@ -13,7 +13,6 @@
 
 let
   config = {
-    full = null;
     datadir = dataDir;
     "authrpc.jwtsecret" = "/run/reth/secret.jwt";
     "authrpc.addr" = "127.0.0.1";
