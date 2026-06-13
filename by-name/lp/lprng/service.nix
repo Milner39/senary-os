@@ -6,30 +6,67 @@
 , lockdir ? "/run/lpd/lock"    # lpd lockfiles will be this string suffixed with "." and the port number
 , user ? "_lprng"              # username under which lpd will run
 , group ? "_lprng"             # groupid under which lpd will run
-, printer ? {
-  ip = throw "you must provide printer.ip";
-  port = throw "you must provide printer.port";
-}
-, filter ? throw "you must provide a print filter (use pkgs.writeScript)"
+, printers ? []
+, default-printer-name ? "lp"
 , package ? pkgs.p.lprng
 , extraConf ? {}
+, yants
 }:
-let
 
-  printcap = pkgs.writeText "printcap" ''
-    lp|double-sided brother laser:\
-        :lp=${toString printer.port}@${printer.ip}:\
-        :if=${filter}:\
-        :sd=${spooldir}/lp:\
-        :pl#66:\
-        :pw#80:\
-        :pc#150:\
-        :mx#0:\
-        :sh:
-  '';
+assert lib.isList printers;
+
+let
+  types = with yants; {
+    printer = struct "printer" {
+      name = string;
+      description = option string;
+      ip = string;
+      port = int;
+      filter = either string drv;
+      extraConf = option (attrs any);  # should use a more specific type here
+    };
+  };
+
+  printcap =
+    lib.pipe printers [
+
+      # First, check the types
+      (lib.map types.printer)
+
+      # Turn each printer into an attrset
+      (lib.map (printer: {
+        _name = printer.name;
+        _description = printer.description or "printer";
+        lp   = "${toString printer.port}@${printer.ip}";
+        "if" = "${printer.filter}";
+        sd   = "${spooldir}/${printer.name}";
+        pl   = "#66";
+        pw   = "#80";
+        pc   = "#150";
+        mx   = "#0";
+        sh   = null;
+      } // (printer.extraConf or {})))
+
+      # Then turn each attrset into a list of lines in printcap-format
+      (lib.map (printer:
+        [ "${printer._name}|${printer._description}:\\\n" ] ++
+        (lib.pipe printer [
+          (lib.filterAttrs (name: _: !(lib.hasPrefix "_" name)))
+          (lib.mapAttrsToList (key: val:
+            "    :${key}${lib.optionalString (val!=null) "=${toString val}"}:\\\n"))
+        ])))
+
+      # concatenate the lines
+      (lib.map lib.concatStrings)
+
+      # now we have a list of printer definitions; concatenate those
+      lib.concatStrings
+
+      (pkgs.writeText "printcap")
+    ];
 
   lpd_conf_options =
-    { default_printer = "lp"
+    { default_printer = default-printer-name
 
     ; default_tmp_dir = "/tmp"                # default temp directory for temp files
     ; server_tmp_dir = "/tmp"                 # server temporary file directory
@@ -98,8 +135,11 @@ six.mkFunnel {
 
     [ "${pkgs.busybox}/bin/mkdir" "-p" spooldir ]
     [ "${pkgs.busybox}/bin/chown" "${user}:${group}" spooldir ]
-    [ "${pkgs.busybox}/bin/mkdir" "-p" "-m" "0700" "${spooldir}/${lpd_conf_options.default_printer}" ]
-    [ "${pkgs.busybox}/bin/chown" "${user}:${group}" "${spooldir}/${lpd_conf_options.default_printer}" ]
+
+  ] ++ (lib.concatMap (printer: [
+    [ "${pkgs.busybox}/bin/mkdir" "-p" "-m" "0700" "${spooldir}/${printer.name}" ]
+    [ "${pkgs.busybox}/bin/chown" "${user}:${group}" "${spooldir}/${printer.name}" ]
+  ]) printers) ++ [
 
     [ "${pkgs.busybox}/bin/mkdir" "-p" lockdir ]
     [ "${pkgs.busybox}/bin/chown" "${user}:${group}" lockdir ]
