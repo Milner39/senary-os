@@ -123,7 +123,15 @@ infuse prev {
     nixos-asahi-kernel.boot.initrd.availableKernelModules;
 
   boot.kernel.package.__assign =
-    nixos-asahi-kernel.boot.kernelPackages.kernel;
+    lib.makeOverridable
+      ({ patches }:
+        let kernelPackages =
+              nixos-asahi-kernel.boot.kernelPackages.override (previousArgs: {
+                _kernelPatches = (previousArgs._kernelPatches or []) ++ patches;
+              });
+        in
+          kernelPackages.kernel)
+      { patches = []; };
 
   boot.kernel.firmware.__append = [
     (final.pkgs.runCommand "asahi-peripheral-firmware" {} ''
