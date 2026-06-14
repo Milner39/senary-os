@@ -104,6 +104,9 @@ infuse prev {
   boot.kernel.params.__append = [
     "earlycon"
 
+    # FIXME: this is important enought that it should be compiled-in to the
+    # kernel image.
+    #
     # Scary comment copied from nixos-apple-silicon:
     #
     # Apple's SSDs are slow (~dozens of ms) at processing flush requests which
