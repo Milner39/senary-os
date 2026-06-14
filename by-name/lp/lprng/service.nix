@@ -75,7 +75,7 @@ let
 
     ; lockfile = "${lockdir}/lockfile"        # lpd lock file
 
-    ; sd = "${spooldir} /%P"                  # spool directory (only ONE printer per directory!)
+    ; sd = "${spooldir}/%P"                   # spool directory (only ONE printer per directory!)
 
     ; lpd_printcap_path = printcap            # lpd printcap path
     ; printcap_path = printcap                # /etc/printcap files
