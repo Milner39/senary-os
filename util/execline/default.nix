@@ -11,12 +11,19 @@ let
 
   inherit (lib) all isList isInt isFloat isString isDerivation isPath;
 
-  isExeclineLeaf =
+  isArg =
     arg:
-    arg == [] ||
     isPath arg ||
     isString arg ||
     isDerivation arg;
+
+  isExeclineLeaf =
+    arg:
+    arg == [] ||
+    isArg arg;
+
+  isArgv = argv:
+    lib.isList argv && lib.all isArg argv;
 
   # returns true iff the argument consists of only lists and strings
   isExecline =
@@ -109,6 +116,15 @@ let
     ] ++ lib.toList argv;
 
 in {
-  inherit isExecline assertIsExecline loop seq ignore-exit-code ifthenelse discard-stdout;
+  inherit
+    isArgv
+    isExecline
+    assertIsExecline
+    loop
+    seq
+    ignore-exit-code
+    ifthenelse
+    discard-stdout
+  ;
 }
 
