@@ -23,6 +23,10 @@ assert down!=null -> six.util.execline.assertIsExecline down;
 # TODO: prefix all runscripts with `s6-cd /run/booted-system/six/scandir/$1`?
 # That way relative path references to ./data will use a path which gets updated
 # by configuration activations.
+#
+# FIXME: when s6-rc-update is run, *all* the /run/service/data directories get
+# blanked out, even if the service is restarted.  So they shouldn't be
+# runtime-mutable.
 
 let
   afterDirName = if type == "bundle" then "contents.d" else "dependencies.d";
