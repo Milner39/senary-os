@@ -60,7 +60,10 @@ six.mkFunnel {
     CACHESIZE = toString cache-size;
     IP = listen-ip;
     IPSEND = outbound-ip;
-    ROOT = "./data";
+
+    # We can't use ./data or symlinks into the store because dnscache chroots
+    # into here :(
+    ROOT = "/run/dnscache";
   };
 
   run.pre-argvs = [
@@ -75,12 +78,12 @@ six.mkFunnel {
 
     # FIXME apparently this is a non-disableable filtering mechanism for client IPs,
     # but it can only be configured at 8-bit-netmask-chunk granularity?
-    [ "${pkgs.busybox}/bin/mkdir" "-p" "data/ip/" ]
-    [ "${pkgs.busybox}/bin/touch" "data/ip/127.0.0.1" ]
+    [ "${pkgs.busybox}/bin/mkdir" "-p" "/run/dnscache/ip/" ]
+    [ "${pkgs.busybox}/bin/touch" "/run/dnscache/ip/127.0.0.1" ]
 
     # TODO: validate that these are numerical ipv4 addresses at eval-time
-    [ "${pkgs.busybox}/bin/mkdir" "-p" "data/servers/" ]
-    [ "${pkgs.busybox}/bin/cp" servers-file "data/servers/@" ]
+    [ "${pkgs.busybox}/bin/mkdir" "-p" "/run/dnscache/servers/" ]
+    [ "${pkgs.busybox}/bin/cp" servers-file "/run/dnscache/servers/@" ]
   ];
 
   run.redirect-stdin-from = "/dev/urandom";
