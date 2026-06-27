@@ -165,7 +165,9 @@ stdenv.mkDerivation {
             default = "conf";
             conf {
                 kernel = "kernel";
+  '' + lib.optionalString (dtb != null) ''
                 fdt = "fdt";
+  '' + ''
                 ramdisk = "ramdisk";
             };
         };
