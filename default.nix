@@ -11,8 +11,8 @@
   infuse
   ? ((import (builtins.fetchGit {
     url = "https://codeberg.org/amjoseph/infuse.nix";
-    ref = "v2.5";
-    rev = "d3f4e49112f9a59e701ac067faec6832149df07c";
+    ref = "v2.6";
+    rev = "364ea18b5611b5fd6a6acd7151411b430a70e194";
   })) { inherit lib; }).v1.infuse,
 
   nixpkgs
