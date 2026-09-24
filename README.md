@@ -12,6 +12,16 @@
 SenaryOS is a Linux distribution derived from sixos.
 
 
+## Why "SenaryOS"?
+
+> **senary** /ˈsiːnəri/ (*SEE-nuh-ree*), adjective
+>
+> Relating to the number six; **base 6**.
+
+Just as binary is base 2 and denary is base 10, senary is base 6.
+And SenaryOS is **based** on the **s6** init system.
+
+
 ## Relationship to upstream
 
 - **Upstream:** <https://codeberg.org/amjoseph/sixos> (branch `master`) 
