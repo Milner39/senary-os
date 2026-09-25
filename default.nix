@@ -89,45 +89,45 @@ let
         };
       })));
 
+
+  site-dir-unchecked =
+    sixos.lib.maybe-invoke-readTree
+      ({
+        inherit lib yants infuse readTree;
+        inherit (site) types;
+        inherit sixos;
+      } // extra-auto-args // {
+        site = site-dir-unchecked;
+      })
+      args.site-dir;
+
+  site-tag-definitions =
+    sixos.tags //
+    lib.flip lib.mapAttrs site-dir-unchecked.tags
+      (tag-name: site-tag-definition:
+        if sixos.tags?${tag-name}
+        then {
+          overlays = sixos.tags.${tag-name}.overlays ++ site-tag-definition.overlays;
+          implies = (sixos.tags.${tag-name}.implies or {}) // (site-tag-definition.implies or {});
+          after = (sixos.tags.${tag-name}.after or {}) // (site-tag-definition.after or {});
+        } else site-tag-definition);
+
   # readTree invocation on the `site` directory.  This is done as a convenience,
   # to avoid the site repository needing to fetchGit readTree and yants like
   # sixos does.
   site-dir =
-    let
-      site-dir-unchecked =
-        sixos.lib.maybe-invoke-readTree
-          ({
-            inherit lib yants infuse readTree;
-            inherit (site) types;
-            inherit sixos;
-          } // extra-auto-args // {
-            site = site-dir-unchecked;
-          })
-          args.site-dir;
-    in
-      (if check-types
-       then site.types.site-dir
-       else lib.id)
-        site-dir-unchecked;
+    (if check-types
+      then (sixos.types { tag-definitions = site-tag-definitions; }).site-dir
+      else lib.id)
+      site-dir-unchecked;
+
 
   site =
     sixos.mkSite {
       inherit site-dir;
-      tag-definitions =
-        sixos.tags //
-        lib.flip lib.mapAttrs site-dir.tags
-          (tag-name: site-tag-definition:
-            if sixos.tags?${tag-name}
-            then {
-              overlays = sixos.tags.${tag-name}.overlays ++ site-tag-definition.overlays;
-              implies = (sixos.tags.${tag-name}.implies or {}) // (site-tag-definition.implies or {});
-              after = (sixos.tags.${tag-name}.after or {}) // (site-tag-definition.after or {});
-            } else site-tag-definition);
+      tag-definitions = site-tag-definitions;
     };
 
 in
 
-# typecheck the result *after* the fixpoint (otherwise we get infinite
-# recursion because yants checking is strict)
-(if check-types then site.types.site else lib.id) site
-
+site
