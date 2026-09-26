@@ -19,12 +19,11 @@ let
 in
 stdenv.mkDerivation {
   inherit pname version;
-  src = pkgs.fetchFromGitHub {
-    owner = "slashbeast";
-    repo = pname;
-    rev = "f77310ea8e039282a545f17df676f2e42f112746";
-    hash = "sha256-dGUSyE4/0od7CGM600+51JZZsJtYt1qLK2oSa92blzw=";
-  };
+
+  # `helpers/` and `LICENSE` from github.com/slashbeast/mdev-like-a-boss
+  # at f77310ea8e039282a545f17df676f2e42f112746
+  # The upstream repository has been deleted.
+  src = ./mdev-like-a-boss;
   nativeBuildInputs = [ pkgs.buildPackages.makeWrapper ];
   dontBuild = true;
   installPhase = ''
