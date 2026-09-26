@@ -9,7 +9,7 @@
 , fetchpatch
 , linuxKernel
 , runCommand
-, overrideWithDistCC
+, overrideWithDistCC ? throw "kernel.nix: enableDistCC requires an overrideWithDistCC stdenv adapter in pkgs"
 
 # kernel source tarball
 , version ? "6.6.41"
