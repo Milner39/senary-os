@@ -485,29 +485,34 @@ let
       meta = (previousAttrs.meta or {}) // { mainProgram = "activate"; };
       passthru = (previousAttrs.passthru or {}) // {
         inherit source boot;
-        vm = lib.makeOverridable
-          ({ storeDir
-           , memSize-mbytes
-           }:
-             let
-               args = [
-                 "-m" (toString memSize-mbytes)
-                 "-nographic"
-                 "-no-reboot" # shutdown means exit
-                 "-virtfs" "local,path=${storeDir},security_model=none,readonly=on,mount_tag=nixstore,id=nixstore_dev"
-                 "-device" "virtio-9p-pci,fsdev=nixstore_dev,mount_tag=nixstore"
-                 "-net" "none"
-                 "-vga" "none"
-                 "-kernel" (toString configuration.boot.kernel.payload)
-                 "-initrd" (toString configuration.boot.initrd.image)
-               ];
-             in pkgs.writeShellScriptBin "vm-${configuration.name}.sh" ''
-               exec ${pkgs.vmTools.qemu-common.qemuBinary pkgs.qemu} \
-                 ${lib.escapeShellArgs args} \
-                 -append "$(cat ${configuration}/boot/kernel-params)"
-             '')
-        { storeDir = builtins.storeDir;
-          memSize-mbytes  = 512; };
+        vm = lib.makeOverridable (
+          {
+            storeDir, memSize-mbytes
+          }:
+            let
+              args = [
+                "-m" (toString memSize-mbytes)
+                "-nographic"
+                "-no-reboot" # shutdown means exit
+                "-virtfs" "local,path=${storeDir},security_model=none,readonly=on,mount_tag=nixstore,id=nixstore_dev"
+                "-device" "virtio-9p-pci,fsdev=nixstore_dev,mount_tag=nixstore"
+                "-net" "none"
+                "-vga" "none"
+                "-kernel" (toString configuration.boot.kernel.payload)
+                "-initrd" (toString configuration.boot.initrd.image)
+              ];
+            in
+              pkgs.writeShellScriptBin "vm-${configuration.name}.sh" ''
+                exec ${(pkgs.callPackage "${pkgs.path}/nixos/lib/qemu-common.nix" {}).qemuBinary pkgs.qemu} \
+                  ${lib.escapeShellArgs args} \
+                  -append "$(cat ${configuration}/boot/kernel-params)"
+              ''
+        )
+
+        {
+          storeDir = builtins.storeDir;
+          memSize-mbytes  = 512;
+        };
       };
     });
 in
