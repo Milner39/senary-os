@@ -258,6 +258,7 @@ in
     inherit default-tag-values;
     inherit set-tag-values;
     inherit tag-implication-relation;
+    inherit tag-application-order-relation;
     inherit tag-definition;
     inherit tag-definitions;
   }

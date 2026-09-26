@@ -97,20 +97,17 @@ let
       in
         host-prev // { tags = host-final.site.types.set-tag-values final-tags; });
 
-  #
-  # FIXME: apply tags in the order determined by `implies`
-  #
   apply-tags =
     (host-final: host-prev:
       (sixos.lib.pipe host-final.tags [
         (lib.filterAttrs (_: v: v))   # filter out the unset tags
         lib.attrNames                 # gather the attrnames
 
-        # sort tags-to-be-applied according to the closure of the implication
-        # relation; this means that if `isAarch64` implies `isAarch`, the
-        # overlay for `isAarch` will be applied first.
+        # sort tags-to-be-applied according to the closure of the `implies`
+        # and `after` relation; this means that if `isAarch64` implies
+        # `isAarch`, the overlay for `isAarch` will be applied first.
         (lib.sort
-          (a: b: host-final.site.types.tag-implication-relation.${a}.${b} or false))
+          (a: b: host-final.site.types.tag-application-order-relation.${a}.${b} or false))
 
         # for debugging
         #(tags: lib.warn (toString tags) tags)
